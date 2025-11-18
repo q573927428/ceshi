@@ -89,6 +89,8 @@
           </div>
         </el-tab-pane>
         <el-tab-pane label="阵容" name="fourth">
+          <!-- 条件渲染：只有当 uniqueCards 存在时才渲染 FormationComponent -->
+          <FormationComponent v-if="uniqueCards && uniqueCards.length > 0" :uniqueCards="uniqueCards" />
         </el-tab-pane>
         <el-tab-pane label="其他" name="fifth">
           <div class="other-resources">
@@ -131,12 +133,14 @@
   import CategoryCards from '~/components/CategoryCards.vue';
   import SkillCard from '~/components/SkillCard.vue';
   import WeaponCard from '~/components/WeaponCard.vue';
+  import FormationComponent from '~/components/FormationComponent.vue'; // 新增导入 FormationComponent
 
   export default {
     components: {
       CategoryCards,
       SkillCard,
-      WeaponCard
+      WeaponCard,
+      FormationComponent // 新增 FormationComponent 组件
     },
     data() {
       return {
