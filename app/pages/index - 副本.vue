@@ -5,13 +5,6 @@
   
       <!-- 链接区域 -->
       <div class="link-section">
-        <h3>
-          <span v-if="tenures.season_info">{{ tenures.season_info }}  </span>  
-          <span v-if="tenures.season_info !== '备战区'">
-            <span v-if="tenures.combine_name">{{ tenures.combine_name }}  </span>  
-            <span v-if="tenures.server_info">{{ tenures.server_info }}  </span>  
-          </span>
-        </h3>
         <h3>藏宝阁链接:</h3>
         <textarea v-model="zangbaoLink" placeholder="163张五星武将卡， 26个稀世宝物，27个S级战法 https://stzb.cbg.163.com/cgi/mweb/equip/1/202510261802116-1-NWCGRIWQUFKXBJ?view_loc=reco_home%7Ctag_key%3A%7B%22exposed_scene_id%22%3A%20%221763281118863-5c17696e%22,%20%22is_from_ad_reco%22%3A%200,%20%22tag%22%3A%20%22general_rec_din_tfs%22%7D&reco_request_id=1763281120787czbd8&tag=general_rec_din_tfs&tfid=f_reco_home&tcid=c_reco_home&exposed_scene_id=1763281118863-5c17696e&refer_sn=019A8BBE-A612-8A81-35CB-0E4693E9E526"></textarea>
       </div>
@@ -19,7 +12,7 @@
       <!-- 按钮区域 -->
       <div class="button-section">
         <el-button type="primary" @click="extractData">一键估号</el-button>
-        <el-button type="primary" @click="resetOpacity">重置透明度</el-button>
+        <el-button type="primary" @click="resetOpacity">重置</el-button>
         <el-button type="info" @click="handleShare">分享给好友</el-button>
       </div>
   
@@ -27,15 +20,28 @@
       <div class="price-section">
         <div class="price-item">
           <span>卡池价格</span>
-          <strong>0</strong>
+          <p>0</p>
         </div>
         <div class="price-item">
           <span>武器价格</span>
-          <strong>0</strong>
+          <p>0</p>
         </div>
         <div class="price-item">
           <span>总价格</span>
-          <strong>0</strong>
+          <p>0</p>
+        </div>
+      </div>
+
+      <!-- 卡池价格信息 -->
+      <div class="season-info" v-if="accountData && equip">
+        <div class="season-item">
+          <!-- <div><span>区服：</span> {{ tenures.combine_name }} {{ tenures.server_info }} </div> -->
+          <div><span>区服：</span> {{ equip.area_name }}  {{ equip.server_name }} </div>
+          <div><span>状态：</span> {{ equip.status_desc }} </div>
+        </div>
+        <div class="season-item">
+          <div><span>藏宝阁价格：</span> {{ equipPrice}} </div>
+          <div><span>试师号价格：</span> {{ equipPriceShishi }} </div>
         </div>
       </div>
   
@@ -49,14 +55,43 @@
         </el-tab-pane>
         <el-tab-pane label="武器" name="third">
           <div v-if="accountData && accountData.gear" class="weapons-container">
-            <WeaponCard 
-              v-for="weapon in filteredWeapons" 
-              :key="weapon.gear_id"
-              :card="weapon"
-            />
+            <div class="weapon-group" v-if="redWeapons.length > 0">
+              <h3>红武</h3>
+              <div class="weapons-list">
+                <WeaponCard 
+                  v-for="weapon in redWeapons" 
+                  :key="weapon.gear_id"
+                  :card="weapon"
+                />
+              </div>
+            </div>
+            
+            <div class="weapon-group" v-if="pinkWeapons.length > 0">
+              <h3>粉武</h3>
+              <div class="weapons-list">
+                <WeaponCard 
+                  v-for="weapon in pinkWeapons" 
+                  :key="weapon.gear_id"
+                  :card="weapon"
+                />
+              </div>
+            </div>
+            
+            <div class="weapon-group" v-if="blueWeapons.length > 0">
+              <h3>蓝武</h3>
+              <div class="weapons-list">
+                <WeaponCard 
+                  v-for="weapon in blueWeapons" 
+                  :key="weapon.gear_id"
+                  :card="weapon"
+                />
+              </div>
+            </div>
           </div>
         </el-tab-pane>
         <el-tab-pane label="阵容" name="fourth">
+          <!-- 条件渲染：只有当 uniqueCards 存在时才渲染 FormationComponent -->
+          <FormationComponent v-if="uniqueCards && uniqueCards.length > 0" :uniqueCards="uniqueCards" />
         </el-tab-pane>
         <el-tab-pane label="其他" name="fifth">
           <div class="other-resources">
@@ -92,10 +127,6 @@
         </el-tab-pane>
       </el-tabs>
   
-      <!-- 二维码 -->
-      <div class="qrcode-section">
-        <img src="https://placehold.co/150x150" alt="二维码">
-      </div>
     </div>
   </template>
   
@@ -103,21 +134,30 @@
   import CategoryCards from '~/components/CategoryCards.vue';
   import SkillCard from '~/components/SkillCard.vue';
   import WeaponCard from '~/components/WeaponCard.vue';
+  import FormationComponent from '~/components/FormationComponent.vue'; // 新增导入 FormationComponent
 
   export default {
     components: {
       CategoryCards,
       SkillCard,
-      WeaponCard
+      WeaponCard,
+      FormationComponent // 新增 FormationComponent 组件
     },
     data() {
       return {
         zangbaoLink: 'https://stzb.cbg.163.com/cgi/mweb/equip/1/202510281502116-1-RU4G0IXMKDLWYW?refer_sn=019A910B-06A2-9A01-8E07-8A111122F68A',
         activeTab: 'first',
+        serverid: 1,
         extractedId: '',
         jsonData: null,
         uniqueCards: null,
         accountData: null,  // 存储从藏宝阁链接提取的数据
+        equip:{
+          price:0,
+          server_name:"",
+          status_desc:"",
+          area_name:""
+        },
         tenures: {
           yuan_bao: 0,
           jiang_ling: 0,
@@ -138,14 +178,42 @@
       };
     },
     computed: {
-      // 筛选出 phase 值为 3 的武器
-      filteredWeapons() {
+      // 先筛选phase值为3的武器
+      phase3Weapons() {
         if (!this.accountData || !this.accountData.gear) {
           return [];
         }
-        const gear = this.accountData.gear.filter(weapon => weapon.phase === 3)
         return this.accountData.gear.filter(weapon => weapon.phase === 3);
+      },
+      
+      // 红武: advance值为1的武器（从phase3Weapons中筛选）
+      redWeapons() {
+        return this.phase3Weapons.filter(weapon => weapon.advance === 1);
+      },
+      
+      // 粉武: level_type值为2的武器（从phase3Weapons中筛选，但排除红武）
+      pinkWeapons() {
+        return this.phase3Weapons.filter(weapon => weapon.level_type === 2 && weapon.advance !== 1);
+      },
+      
+      // 蓝武: level_type值为0的武器（从phase3Weapons中筛选，但排除红武）
+      blueWeapons() {
+        return this.phase3Weapons.filter(weapon => weapon.level_type === 0 && weapon.advance !== 1);
+      },
+      
+      // 筛选出 phase 值为 3 的武器（保留原计算属性以保持代码兼容性）
+      filteredWeapons() {
+        return this.phase3Weapons;
+      },
+      //藏宝阁价格equip.price需要除以100
+      equipPrice() {
+        return this.equip.price / 100;
+      },
+      //试师号价格equip.price乘以1.5需要除以100
+      equipPriceShishi() {
+        return this.equip.price * 1.3 / 100;
       }
+
     },
     methods: {
       async extractData() {
@@ -157,6 +225,7 @@
 
         // 重置卡片状态为初始状态
         this.resetOpacity();
+        this.accountData = null;
         
         // 使用正则表达式提取ID
         const regex = /\/equip\/1\/([a-zA-Z0-9\-]+)/;
@@ -164,10 +233,16 @@
 
         if (match && match[1]) {
           this.extractedId = match[1];
-          
+
+          const ordersn = this.extractedId;
+          const { data, pending, error } = useFetch('/api/equip/detail', {
+            params: { ordersn }
+          })
+          this.equip = data
+          // console.log('equip data:', this.equip);
           // 构建API URL
           const apiUrl = `https://cbg-other-desc.res.netease.com/stzb/static/equipdesc/${this.extractedId}.json`;
-          
+
           try {
             // 获取JSON数据
             const response = await fetch(apiUrl);
@@ -347,10 +422,27 @@
   .price-item {
     flex: 1;
     text-align: center;
-    padding: 15px 0;
+    padding-top: 10px;
     border: 1px solid #ccc;
     border-radius: 8px;
     background: #f5f5f5;
+    margin: 0 8px;
+  }
+  .price-item p{
+    color: crimson;
+    font-size: 20px;
+    font-weight: bold;
+    margin: 5px 0;
+    padding: 0px;
+  }
+
+  .season-info {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 16px;
+  }
+  .season-item { 
+    padding: 2px 0;
     margin: 0 8px;
   }
   
@@ -358,11 +450,6 @@
     margin-bottom: 20px;
   }
   
-  .qrcode-section {
-    text-align: center;
-    margin-top: 16px;
-  }
-
   .card-assort {
     background: #f5f5f5;
     width: 100%;
@@ -424,8 +511,33 @@
   
   .weapons-container {
     display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 20px;
+  }
+  
+  .weapon-group h3 {
+    margin-bottom: 10px;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+  }
+  
+  .weapons-list {
+    display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    margin-top:20px ;
+  }
+  
+  .weapons-container {
+    margin-top: 0;
+  }
+  @media (max-width: 576px) {
+    .season-info {
+      font-size: 12px;
+    }
+    .price-section {
+      font-size: 12px;
+    }
   }
   </style>

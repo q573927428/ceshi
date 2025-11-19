@@ -33,14 +33,15 @@
       </div>
 
       <!-- 卡池价格信息 -->
-      <div class="season-info" v-if="accountData">
+      <div class="season-info" v-if="accountData && equip">
         <div class="season-item">
-          <div><span>区服：</span> {{ tenures.combine_name }} {{ tenures.server_info }} </div>
-          <div><span>类型：</span> {{ tenures.server_info }} </div>
+          <!-- <div><span>区服：</span> {{ tenures.combine_name }} {{ tenures.server_info }} </div> -->
+          <div><span>区服：</span> {{ equip.area_name }}  {{ equip.server_name }} </div>
+          <div><span>状态：</span> {{ equip.status_desc }} </div>
         </div>
         <div class="season-item">
-          <div><span>藏宝阁价格：</span> {{ tenures.combine_name }} </div>
-          <div><span>试师号价格：</span> {{ tenures.combine_name }} </div>
+          <div><span>藏宝阁价格：</span> {{ equipPrice}} </div>
+          <div><span>试师号价格：</span> {{ equipPriceShishi }} </div>
         </div>
       </div>
   
@@ -146,10 +147,17 @@
       return {
         zangbaoLink: 'https://stzb.cbg.163.com/cgi/mweb/equip/1/202510281502116-1-RU4G0IXMKDLWYW?refer_sn=019A910B-06A2-9A01-8E07-8A111122F68A',
         activeTab: 'first',
+        serverid: 1,
         extractedId: '',
         jsonData: null,
         uniqueCards: null,
         accountData: null,  // 存储从藏宝阁链接提取的数据
+        equip:{
+          price:0,
+          server_name:"",
+          status_desc:"",
+          area_name:""
+        },
         tenures: {
           yuan_bao: 0,
           jiang_ling: 0,
@@ -196,7 +204,16 @@
       // 筛选出 phase 值为 3 的武器（保留原计算属性以保持代码兼容性）
       filteredWeapons() {
         return this.phase3Weapons;
+      },
+      //藏宝阁价格equip.price需要除以100
+      equipPrice() {
+        return this.equip.price / 100;
+      },
+      //试师号价格equip.price乘以1.5需要除以100
+      equipPriceShishi() {
+        return this.equip.price * 1.3 / 100;
       }
+
     },
     methods: {
       async extractData() {
@@ -216,10 +233,16 @@
 
         if (match && match[1]) {
           this.extractedId = match[1];
-          
+
+          const ordersn = this.extractedId;
+          const { data, pending, error } = useFetch('/api/equip/detail', {
+            params: { ordersn }
+          })
+          this.equip = data
+          // console.log('equip data:', this.equip);
           // 构建API URL
           const apiUrl = `https://cbg-other-desc.res.netease.com/stzb/static/equipdesc/${this.extractedId}.json`;
-          
+
           try {
             // 获取JSON数据
             const response = await fetch(apiUrl);
@@ -419,7 +442,6 @@
     margin-top: 16px;
   }
   .season-item { 
-    flex: 1;
     padding: 2px 0;
     margin: 0 8px;
   }
