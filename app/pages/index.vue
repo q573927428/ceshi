@@ -13,7 +13,7 @@
       <div class="button-section">
         <el-button type="primary" @click="extractData">一键估号</el-button>
         <el-button type="primary" @click="resetOpacity">重置</el-button>
-        <el-button type="info" @click="handleShare">分享给好友</el-button>
+        <el-button type="info" @click="handleShare">历史记录</el-button>
       </div>
   
       <!-- 卡池价格信息 -->
@@ -127,6 +127,11 @@
         </el-tab-pane>
       </el-tabs>
   
+      <!-- 历史记录弹窗 -->
+      <el-dialog v-model="historyDialogVisible" title="历史记录" width="80%" top="5vh">
+        <HistoryRecord />
+      </el-dialog>
+  
     </div>
   </template>
   
@@ -135,13 +140,15 @@
   import SkillCard from '~/components/SkillCard.vue';
   import WeaponCard from '~/components/WeaponCard.vue';
   import FormationComponent from '~/components/FormationComponent.vue'; // 新增导入 FormationComponent
+  import HistoryRecord from '~/components/HistoryRecord.vue';
 
   export default {
     components: {
       CategoryCards,
       SkillCard,
       WeaponCard,
-      FormationComponent // 新增 FormationComponent 组件
+      FormationComponent, // 新增 FormationComponent 组件
+      HistoryRecord
     },
     data() {
       return {
@@ -174,8 +181,24 @@
           server_id:0,
           platform:"",
           get_reward_time_limit:""
-        }
+        },
+        historyRecords: [], // 新增：用于存储历史记录
+        historyDialogVisible: false, // 控制历史记录弹窗显示
       };
+    },
+    mounted() {
+      // 确保只在浏览器环境中访问localStorage
+      if (process.client && typeof localStorage !== 'undefined') {
+        const saved = localStorage.getItem('zangbaoHistory');
+        if (saved) {
+          try {
+            this.historyRecords = JSON.parse(saved);
+          } catch (e) {
+            console.error('解析历史记录失败:', e);
+            this.historyRecords = [];
+          }
+        }
+      }
     },
     computed: {
       // 先筛选phase值为3的武器
@@ -207,11 +230,11 @@
       },
       //藏宝阁价格equip.price需要除以100
       equipPrice() {
-        return this.equip.price / 100;
+        return this.equip?.price ? this.equip.price / 100 : 0;
       },
       //试师号价格equip.price乘以1.5需要除以100
       equipPriceShishi() {
-        return this.equip.price * 1.3 / 100;
+        return this.equip?.price ? this.equip.price * 1.3 / 100 : 0;
       }
 
     },
@@ -235,11 +258,22 @@
           this.extractedId = match[1];
 
           const ordersn = this.extractedId;
-          const { data, pending, error } = useFetch('/api/equip/detail', {
+          console.log('订单号:', ordersn);
+          
+          const { data, pending, error } = await useFetch('/api/equip/detail', {
             params: { ordersn }
           })
-          this.equip = data
-          // console.log('equip data:', this.equip);
+
+          // 确保data.value存在再赋值给this.equip
+          if (data.value) {
+            this.equip = data.value
+            console.log('获取装备信息成功:', this.equip)
+          } else {
+            console.error('API返回数据为空或无效')
+            ElMessage.error('获取装备信息失败')
+            return
+          }
+          
           // 构建API URL
           const apiUrl = `https://cbg-other-desc.res.netease.com/stzb/static/equipdesc/${this.extractedId}.json`;
 
@@ -297,6 +331,35 @@
             this.updateSomeCards()
             this.updateSkill()
             this.getTenure()
+
+            // 保存历史记录，增加边界检查，并确保在浏览器环境中使用localStorage
+            if (process.client && typeof localStorage !== 'undefined') {
+              if (this.equip && typeof this.equip.price !== 'undefined') {
+                const record = {
+                  estimatedPrice: this.equip.price / 100,
+                  grid: this.accountData?.grid || 0,
+                  bao: this.accountData?.bao || 0,
+                  zangbaoPrice: this.equip.price / 100,
+                  cbgLink: this.zangbaoLink,
+                  timestamp: new Date().toLocaleString()
+                };
+
+                // 将记录添加到本地存储
+                const saved = localStorage.getItem('zangbaoHistory');
+                let records = saved ? JSON.parse(saved) : [];
+                records.unshift(record);
+                localStorage.setItem('zangbaoHistory', JSON.stringify(records));
+                
+                // 触发自定义事件通知HistoryRecord组件更新
+                if (typeof window !== 'undefined' && window.dispatchEvent) {
+                  window.dispatchEvent(new CustomEvent('historyRecordUpdated', { detail: records }));
+                }
+              } else {
+                console.error('equip或equip.price未定义');
+                ElMessage.error('无法获取价格信息');
+              }
+            }
+
           } catch (error) {
             console.error('获取或解析数据时出错:', error);
             const errorMessage = error && error.message ? error.message : '未知错误';
@@ -314,61 +377,70 @@
         });
       },
       
-      handleCopy() {
-        // 复制链接逻辑
-      },
-      
       handleShare() {
-        // 分享逻辑
+        // 显示历史记录弹窗
+        this.historyDialogVisible = true;
       },
       
       updateSomeCards() {
         // 模拟从服务器获取到的卡片ID列表
-        const uniqueCards = this.uniqueCards
-        this.$refs.categoryCards.updateCardOpacity(uniqueCards)
+        if (this.$refs.categoryCards && this.uniqueCards) {
+          this.$refs.categoryCards.updateCardOpacity(this.uniqueCards);
+        }
       },
       updateSkill() {
         // 模拟从服务器获取到的技能ID列表
-        const skills = this.accountData.skill;
-        this.$refs.skillCard.updateSkillOpacity(skills)
+        if (this.$refs.skillCard && this.accountData?.skill) {
+          this.$refs.skillCard.updateSkillOpacity(this.accountData.skill);
+        }
       },
       
       resetOpacity() {
         // 重置所有卡片透明度
         this.uniqueCards = null;
-        this.$refs.categoryCards.categories.forEach(category => {
-          category.cards.forEach(card => {
-            card.opacity = 0.3
-            card.advance_num = 0
-            card.policy_awake_state = 0
+        if (this.$refs.categoryCards) {
+          this.$refs.categoryCards.categories.forEach(category => {
+            category.cards.forEach(card => {
+              card.opacity = 0.3
+              card.advance_num = 0
+              card.policy_awake_state = 0
+            })
           })
-        })
+        }
         //重置技能透明度
-        this.$refs.skillCard.categories.forEach(category => {
-          category.skills.forEach(skill => {
-            skill.opacity = 0.3
-            skill.research_progress = 100
+        if (this.$refs.skillCard) {
+          this.$refs.skillCard.categories.forEach(category => {
+            category.skills.forEach(skill => {
+              skill.opacity = 0.3
+              skill.research_progress = 100
+            })
           })
-        })
+        }
       },
       getTenure(){
-        const yuan_bao = this.accountData.tenure.yuan_bao;
-        const yue_ka_endtime = this.accountData.tenure.yue_ka_endtime;
-        const jiang_ling = this.accountData.tenure.jiang_ling;
-        const bind_yuan_bao = this.accountData.tenure.bind_yuan_bao;
-        const hufu = this.accountData.tenure.hufu;
-        const honor = this.accountData.tenure.honor;
-        const chi_zhu_shan_tie = this.accountData.material.chi_zhu_shan_tie.value;
-        const xiao_ye_zi_tan = this.accountData.material.xiao_ye_zi_tan.value;
-        const gear_feature_hammer = this.accountData.material.gear_feature_hammer.value;
-        const dynamic_icon = this.accountData.dynamic_icon.length;
+        // 添加边界检查
+        if (!this.accountData) {
+          console.warn('accountData未定义，无法获取任期信息');
+          return;
+        }
 
-        const season_info = this.accountData.season_info;
-        const server_info = this.accountData.server_info;
-        const combine_name = this.accountData.combine_name;
-        const server_id = this.accountData.server_id;
-        const platform = this.accountData.platform;
-        const get_reward_time_limit = this.accountData.get_reward_time_limit;
+        const yuan_bao = this.accountData.tenure?.yuan_bao || 0;
+        const yue_ka_endtime = this.accountData.tenure?.yue_ka_endtime || '';
+        const jiang_ling = this.accountData.tenure?.jiang_ling || 0;
+        const bind_yuan_bao = this.accountData.tenure?.bind_yuan_bao || 0;
+        const hufu = this.accountData.tenure?.hufu || 0;
+        const honor = this.accountData.tenure?.honor || 0;
+        const chi_zhu_shan_tie = this.accountData.material?.chi_zhu_shan_tie?.value || 0;
+        const xiao_ye_zi_tan = this.accountData.material?.xiao_ye_zi_tan?.value || 0;
+        const gear_feature_hammer = this.accountData.material?.gear_feature_hammer?.value || 0;
+        const dynamic_icon = this.accountData.dynamic_icon?.length || 0;
+
+        const season_info = this.accountData.season_info || '';
+        const server_info = this.accountData.server_info || '';
+        const combine_name = this.accountData.combine_name || '';
+        const server_id = this.accountData.server_id || 0;
+        const platform = this.accountData.platform || '';
+        const get_reward_time_limit = this.accountData.get_reward_time_limit || '';
         
         this.tenures = {
           yuan_bao,
