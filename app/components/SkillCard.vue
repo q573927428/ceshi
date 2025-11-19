@@ -138,7 +138,8 @@ export default {
 
 <style scoped>
 .skill-card-container {
-  padding: 20px;
+  padding: 1px;
+  margin-top: 15px;
 }
 
 .category-section {

@@ -243,4 +243,43 @@ export default {
   text-align: center;
   color: #ff9900;
 }
+@media (max-width: 576px) {
+  .skill-item {
+    width: 80px;
+    height: 80px;
+    margin: 5px;
+  }
+  .quality-frame {
+    background-size: 80px 80px;
+  }
+  .quality-A .quality-B .quality-C .quality-D .quality-S {
+    background-size: 80px 80px;
+  }
+  .type-bg{
+    left: 10px;
+    background-size: 80px 80px;
+  }
+  .type-1, .type-2, .type-3, .type-4 {
+    background-size: 60px 60px;
+  }
+  .season-tag {
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    font-size: 10px;
+  }
+  .research-mask {
+    top: 3px;
+    left: 10px;
+    width: 60px;
+    height: 60px;
+  }
+  .research-text {
+    font-size: 12px;
+  }
+  .skill-name {
+    font-size: 12px;
+    padding-top: 50px;
+  }
+}
 </style>

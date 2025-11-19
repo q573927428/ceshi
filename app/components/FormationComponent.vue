@@ -238,7 +238,7 @@ export default {
 
 <style scoped>
 .formation-container {
-  padding: 16px;
+  padding-top: 15px;
 }
 
 .formation-cards {
@@ -260,8 +260,8 @@ export default {
 }
 
 .team-group {
-  margin-bottom: 0;
-  padding: 12px;
+  margin: 5px auto;
+  padding: 10px 30px;
   border-radius: 8px;
   background-color: #f3e0e0;
   transition: background-color 0.3s;

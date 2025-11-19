@@ -238,7 +238,7 @@ export default {
 
 <style scoped>
 .category-cards {
-  padding: 20px;
+  padding: 10px 0;
 }
 
 .category-section {

@@ -192,5 +192,45 @@ function highlightNumbers(text) {
   white-space: normal;
   z-index: 2;
 }
+@media (max-width: 576px) {
+  .weapon-item {
+    height: 160px;
+  }
+  .wrap {
+    width: 90px;
+    height: 128px;
+  }
+  .name {
+    font-size: 10px;
+    bottom: -130px;
+  }
+  .xishi-icon{
+    background-size: 20px 60px;
+  }
+  .best-wrap {
+    top: -9px;
+    right: -79px;
+  }
+  .ji-bg{
+    background-size: 20px 20px;
+  }
+  .citiao {
+    top: 60px;
+    left: 7px;
+  }
+  .citiao-21, .citiao-20, .citiao-1, .citiao-00 {
+    background-size: 20px 55px;
+  }
+  .citiao-text {
+    top: 12px;
+    left: 5px;
+    font-size: 10px;
+    width: 10px;
+  }
+  .feature-text {
+    font-size: 8px;
+    bottom: -130px;
+  }
+}
 
 </style>

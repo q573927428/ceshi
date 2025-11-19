@@ -12,7 +12,7 @@
       <!-- 按钮区域 -->
       <div class="button-section">
         <el-button type="primary" @click="extractData">一键估号</el-button>
-        <el-button type="primary" @click="resetOpacity">重置透明度</el-button>
+        <el-button type="primary" @click="resetOpacity">重置</el-button>
         <el-button type="info" @click="handleShare">分享给好友</el-button>
       </div>
   
@@ -20,15 +20,15 @@
       <div class="price-section">
         <div class="price-item">
           <span>卡池价格</span>
-          <strong>0</strong>
+          <p>0</p>
         </div>
         <div class="price-item">
           <span>武器价格</span>
-          <strong>0</strong>
+          <p>0</p>
         </div>
         <div class="price-item">
           <span>总价格</span>
-          <strong>0</strong>
+          <p>0</p>
         </div>
       </div>
 
@@ -208,6 +208,7 @@
 
         // 重置卡片状态为初始状态
         this.resetOpacity();
+        this.accountData = null;
         
         // 使用正则表达式提取ID
         const regex = /\/equip\/1\/([a-zA-Z0-9\-]+)/;
@@ -398,11 +399,18 @@
   .price-item {
     flex: 1;
     text-align: center;
-    padding: 15px 0;
+    padding-top: 10px;
     border: 1px solid #ccc;
     border-radius: 8px;
     background: #f5f5f5;
     margin: 0 8px;
+  }
+  .price-item p{
+    color: crimson;
+    font-size: 20px;
+    font-weight: bold;
+    margin: 5px 0;
+    padding: 0px;
   }
 
   .season-info {
@@ -412,11 +420,7 @@
   }
   .season-item { 
     flex: 1;
-    text-align: center;
-    padding: 15px 0;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-  
+    padding: 2px 0;
     margin: 0 8px;
   }
   
@@ -505,5 +509,13 @@
   
   .weapons-container {
     margin-top: 0;
+  }
+  @media (max-width: 576px) {
+    .season-info {
+      font-size: 12px;
+    }
+    .price-section {
+      font-size: 12px;
+    }
   }
   </style>

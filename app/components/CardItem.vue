@@ -360,4 +360,58 @@ export default {
   z-index: 2;
   font-size: 16px;
 }
+
+@media (max-width: 576px) {
+  .wujiang-item {
+    width: 66px;
+  }
+  .wrap {
+    width: 66px;
+    height: 100px;
+  }
+  .state-wrap {
+    width: 14px;
+    height: 14px;
+    line-height: 14px;
+  }
+  .state1, .state2, .state3, .state4, .state5, .state6 {
+    background-size: 15px 15px;
+  }
+  .season-wrap {
+    width: 16px;
+    height: 16px;
+  }
+  .season-N, .season-S2, .season-S3, .season-XP, .season-SP {
+    background-size: 16px 16px;
+  }
+  .hero-achieve { 
+    width: 16px;
+    height: 16px;
+  }
+  .ji-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 16px;
+    height: 16px;
+  }
+  .ji-10, .ji-11 {
+    background-size: 16px 16px;
+  }
+  .stars {
+    bottom: -2px;
+  }
+  .star{
+    width: 8px;
+    height: 8px;
+    margin: 0 0.5px;
+  }
+  .name {
+    top: 20px;
+    left: 2px;
+    width: 10px;
+    height: 14px;
+    font-size: 8px;
+  }
+}
 </style>
