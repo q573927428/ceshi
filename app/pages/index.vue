@@ -338,7 +338,7 @@
             // 保存历史记录，增加边界检查，并确保在浏览器环境中使用localStorage
             if (process.client && typeof localStorage !== 'undefined') {
               if (this.equip && typeof this.equip.price !== 'undefined') {
-                const record = {
+                const newRecord = {
                   estimatedPrice: this.equip.price / 100,
                   grid: this.accountData?.grid || 0,
                   bao: this.accountData?.bao || 0,
@@ -350,7 +350,23 @@
                 // 将记录添加到本地存储
                 const saved = localStorage.getItem('zangbaoHistory');
                 let records = saved ? JSON.parse(saved) : [];
-                records.unshift(record);
+                
+                // 查找是否已存在相同链接的记录
+                const existingIndex = records.findIndex(record => record.cbgLink === newRecord.cbgLink);
+                
+                if (existingIndex !== -1) {
+                  // 如果存在，则更新时间戳
+                  records[existingIndex].timestamp = newRecord.timestamp;
+                  // 可以选择也更新其他可能变化的字段
+                  records[existingIndex].estimatedPrice = newRecord.estimatedPrice;
+                  records[existingIndex].zangbaoPrice = newRecord.zangbaoPrice;
+                  records[existingIndex].grid = newRecord.grid;
+                  records[existingIndex].bao = newRecord.bao;
+                } else {
+                  // 如果不存在，则添加新记录到开头
+                  records.unshift(newRecord);
+                }
+                
                 localStorage.setItem('zangbaoHistory', JSON.stringify(records));
                 
                 // 触发自定义事件通知HistoryRecord组件更新
