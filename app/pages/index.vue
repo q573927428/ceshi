@@ -17,7 +17,7 @@
       </div>
   
       <!-- 卡池价格信息 -->
-      <div class="price-section">
+      <!-- <div class="price-section">
         <div class="price-item">
           <span>卡池价格</span>
           <p>0</p>
@@ -30,7 +30,7 @@
           <span>总价格</span>
           <p>0</p>
         </div>
-      </div>
+      </div> -->
 
       <!-- 卡池价格信息 -->
       <div class="season-info" v-if="accountData && equip">
@@ -250,9 +250,12 @@
         this.resetOpacity();
         this.accountData = null;
         
+        // 去除链接中?后面的部分
+        const cleanLink = this.zangbaoLink.split('?')[0];
+        
         // 使用正则表达式提取ID
         const regex = /\/equip\/1\/([a-zA-Z0-9\-]+)/;
-        const match = this.zangbaoLink.match(regex);
+        const match = cleanLink.match(regex);
 
         if (match && match[1]) {
           this.extractedId = match[1];
@@ -340,7 +343,7 @@
                   grid: this.accountData?.grid || 0,
                   bao: this.accountData?.bao || 0,
                   zangbaoPrice: this.equip.price / 100,
-                  cbgLink: this.zangbaoLink,
+                  cbgLink: `https://stzb.cbg.163.com/cgi/mweb/equip/1/${this.extractedId}`,
                   timestamp: new Date().toLocaleString()
                 };
 

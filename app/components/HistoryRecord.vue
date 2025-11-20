@@ -1,6 +1,5 @@
 <template>
   <div class="history-record">
-    <h3>查询历史记录</h3>
     <div v-if="paginatedRecords.length === 0" class="no-record">
       暂无历史记录
     </div>
@@ -8,13 +7,17 @@
       <li v-for="(record, index) in paginatedRecords" :key="index" class="record-item">
         <div class="record-header">
           <span class="record-title">估算价格: {{ record.estimatedPrice }}</span>
-          <span class="record-subtitle">(格:{{ record.grid }}宝:{{ record.bao }})</span>
-          <span class="record-price">藏宝阁价格: {{ record.zangbaoPrice }}</span>
+          <!-- <span class="record-subtitle">(格:{{ record.grid }}宝:{{ record.bao }})</span> -->
+          <span class="record-price">( 藏宝阁价格: {{ record.zangbaoPrice }} )</span>
         </div>
         <div class="record-link">
+          cbg链接:
           <a :href="record.cbgLink" target="_blank" rel="noopener noreferrer">
-            cbg链接: {{ record.cbgLink }}
+             {{ record.cbgLink }}
           </a>
+          <el-icon @click="copyUrl(record.cbgLink)" class="copyCbgLink">
+            <DocumentCopy />
+          </el-icon>
         </div>
         <div class="record-meta">
           <span class="record-time">估号时间: {{ record.timestamp }}</span>
@@ -42,9 +45,12 @@
 </template>
 
 <script>
-
+import { DocumentCopy } from '@element-plus/icons-vue'
 export default {
   name: 'HistoryRecord',
+  components: {
+    DocumentCopy
+  },
   data() {
     return {
       historyRecords: [],
@@ -102,6 +108,14 @@ export default {
           this.historyRecords = JSON.parse(saved);
         }
       }
+    },
+    copyUrl(cbgLink) {
+      navigator.clipboard.writeText(cbgLink)
+      ElMessage({
+        message: '复制成功',
+        type: 'success',
+        zIndex: 99999
+      })
     },
     saveRecords() {
       // 添加localStorage存在性检查
@@ -248,4 +262,9 @@ export default {
   justify-content: center;
   margin: 20px 0;
 }
+.copyCbgLink{
+  cursor: pointer;
+  margin-left: 8px;
+}
+
 </style>
