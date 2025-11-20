@@ -106,6 +106,14 @@ export default {
         const saved = localStorage.getItem('zangbaoHistory');
         if (saved) {
           this.historyRecords = JSON.parse(saved);
+          // 按时间倒序排列（最新的在最上面）
+          this.historyRecords.sort((a, b) => {
+            // 将时间字符串转换为时间戳进行比较
+            const timeA = new Date(a.timestamp).getTime();
+            const timeB = new Date(b.timestamp).getTime();
+            // 降序排列（最新的在前面）
+            return timeB - timeA;
+          });
         }
       }
     },
