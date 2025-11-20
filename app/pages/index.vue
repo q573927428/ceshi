@@ -295,7 +295,7 @@
               return String.fromCharCode(parseInt(grp, 16));
             });
             const aaData = JSON.parse(decodedData); 
-            console.log('解析后的账号数据:', aaData);
+            // console.log('解析后的账号数据:', aaData);
             
 
             // 临时存储完整的账号数据，便于后续处理
