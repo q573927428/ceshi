@@ -76,7 +76,7 @@ export default {
     },
     hero_achieve: {
       type: Number,
-      default: 1
+      default: 0
     },
     advance_num: {
       type: Number,

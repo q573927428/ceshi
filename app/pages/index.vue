@@ -261,7 +261,7 @@
           this.extractedId = match[1];
 
           const ordersn = this.extractedId;
-          console.log('订单号:', ordersn);
+          // console.log('订单号:', ordersn);
           
           const { data, pending, error } = await useFetch('/api/equip/detail', {
             params: { ordersn }
@@ -270,7 +270,7 @@
           // 确保data.value存在再赋值给this.equip
           if (data.value) {
             this.equip = data.value
-            console.log('获取装备信息成功:', this.equip)
+            // console.log('获取装备信息成功:', this.equip)
           } else {
             console.error('API返回数据为空或无效')
             ElMessage.error('获取装备信息失败')
@@ -295,7 +295,7 @@
               return String.fromCharCode(parseInt(grp, 16));
             });
             const aaData = JSON.parse(decodedData); 
-            // console.log('解析后的账号数据:', aaData);
+            console.log('解析后的账号数据:', aaData);
             
 
             // 临时存储完整的账号数据，便于后续处理
