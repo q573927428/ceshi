@@ -8,7 +8,7 @@
         :name="index"
         :title="category.category"
       >
-        <div class="formation-cards">
+        <div class="formation-cards" :class="{ 'single-column': singleColumn }">
           <div 
             v-for="(team, teamIndex) in category.teams" 
             :key="teamIndex" 
@@ -50,6 +50,10 @@ export default {
     uniqueCards: {
       type: Array,
       required: true
+    },
+    singleColumn: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
@@ -248,14 +252,18 @@ export default {
   gap: 16px;
 }
 
+.formation-cards.single-column {
+  grid-template-columns: 1fr;
+}
+
 @media (min-width: 1200px) {
-  .formation-cards {
+  .formation-cards:not(.single-column) {
     grid-template-columns: 1fr 1fr;
   }
 }
 
 @media (min-width: 1599px) {
-  .formation-cards {
+  .formation-cards:not(.single-column) {
     grid-template-columns: 1fr 1fr 1fr;
   }
 }
