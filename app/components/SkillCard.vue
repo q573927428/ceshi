@@ -50,12 +50,12 @@ export default {
         { skill_id: 200244, name: "正始之变", skill_info: [], season: 2, skill_type: 2, research_progress: 100, quality: "S" },
         { skill_id: 200755, name: "攻其不备", skill_info: [], season: 3, skill_type: 2, research_progress: 100, quality: "S" },
         { skill_id: 200784, name: "桃园结义", skill_info: [], season: 2, skill_type: 2, research_progress: 100, quality: "S" },
+        { skill_id: 200201, name: "无心恋战", skill_info: [], season: 0, skill_type: 2, research_progress: 100, quality: "S" },
         { skill_id: 200862, name: "单骑救主", skill_info: [], season: 2, skill_type: 2, research_progress: 100, quality: "A" },
         { skill_id: 200754, name: "胜兵求战", skill_info: [], season: 3, skill_type: 2, research_progress: 100, quality: "B" },
         { skill_id: 200959, name: "久战熟谋", skill_info: [], season: 4, skill_type: 2, research_progress: 100, quality: "A" },
         { skill_id: 200964, name: "合纵连横", skill_info: [], season: 0, skill_type: 2, research_progress: 100, quality: "A" },
         { skill_id: 201008, name: "诱敌深入", skill_info: [], season: 0, skill_type: 2, research_progress: 100, quality: "A" },
-        { skill_id: 200201, name: "无心恋战", skill_info: [], season: 0, skill_type: 2, research_progress: 100, quality: "S" },
         { skill_id: 200276, name: "除恶务尽", skill_info: [], season: 4, skill_type: 2, research_progress: 100, quality: "S" }
       ];
 
@@ -74,12 +74,12 @@ export default {
         { skill_id: 200814, name: "汜水关", skill_info: [], season: 2, skill_type: 2, research_progress: 100, quality: "A" },
         { skill_id: 200844, name: "鼎足江东", skill_info: [], season: 2, skill_type: 2, research_progress: 100, quality: "A" },
         { skill_id: 200789, name: "凤仪亭", skill_info: [], season: 2, skill_type: 2, research_progress: 100, quality: "A" },
-        { skill_id: 200263, name: "火烧连营", skill_info: [], season: 4, skill_type: 2, research_progress: 100, quality: "S" },
-        { skill_id: 200979, name: "及锋而试", skill_info: [], season: 0, skill_type: 2, research_progress: 100, quality: "S" },
         { skill_id: 200801, name: "利兵谋胜", skill_info: [], season: 0, skill_type: 2, research_progress: 100, quality: "S" },
         { skill_id: 200886, name: "三军之众", skill_info: [], season: 4, skill_type: 2, research_progress: 100, quality: "S" },
         { skill_id: 200237, name: "妖术", skill_info: [], season: 0, skill_type: 2, research_progress: 100, quality: "S" },
         { skill_id: 200235, name: "浑水摸鱼", skill_info: [], season: 0, skill_type: 2, research_progress: 100, quality: "S" },
+        { skill_id: 200263, name: "火烧连营", skill_info: [], season: 4, skill_type: 2, research_progress: 100, quality: "S" },
+        { skill_id: 200979, name: "及锋而试", skill_info: [], season: 0, skill_type: 2, research_progress: 100, quality: "S" },
         { skill_id: 200271, name: "袭屯夺气", skill_info: [], season: 4, skill_type: 2, research_progress: 100, quality: "A" },
         { skill_id: 200267, name: "敛众定气", skill_info: [], season: 4, skill_type: 2, research_progress: 100, quality: "A" }
       ];

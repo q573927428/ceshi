@@ -18,10 +18,20 @@
           <el-icon @click="copyUrl(record.cbgLink)" class="copyCbgLink">
             <DocumentCopy />
           </el-icon>
+          <el-icon 
+            @click="toggleFavorite(getOriginalIndex(index))" 
+            class="favorite-icon"
+            :class="{ favorited: record.isFavorited }"
+          >
+            <StarFilled v-if="record.isFavorited" />
+            <Star v-else />
+          </el-icon>
         </div>
         <div class="record-meta">
           <span class="record-time">估号时间: {{ record.timestamp }}</span>
-          <button @click="deleteRecord(getOriginalIndex(index))" class="btn-delete">删除</button>
+          <el-icon @click="deleteRecord(getOriginalIndex(index))" class="btn-delete">
+            <Delete />
+          </el-icon>
         </div>
       </li>
     </ul>
@@ -45,11 +55,15 @@
 </template>
 
 <script>
-import { DocumentCopy } from '@element-plus/icons-vue'
+import { DocumentCopy, Star, StarFilled,Delete } from '@element-plus/icons-vue'
+
 export default {
   name: 'HistoryRecord',
   components: {
-    DocumentCopy
+    DocumentCopy,
+    Star,
+    StarFilled,
+    Delete
   },
   data() {
     return {
@@ -108,10 +122,13 @@ export default {
           this.historyRecords = JSON.parse(saved);
           // 按时间倒序排列（最新的在最上面）
           this.historyRecords.sort((a, b) => {
-            // 将时间字符串转换为时间戳进行比较
+            // 将收藏的记录排在前面
+            if (a.isFavorited && !b.isFavorited) return -1;
+            if (!a.isFavorited && b.isFavorited) return 1;
+            
+            // 时间倒序排列（最新的在前面）
             const timeA = new Date(a.timestamp).getTime();
             const timeB = new Date(b.timestamp).getTime();
-            // 降序排列（最新的在前面）
             return timeB - timeA;
           });
         }
@@ -151,6 +168,11 @@ export default {
       }
     },
     addRecord(record) {
+      // 初始化收藏状态
+      if (record.isFavorited === undefined) {
+        record.isFavorited = false;
+      }
+      
       this.historyRecords.unshift(record);
       this.currentPage = 1; // 添加新记录时回到第一页
       this.saveRecords();
@@ -169,6 +191,36 @@ export default {
     // 根据当前页和索引计算原始索引
     getOriginalIndex(index) {
       return (this.currentPage - 1) * this.pageSize + index;
+    },
+    
+    // 切换收藏状态
+    toggleFavorite(index) {
+      // 确保记录有isFavorited属性
+      if (this.historyRecords[index].isFavorited === undefined) {
+        this.historyRecords[index].isFavorited = false;
+      }
+      
+      // 切换收藏状态
+      this.historyRecords[index].isFavorited = !this.historyRecords[index].isFavorited;
+      
+      // 重新排序，将收藏的记录放在前面
+      this.historyRecords.sort((a, b) => {
+        // 将收藏的记录排在前面
+        if (a.isFavorited && !b.isFavorited) return -1;
+        if (!a.isFavorited && b.isFavorited) return 1;
+        
+        // 时间倒序排列（最新的在前面）
+        const timeA = new Date(a.timestamp).getTime();
+        const timeB = new Date(b.timestamp).getTime();
+        return timeB - timeA;
+      });
+      
+      this.saveRecords();
+      
+      // 通知其他组件历史记录已更新
+      if (typeof window !== 'undefined' && window.dispatchEvent) {
+        window.dispatchEvent(new CustomEvent('historyRecordUpdated', { detail: this.historyRecords }));
+      }
     }
   }
 };
@@ -246,8 +298,8 @@ export default {
 
 .btn-delete,
 .btn-clear {
-  background-color: #dc3545;
-  color: white;
+  background-color: #ccc;
+  color: #dc3545;
   border: none;
   padding: 4px 8px;
   border-radius: 4px;
@@ -258,6 +310,7 @@ export default {
 .btn-delete:hover,
 .btn-clear:hover {
   background-color: #c82333;
+  color: #fff;
 }
 
 .actions {
@@ -275,4 +328,13 @@ export default {
   margin-left: 8px;
 }
 
+.favorite-icon {
+  cursor: pointer;
+  margin-left: 8px;
+  color: #ccc;
+}
+
+.favorite-icon.favorited {
+  color: #ffd700;
+}
 </style>
