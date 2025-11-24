@@ -9,17 +9,25 @@
       <div class="link-compare-container">
         <div class="link-input">
           <label>链接1:</label>
-          <textarea 
-            v-model="zangbaoLink1" 
-            placeholder="请输入第一个藏宝阁链接"
-          ></textarea>
+          <el-input
+            v-model="zangbaoLink1"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入藏宝阁链接，例如：https://stzb.cbg.163.com/cgi/mweb/equip/..."
+            maxlength="2000"
+            show-word-limit
+          />
         </div>
         <div class="link-input">
           <label>链接2:</label>
-          <textarea 
-            v-model="zangbaoLink2" 
-            placeholder="请输入第二个藏宝阁链接"
-          ></textarea>
+          <el-input
+            v-model="zangbaoLink2"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入藏宝阁链接，例如：https://stzb.cbg.163.com/cgi/mweb/equip/..."
+            maxlength="2000"
+            show-word-limit
+          />
         </div>
       </div>
     </div>

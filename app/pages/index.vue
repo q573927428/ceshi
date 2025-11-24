@@ -6,7 +6,14 @@
       <!-- 链接区域 -->
       <div class="link-section">
         <h3>藏宝阁链接:</h3>
-        <textarea v-model="zangbaoLink" placeholder="163张五星武将卡， 26个稀世宝物，27个S级战法 https://stzb.cbg.163.com/cgi/mweb/equip/1/202510261802116-1-NWCGRIWQUFKXBJ?view_loc=reco_home%7Ctag_key%3A%7B%22exposed_scene_id%22%3A%20%221763281118863-5c17696e%22,%20%22is_from_ad_reco%22%3A%200,%20%22tag%22%3A%20%22general_rec_din_tfs%22%7D&reco_request_id=1763281120787czbd8&tag=general_rec_din_tfs&tfid=f_reco_home&tcid=c_reco_home&exposed_scene_id=1763281118863-5c17696e&refer_sn=019A8BBE-A612-8A81-35CB-0E4693E9E526"></textarea>
+        <el-input
+          v-model="zangbaoLink"
+          type="textarea"
+          :rows="4"
+          placeholder="请输入藏宝阁链接，例如：https://stzb.cbg.163.com/cgi/mweb/equip/..."
+          maxlength="2000"
+          show-word-limit
+        />
       </div>
   
       <!-- 按钮区域 -->
@@ -17,25 +24,8 @@
       </div>
   
       <!-- 卡池价格信息 -->
-      <!-- <div class="price-section">
-        <div class="price-item">
-          <span>卡池价格</span>
-          <p>0</p>
-        </div>
-        <div class="price-item">
-          <span>武器价格</span>
-          <p>0</p>
-        </div>
-        <div class="price-item">
-          <span>总价格</span>
-          <p>0</p>
-        </div>
-      </div> -->
-
-      <!-- 卡池价格信息 -->
       <div class="season-info" v-if="accountData && equip">
         <div class="season-item">
-          <!-- <div><span>区服：</span> {{ tenures.combine_name }} {{ tenures.server_info }} </div> -->
           <div><span>区服：</span> {{ equip.area_name }}  {{ equip.server_name }} </div>
           <div><span>状态：</span> {{ equip.status_desc }} </div>
         </div>
