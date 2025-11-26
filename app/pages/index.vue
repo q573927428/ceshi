@@ -353,8 +353,22 @@
                   records[existingIndex].grid = newRecord.grid;
                   records[existingIndex].bao = newRecord.bao;
                 } else {
-                  // 如果不存在，则添加新记录到开头
-                  records.unshift(newRecord);
+                  // 如果不存在，则添加新记录
+                  // 初始化收藏状态
+                  newRecord.isFavorited = false;
+                  records.push(newRecord);
+                  
+                  // 重新排序：收藏的记录在前，非收藏的记录按时间倒序排列
+                  records.sort((a, b) => {
+                    // 将收藏的记录排在前面
+                    if (a.isFavorited && !b.isFavorited) return -1;
+                    if (!a.isFavorited && b.isFavorited) return 1;
+                    
+                    // 时间倒序排列（最新的在前面）
+                    const timeA = new Date(a.timestamp).getTime();
+                    const timeB = new Date(b.timestamp).getTime();
+                    return timeB - timeA;
+                  });
                 }
                 
                 localStorage.setItem('zangbaoHistory', JSON.stringify(records));

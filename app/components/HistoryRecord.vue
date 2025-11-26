@@ -70,7 +70,7 @@ export default {
       historyRecords: [],
       historyUpdateHandler: null,
       currentPage: 1, // 当前页码
-      pageSize: 5     // 每页显示记录数
+      pageSize: 8     // 每页显示记录数
     };
   },
   computed: {
@@ -173,7 +173,33 @@ export default {
         record.isFavorited = false;
       }
       
-      this.historyRecords.unshift(record);
+      // 查找是否已存在相同链接的记录
+      const existingIndex = this.historyRecords.findIndex(item => item.cbgLink === record.cbgLink);
+      
+      if (existingIndex !== -1) {
+        // 如果存在，则更新时间戳和其他可能变化的字段
+        this.historyRecords[existingIndex].timestamp = record.timestamp;
+        this.historyRecords[existingIndex].estimatedPrice = record.estimatedPrice;
+        this.historyRecords[existingIndex].zangbaoPrice = record.zangbaoPrice;
+        this.historyRecords[existingIndex].grid = record.grid;
+        this.historyRecords[existingIndex].bao = record.bao;
+      } else {
+        // 如果不存在，则添加新记录
+        this.historyRecords.push(record);
+      }
+      
+      // 重新排序：收藏的记录在前，非收藏的记录按时间倒序排列
+      this.historyRecords.sort((a, b) => {
+        // 将收藏的记录排在前面
+        if (a.isFavorited && !b.isFavorited) return -1;
+        if (!a.isFavorited && b.isFavorited) return 1;
+        
+        // 时间倒序排列（最新的在前面）
+        const timeA = new Date(a.timestamp).getTime();
+        const timeB = new Date(b.timestamp).getTime();
+        return timeB - timeA;
+      });
+      
       this.currentPage = 1; // 添加新记录时回到第一页
       this.saveRecords();
       

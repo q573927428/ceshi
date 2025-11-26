@@ -13,7 +13,10 @@
             v-for="(team, teamIndex) in category.teams" 
             :key="teamIndex" 
             class="team-group"
-            :class="{ 'team-group-max-advance': team.totalAdvanceNum >= 15 }"
+            :class="{ 
+              'team-group-max-advance': team.totalAdvanceNum >= 15,
+              'team-group-medium-advance': team.totalAdvanceNum >= 10 && team.totalAdvanceNum < 15
+            }"
           >
             <div class="team-title">{{ team.title }} （ <span class="team-total-advance"> {{ team.totalAdvanceNum }} </span> 红 ）</div>
             <div class="team-cards">
@@ -272,12 +275,16 @@ export default {
   margin: 5px auto;
   padding: 10px 30px;
   border-radius: 8px;
-  background-color: #f3e0e0;
+  background-color: #f7ecec;
   transition: background-color 0.3s;
 }
 
+.team-group-medium-advance {
+  background-color: #f9c5c5;
+}
+
 .team-group-max-advance {
-  background-color: #ffaeae;
+  background-color: #e77676;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
