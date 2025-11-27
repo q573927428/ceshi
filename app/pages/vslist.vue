@@ -20,7 +20,7 @@
           <el-button type="primary" @click="addLink">添加链接</el-button>
           <!-- <el-button type="success" @click="extractData">一键对比</el-button> -->
           <el-button type="warning" @click="clearLinks">清空链接</el-button>
-          <el-button type="info" @click="handleShare">历史记录</el-button>
+          <!-- <el-button type="info" @click="handleShare">历史记录</el-button> -->
         </div>
       </div>
     </div>
@@ -35,9 +35,9 @@
         >
           <div class="panel-header" v-if="accountDataList[index] && accountDataList[index].accountData && accountDataList[index].equip">
             <div class="header-info">
-              <h3>{{ index + 1 }}：{{ accountDataList[index].equip.status_desc }}  {{ accountDataList[index].equip.area_name }}  {{ accountDataList[index].equip.server_name }} </h3>
+              <h3>{{ index + 1 }}：{{ accountDataList[index].equip.status_desc }}  {{ accountDataList[index].equip.area_name }}  {{ accountDataList[index].equip.server_name }} （{{ accountDataList[index].equipPrice }}）</h3>
               <div class="price-info">
-                价格：{{ accountDataList[index].equipPrice }} ID：{{ accountDataList[index].extractedId }}
+                ID：{{ accountDataList[index].extractedId }}
               </div>
             </div>
             <el-button 
@@ -204,6 +204,25 @@ export default {
       this.zangbaoLinks.splice(index, 1);
       this.accountDataList.splice(index, 1);
       this.activeTabs.splice(index, 1);
+      
+      // 同时更新本地存储
+      this.saveToLocalStorage();
+      
+      // 从缓存中移除对应的数据
+      if (typeof window !== 'undefined') {
+        try {
+          const cache = JSON.parse(localStorage.getItem('zangbaoCache') || '{}');
+          const linkKeys = Object.keys(cache);
+          // 删除索引对应的链接的缓存数据
+          if (index < linkKeys.length) {
+            const linkToRemove = linkKeys[index];
+            delete cache[linkToRemove];
+            localStorage.setItem('zangbaoCache', JSON.stringify(cache));
+          }
+        } catch (e) {
+          console.error('删除缓存数据失败:', e);
+        }
+      }
     },
     
     clearLinks() {
@@ -223,7 +242,7 @@ export default {
       
       ElMessage.info('链接已清空');
     },
-    
+
     setRef(type, index, el) {
       if (!this.refs[type]) {
         this.refs[type] = {};
@@ -464,7 +483,6 @@ export default {
       // 显示历史记录弹窗
       this.historyDialogVisible = true;
     },
-    
     // 缓存数据相关方法
     cacheData(link, data) {
       if (typeof window !== 'undefined') {
@@ -549,6 +567,9 @@ export default {
               });
             }
           }
+          
+          // 加载收藏数据
+          this.loadFavoritesFromStorage();
         } catch (e) {
           console.error('从本地存储加载链接失败:', e);
         }
@@ -613,7 +634,7 @@ export default {
 
 @media (min-width: 768px) {
   .compare-container {
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 }
 
