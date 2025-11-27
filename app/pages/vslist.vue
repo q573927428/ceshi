@@ -29,62 +29,62 @@
     <div class="compare-results" v-if="zangbaoLinks.length > 0">
       <div class="compare-container">
         <div 
-          v-for="(link, index) in zangbaoLinks" 
-          :key="index" 
+          v-for="(link, index) in displayedLinks" 
+          :key="index + (currentPage - 1) * pageSize" 
           class="compare-panel"
         >
-          <div class="panel-header" v-if="accountDataList[index] && accountDataList[index].accountData && accountDataList[index].equip">
+          <div class="panel-header" v-if="accountDataList[index + (currentPage - 1) * pageSize] && accountDataList[index + (currentPage - 1) * pageSize].accountData && accountDataList[index + (currentPage - 1) * pageSize].equip">
             <div class="header-info">
-              <h3>{{ index + 1 }}：{{ accountDataList[index].equip.status_desc }}  {{ accountDataList[index].equip.area_name }}  {{ accountDataList[index].equip.server_name }} （{{ accountDataList[index].equipPrice }}）</h3>
+              <h3>{{ index + (currentPage - 1) * pageSize + 1 }}：{{ accountDataList[index + (currentPage - 1) * pageSize].equip.status_desc }}  {{ accountDataList[index + (currentPage - 1) * pageSize].equip.area_name }}  {{ accountDataList[index + (currentPage - 1) * pageSize].equip.server_name }} （{{ accountDataList[index + (currentPage - 1) * pageSize].equipPrice }}）</h3>
               <div class="price-info">
-                ID：{{ accountDataList[index].extractedId }}
+                ID：{{ accountDataList[index + (currentPage - 1) * pageSize].extractedId }}
               </div>
             </div>
             <el-button 
               type="danger" 
               size="small" 
-              @click="removeLink(index)"
+              @click="removeLink(index + (currentPage - 1) * pageSize)"
             >
               删除
             </el-button>
           </div>
           <div class="panel-content">
-            <el-tabs v-model="activeTabs[index]" class="tabs-assort" v-if="accountDataList[index]">
+            <el-tabs v-model="activeTabs[index + (currentPage - 1) * pageSize]" class="tabs-assort" v-if="accountDataList[index + (currentPage - 1) * pageSize]">
               <el-tab-pane label="武将" name="first">
-                <CategoryCardsList :ref="el => setRef('categoryCards', index, el)" />
+                <CategoryCardsList :ref="el => setRef('categoryCards', index + (currentPage - 1) * pageSize, el)" />
               </el-tab-pane>
               <el-tab-pane label="技能" name="second">
-                <SkillCard :ref="el => setRef('skillCard', index, el)" />
+                <SkillCard :ref="el => setRef('skillCard', index + (currentPage - 1) * pageSize, el)" />
               </el-tab-pane>
               <el-tab-pane label="武器" name="third">
-                <div v-if="accountDataList[index].accountData && accountDataList[index].accountData.gear" class="weapons-container">
-                  <div class="weapon-group" v-if="accountDataList[index].redWeapons.length > 0">
+                <div v-if="accountDataList[index + (currentPage - 1) * pageSize].accountData && accountDataList[index + (currentPage - 1) * pageSize].accountData.gear" class="weapons-container">
+                  <div class="weapon-group" v-if="accountDataList[index + (currentPage - 1) * pageSize].redWeapons.length > 0">
                     <h3>红武</h3>
                     <div class="weapons-list">
                       <WeaponCard 
-                        v-for="weapon in accountDataList[index].redWeapons" 
+                        v-for="weapon in accountDataList[index + (currentPage - 1) * pageSize].redWeapons" 
                         :key="weapon.gear_id"
                         :card="weapon"
                       />
                     </div>
                   </div>
                   
-                  <div class="weapon-group" v-if="accountDataList[index].pinkWeapons.length > 0">
+                  <div class="weapon-group" v-if="accountDataList[index + (currentPage - 1) * pageSize].pinkWeapons.length > 0">
                     <h3>粉武</h3>
                     <div class="weapons-list">
                       <WeaponCard 
-                        v-for="weapon in accountDataList[index].pinkWeapons" 
+                        v-for="weapon in accountDataList[index + (currentPage - 1) * pageSize].pinkWeapons" 
                         :key="weapon.gear_id"
                         :card="weapon"
                       />
                     </div>
                   </div>
                   
-                  <div class="weapon-group" v-if="accountDataList[index].blueWeapons.length > 0">
+                  <div class="weapon-group" v-if="accountDataList[index + (currentPage - 1) * pageSize].blueWeapons.length > 0">
                     <h3>蓝武</h3>
                     <div class="weapons-list">
                       <WeaponCard 
-                        v-for="weapon in accountDataList[index].blueWeapons" 
+                        v-for="weapon in accountDataList[index + (currentPage - 1) * pageSize].blueWeapons" 
                         :key="weapon.gear_id"
                         :card="weapon"
                       />
@@ -94,29 +94,29 @@
               </el-tab-pane>
               <el-tab-pane label="阵容" name="fourth">
                 <FormationComponent 
-                  v-if="accountDataList[index].uniqueCards && accountDataList[index].uniqueCards.length > 0" 
-                  :uniqueCards="accountDataList[index].uniqueCards" 
+                  v-if="accountDataList[index + (currentPage - 1) * pageSize].uniqueCards && accountDataList[index + (currentPage - 1) * pageSize].uniqueCards.length > 0" 
+                  :uniqueCards="accountDataList[index + (currentPage - 1) * pageSize].uniqueCards" 
                   :single-column="true"
                 />
               </el-tab-pane>
               <el-tab-pane label="其他" name="fifth">
                 <div class="other-resources">
                   <ul>
-                    <li>虎符：{{ accountDataList[index].tenures.hufu }}</li>
-                    <li>普通玉符：{{ accountDataList[index].tenures.bind_yuan_bao }}</li>
-                    <li>四通玉符：{{ accountDataList[index].tenures.yuan_bao }}</li>
-                    <li>将令：{{ accountDataList[index].tenures.jiang_ling }}</li>
-                    <li>荣誉：{{ accountDataList[index].tenures.honor }}</li>
-                    <li>赤珠山铁：{{ accountDataList[index].tenures.chi_zhu_shan_tie }}个</li>
-                    <li>小叶紫檀：{{ accountDataList[index].tenures.xiao_ye_zi_tan }}个</li>
-                    <li>天工锤：{{ accountDataList[index].tenures.gear_feature_hammer }}个</li>
-                    <li>皮肤：{{ accountDataList[index].tenures.dynamic_icon }}个</li>
+                    <li>虎符：{{ accountDataList[index + (currentPage - 1) * pageSize].tenures.hufu }}</li>
+                    <li>普通玉符：{{ accountDataList[index + (currentPage - 1) * pageSize].tenures.bind_yuan_bao }}</li>
+                    <li>四通玉符：{{ accountDataList[index + (currentPage - 1) * pageSize].tenures.yuan_bao }}</li>
+                    <li>将令：{{ accountDataList[index + (currentPage - 1) * pageSize].tenures.jiang_ling }}</li>
+                    <li>荣誉：{{ accountDataList[index + (currentPage - 1) * pageSize].tenures.honor }}</li>
+                    <li>赤珠山铁：{{ accountDataList[index + (currentPage - 1) * pageSize].tenures.chi_zhu_shan_tie }}个</li>
+                    <li>小叶紫檀：{{ accountDataList[index + (currentPage - 1) * pageSize].tenures.xiao_ye_zi_tan }}个</li>
+                    <li>天工锤：{{ accountDataList[index + (currentPage - 1) * pageSize].tenures.gear_feature_hammer }}个</li>
+                    <li>皮肤：{{ accountDataList[index + (currentPage - 1) * pageSize].tenures.dynamic_icon }}个</li>
                   </ul>
                 </div>
                 <div class="dynamic_icon">
-                  <div v-if="accountDataList[index].accountData && accountDataList[index].accountData.dynamic_icon" class="dynamic-icon-container">
+                  <div v-if="accountDataList[index + (currentPage - 1) * pageSize].accountData && accountDataList[index + (currentPage - 1) * pageSize].accountData.dynamic_icon" class="dynamic-icon-container">
                     <div 
-                      v-for="card in accountDataList[index].accountData.dynamic_icon"
+                      v-for="card in accountDataList[index + (currentPage - 1) * pageSize].accountData.dynamic_icon"
                       :key="card.icon_hero_id"
                       class="dynamic-icon-item"
                     >
@@ -134,6 +134,18 @@
             </el-tabs>
           </div>
         </div>
+      </div>
+      
+      <!-- 分页组件 -->
+      <div class="pagination-container" v-if="zangbaoLinks.length > pageSize">
+        <el-pagination
+          @current-change="handlePageChange"
+          :current-page="currentPage"
+          :page-size="pageSize"
+          :total="zangbaoLinks.length"
+          layout="prev, pager, next, jumper"
+          background
+        />
       </div>
     </div>
 
@@ -170,8 +182,17 @@ export default {
         skillCard: {}
       },
       accountDataList: [],
-      historyDialogVisible: false
+      historyDialogVisible: false,
+      currentPage: 1,
+      pageSize: 6
     };
+  },
+  computed: {
+    displayedLinks() {
+      const startIndex = (this.currentPage - 1) * this.pageSize;
+      const endIndex = startIndex + this.pageSize;
+      return this.zangbaoLinks.slice(startIndex, endIndex);
+    }
   },
   mounted() {
     // 页面加载时从本地存储恢复数据
@@ -205,6 +226,11 @@ export default {
       this.accountDataList.splice(index, 1);
       this.activeTabs.splice(index, 1);
       
+      // 如果当前页没有数据了，回到上一页
+      if (this.displayedLinks.length === 0 && this.currentPage > 1) {
+        this.currentPage--;
+      }
+      
       // 同时更新本地存储
       this.saveToLocalStorage();
       
@@ -229,6 +255,7 @@ export default {
       this.zangbaoLinks = [];
       this.accountDataList = [];
       this.activeTabs = [];
+      this.currentPage = 1;
       
       // 清除本地存储的数据
       if (typeof window !== 'undefined') {
@@ -483,6 +510,38 @@ export default {
       // 显示历史记录弹窗
       this.historyDialogVisible = true;
     },
+    
+    handlePageChange(page) {
+      this.currentPage = page;
+      // 滚动到顶部
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      // 在下一次DOM更新后更新卡片透明度
+      this.$nextTick(() => {
+        this.updateCardOpacityForCurrentPage();
+      });
+    },
+    
+    handleTabClick(index) {
+      // 当切换标签页时，确保更新卡片透明度
+      this.$nextTick(() => {
+        this.updateSingleCardOpacity(index, this.accountDataList[index]);
+      });
+    },
+    
+    updateCardOpacityForCurrentPage() {
+      // 为当前页的所有数据更新卡片透明度
+      const startIndex = (this.currentPage - 1) * this.pageSize;
+      const endIndex = Math.min(startIndex + this.pageSize, this.accountDataList.length);
+      
+      for (let i = startIndex; i < endIndex; i++) {
+        const data = this.accountDataList[i];
+        if (data) {
+          this.updateSingleCardOpacity(i, data);
+        }
+      }
+    },
+    
     // 缓存数据相关方法
     cacheData(link, data) {
       if (typeof window !== 'undefined') {
@@ -820,111 +879,10 @@ export default {
   font-size: 8px;
 }
 
-/* 强制技能使用移动端尺寸 */
-:deep(.skill-item) {
-  width: 80px;
-  height: 80px;
-  margin: 5px;
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+  margin-bottom: 20px;
 }
-
-:deep(.skill-item .quality-frame) {
-  background-size: 80px 80px;
-}
-
-:deep(.skill-item .quality-A),
-:deep(.skill-item .quality-B),
-:deep(.skill-item .quality-C),
-:deep(.skill-item .quality-D),
-:deep(.skill-item .quality-S) {
-  background-size: 80px 80px;
-}
-
-:deep(.skill-item .type-bg) {
-  left: 10px;
-  background-size: 80px 80px;
-}
-
-:deep(.skill-item .type-1),
-:deep(.skill-item .type-2),
-:deep(.skill-item .type-3),
-:deep(.skill-item .type-4) {
-  background-size: 60px 60px;
-}
-
-:deep(.skill-item .season-tag) {
-  width: 24px;
-  height: 24px;
-  line-height: 24px;
-  font-size: 10px;
-}
-
-:deep(.skill-item .research-mask) {
-  top: 3px;
-  left: 10px;
-  width: 60px;
-  height: 60px;
-}
-
-:deep(.skill-item .research-text) {
-  font-size: 12px;
-}
-
-:deep(.skill-item .skill-name) {
-  font-size: 12px;
-  padding-top: 50px;
-}
-
-/* 强制武器使用移动端尺寸 */
-:deep(.weapon-item) {
-  height: 160px;
-}
-
-:deep(.weapon-item .wrap) {
-  width: 90px;
-  height: 128px;
-}
-
-:deep(.weapon-item .name) {
-  font-size: 10px;
-  bottom: -130px;
-}
-
-:deep(.weapon-item .xishi-icon) {
-  background-size: 20px 60px;
-}
-
-:deep(.weapon-item .best-wrap) {
-  top: -9px;
-  right: -79px;
-}
-
-:deep(.weapon-item .ji-bg) {
-  background-size: 20px 20px;
-}
-
-:deep(.weapon-item .citiao) {
-  top: 60px;
-  left: 7px;
-}
-
-:deep(.weapon-item .citiao-21),
-:deep(.weapon-item .citiao-20),
-:deep(.weapon-item .citiao-1),
-:deep(.weapon-item .citiao-00) {
-  background-size: 20px 55px;
-}
-
-:deep(.weapon-item .citiao-text) {
-  top: 12px;
-  left: 5px;
-  font-size: 10px;
-  width: 10px;
-}
-
-:deep(.weapon-item .feature-text) {
-  font-size: 8px;
-  bottom: -130px;
-}
-
-/* 移除了旧的媒体查询，由新的响应式方案替代 */
 </style>
