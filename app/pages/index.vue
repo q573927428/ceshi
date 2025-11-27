@@ -285,7 +285,7 @@
               return String.fromCharCode(parseInt(grp, 16));
             });
             const aaData = JSON.parse(decodedData); 
-            console.log('解析后的账号数据:', aaData);
+            // console.log('解析后的账号数据:', aaData);
             
 
             // 临时存储完整的账号数据，便于后续处理
@@ -303,15 +303,7 @@
                 // 如果已存在相同 icon_hero_id 的卡片，比较 advance_num 并保留较大的
                 if (card.advance_num > existingCard.advance_num) {
                   existingCard.advance_num = card.advance_num;
-                  // 同时更新其他可能变化的属性
-                  existingCard.name = card.name;
-                  existingCard.country = card.country;
-                  existingCard.awake_state = card.awake_state;
-                  existingCard.policy_awake_state = card.policy_awake_state;
-                  existingCard.hero_achieve = card.hero_achieve;
-                  existingCard.is_support = card.is_support;
-                  existingCard.season = card.season;
-                  existingCard.icon_hero_id = card.icon_hero_id;
+
                 }
               } else {
                 // 如果不存在，则添加新卡片
@@ -474,22 +466,22 @@
 
       },
       //处理gear数据
-
+      sortHistoryRecords(records) {
+        // 重新排序：收藏的记录在前，非收藏的记录按时间倒序排列
+        return records.sort((a, b) => {
+          // 将收藏的记录排在前面
+          if (a.isFavorited && !b.isFavorited) return -1;
+          if (!a.isFavorited && b.isFavorited) return 1;
+          
+          // 时间倒序排列（最新的在前面）
+          const timeA = new Date(a.timestamp).getTime();
+          const timeB = new Date(b.timestamp).getTime();
+          return timeB - timeA;
+        });
+      }
 
     },
-    sortHistoryRecords(records) {
-      // 重新排序：收藏的记录在前，非收藏的记录按时间倒序排列
-      return records.sort((a, b) => {
-        // 将收藏的记录排在前面
-        if (a.isFavorited && !b.isFavorited) return -1;
-        if (!a.isFavorited && b.isFavorited) return 1;
-        
-        // 时间倒序排列（最新的在前面）
-        const timeA = new Date(a.timestamp).getTime();
-        const timeB = new Date(b.timestamp).getTime();
-        return timeB - timeA;
-      });
-    }
+    
   };
   </script>
   
