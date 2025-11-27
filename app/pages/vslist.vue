@@ -568,8 +568,6 @@ export default {
             }
           }
           
-          // 加载收藏数据
-          this.loadFavoritesFromStorage();
         } catch (e) {
           console.error('从本地存储加载链接失败:', e);
         }
