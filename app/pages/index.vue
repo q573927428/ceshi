@@ -347,28 +347,16 @@
                 if (existingIndex !== -1) {
                   // 如果存在，则更新时间戳
                   records[existingIndex].timestamp = newRecord.timestamp;
-                  // 可以选择也更新其他可能变化的字段
-                  records[existingIndex].estimatedPrice = newRecord.estimatedPrice;
-                  records[existingIndex].zangbaoPrice = newRecord.zangbaoPrice;
-                  records[existingIndex].grid = newRecord.grid;
-                  records[existingIndex].bao = newRecord.bao;
+                  // 重新排序
+                  this.sortHistoryRecords(records);
                 } else {
                   // 如果不存在，则添加新记录
                   // 初始化收藏状态
                   newRecord.isFavorited = false;
                   records.push(newRecord);
                   
-                  // 重新排序：收藏的记录在前，非收藏的记录按时间倒序排列
-                  records.sort((a, b) => {
-                    // 将收藏的记录排在前面
-                    if (a.isFavorited && !b.isFavorited) return -1;
-                    if (!a.isFavorited && b.isFavorited) return 1;
-                    
-                    // 时间倒序排列（最新的在前面）
-                    const timeA = new Date(a.timestamp).getTime();
-                    const timeB = new Date(b.timestamp).getTime();
-                    return timeB - timeA;
-                  });
+                  // 重新排序
+                  this.sortHistoryRecords(records);
                 }
                 
                 localStorage.setItem('zangbaoHistory', JSON.stringify(records));
@@ -488,6 +476,19 @@
       //处理gear数据
 
 
+    },
+    sortHistoryRecords(records) {
+      // 重新排序：收藏的记录在前，非收藏的记录按时间倒序排列
+      return records.sort((a, b) => {
+        // 将收藏的记录排在前面
+        if (a.isFavorited && !b.isFavorited) return -1;
+        if (!a.isFavorited && b.isFavorited) return 1;
+        
+        // 时间倒序排列（最新的在前面）
+        const timeA = new Date(a.timestamp).getTime();
+        const timeB = new Date(b.timestamp).getTime();
+        return timeB - timeA;
+      });
     }
   };
   </script>

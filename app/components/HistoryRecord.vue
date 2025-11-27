@@ -324,10 +324,10 @@ export default {
 
 .btn-delete,
 .btn-clear {
-  background-color: #ccc;
-  color: #dc3545;
+  background-color: #e35151;
+  color: #fff;
   border: none;
-  padding: 4px 8px;
+  padding: 4px 4px;
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
