@@ -19,25 +19,23 @@
         <div class="button-section">
           <el-button type="primary" @click="addLink">添加链接</el-button>
           <!-- <el-button type="success" @click="extractData">一键对比</el-button> -->
-          <!-- <el-button type="warning" @click="clearLinks">清空链接</el-button> -->
+          <el-button type="warning" @click="clearLinks">清空链接</el-button>
+          <!-- <el-button type="info" @click="handleShare">历史记录</el-button> -->
         </div>
       </div>
     </div>
 
     <!-- 对比结果区域 -->
-    <div class="loading-wrapper" v-show="isLoading">
-      数据加载中...
-    </div>
-    <div class="compare-results" v-if="zangbaoLinks.length > 0" >
+    <div class="compare-results" v-if="zangbaoLinks.length > 0">
       <div class="compare-container">
-        <div
+        <div 
           v-for="(link, index) in displayedLinks" 
           :key="index + (currentPage - 1) * pageSize" 
           class="compare-panel"
         >
           <div class="panel-header" v-if="accountDataList[index + (currentPage - 1) * pageSize] && accountDataList[index + (currentPage - 1) * pageSize].accountData && accountDataList[index + (currentPage - 1) * pageSize].equip">
             <div class="header-info">
-              <h3>{{ accountDataList[index + (currentPage - 1) * pageSize].equipPrice }} 元：{{ accountDataList[index + (currentPage - 1) * pageSize].equip.status_desc }} - {{ accountDataList[index + (currentPage - 1) * pageSize].equip.area_name }}  {{ accountDataList[index + (currentPage - 1) * pageSize].equip.server_name }}</h3>
+              <h3>{{ index + (currentPage - 1) * pageSize + 1 }}：{{ accountDataList[index + (currentPage - 1) * pageSize].equip.status_desc }}  {{ accountDataList[index + (currentPage - 1) * pageSize].equip.area_name }}  {{ accountDataList[index + (currentPage - 1) * pageSize].equip.server_name }} （{{ accountDataList[index + (currentPage - 1) * pageSize].equipPrice }}）</h3>
               <div class="price-info">
                 ID：{{ accountDataList[index + (currentPage - 1) * pageSize].extractedId }}
               </div>
@@ -59,12 +57,40 @@
                 <SkillCard :ref="el => setRef('skillCard', index + (currentPage - 1) * pageSize, el)" />
               </el-tab-pane>
               <el-tab-pane label="武器" name="third">
-                <WeaponList 
-                  :account-data="accountDataList[index + (currentPage - 1) * pageSize].accountData"
-                  :red-weapons="accountDataList[index + (currentPage - 1) * pageSize].redWeapons"
-                  :pink-weapons="accountDataList[index + (currentPage - 1) * pageSize].pinkWeapons"
-                  :blue-weapons="accountDataList[index + (currentPage - 1) * pageSize].blueWeapons"
-                />
+                <div v-if="accountDataList[index + (currentPage - 1) * pageSize].accountData && accountDataList[index + (currentPage - 1) * pageSize].accountData.gear" class="weapons-container">
+                  <div class="weapon-group" v-if="accountDataList[index + (currentPage - 1) * pageSize].redWeapons.length > 0">
+                    <h3>红武</h3>
+                    <div class="weapons-list">
+                      <WeaponCard 
+                        v-for="weapon in accountDataList[index + (currentPage - 1) * pageSize].redWeapons" 
+                        :key="weapon.gear_id"
+                        :card="weapon"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div class="weapon-group" v-if="accountDataList[index + (currentPage - 1) * pageSize].pinkWeapons.length > 0">
+                    <h3>粉武</h3>
+                    <div class="weapons-list">
+                      <WeaponCard 
+                        v-for="weapon in accountDataList[index + (currentPage - 1) * pageSize].pinkWeapons" 
+                        :key="weapon.gear_id"
+                        :card="weapon"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div class="weapon-group" v-if="accountDataList[index + (currentPage - 1) * pageSize].blueWeapons.length > 0">
+                    <h3>蓝武</h3>
+                    <div class="weapons-list">
+                      <WeaponCard 
+                        v-for="weapon in accountDataList[index + (currentPage - 1) * pageSize].blueWeapons" 
+                        :key="weapon.gear_id"
+                        :card="weapon"
+                      />
+                    </div>
+                  </div>
+                </div>
               </el-tab-pane>
               <el-tab-pane label="阵容" name="fourth">
                 <FormationComponent 
@@ -130,7 +156,6 @@
 import CategoryCardsList from '~/components/CategoryCardsList.vue';
 import SkillCard from '~/components/SkillCard.vue';
 import WeaponCard from '~/components/WeaponCard.vue';
-import WeaponList from '~/components/WeaponList.vue';
 import FormationComponent from '~/components/FormationComponent.vue';
 
 export default {
@@ -138,12 +163,10 @@ export default {
     CategoryCardsList,
     SkillCard,
     WeaponCard,
-    WeaponList,
     FormationComponent
   },
   data() {
     return {
-      isLoading: true,
       newLink: '',
       zangbaoLinks: [],
       activeTabs: [],
@@ -152,8 +175,9 @@ export default {
         skillCard: {}
       },
       accountDataList: [],
+      historyDialogVisible: false,
       currentPage: 1,
-      pageSize: 8
+      pageSize: 6
     };
   },
   computed: {
@@ -365,6 +389,15 @@ export default {
           // 如果已存在相同 icon_hero_id 的卡片，比较 advance_num 并保留较大的
           if (card.advance_num > existingCard.advance_num) {
             existingCard.advance_num = card.advance_num;
+            // 同时更新其他可能变化的属性
+            existingCard.name = card.name;
+            existingCard.country = card.country;
+            existingCard.awake_state = card.awake_state;
+            existingCard.policy_awake_state = card.policy_awake_state;
+            existingCard.hero_achieve = card.hero_achieve;
+            existingCard.is_support = card.is_support;
+            existingCard.season = card.season;
+            existingCard.icon_hero_id = card.icon_hero_id;
           }
         } else {
           // 如果不存在，则添加新卡片
@@ -419,6 +452,7 @@ export default {
       
       // 缓存数据
       this.cacheData(link, result);
+      
       return result;
     },
     
@@ -463,6 +497,11 @@ export default {
       
       // 保存到本地存储
       this.saveToLocalStorage();
+    },
+
+    handleShare() {
+      // 显示历史记录弹窗
+      this.historyDialogVisible = true;
     },
     
     handlePageChange(page) {
@@ -545,7 +584,6 @@ export default {
     },
     
     loadFromLocalStorage() {
-      this.isLoading = true
       if (typeof window !== 'undefined') {
         try {
           const savedLinks = localStorage.getItem('zangbaoLinks');
@@ -586,9 +624,6 @@ export default {
           console.error('从本地存储加载链接失败:', e);
         }
       }
-      this.$nextTick(() => {
-        this.isLoading = false;
-      });
     }
   }
 };
@@ -598,15 +633,7 @@ export default {
 .zangbao-page {
   padding: 16px;
 }
-.loading-wrapper {
-  width: 100%;
-  min-height: 300px;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: rgba(0,0,0,0.08);
-}
+
 .link-section {
   margin-bottom: 20px;
 }
@@ -655,7 +682,7 @@ export default {
   margin-top: 20px;
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 768px) {
   .compare-container {
     grid-template-columns: 1fr 1fr;
   }
@@ -768,6 +795,81 @@ export default {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+/* 强制武将卡使用移动端尺寸 */
+:deep(.wujiang-item) {
+  width: 66px;
+  margin: 1px auto;
+}
+
+:deep(.wujiang-item .wrap) {
+  width: 66px;
+  height: 100px;
+}
+
+:deep(.wujiang-item .state-wrap) {
+  width: 14px;
+  height: 14px;
+  line-height: 14px;
+}
+
+:deep(.wujiang-item .state1),
+:deep(.wujiang-item .state2),
+:deep(.wujiang-item .state3),
+:deep(.wujiang-item .state4),
+:deep(.wujiang-item .state5),
+:deep(.wujiang-item .state6) {
+  background-size: 15px 15px;
+}
+
+:deep(.wujiang-item .season-wrap) {
+  width: 16px;
+  height: 16px;
+}
+
+:deep(.wujiang-item .season-N),
+:deep(.wujiang-item .season-S2),
+:deep(.wujiang-item .season-S3),
+:deep(.wujiang-item .season-XP),
+:deep(.wujiang-item .season-SP) {
+  background-size: 16px 16px;
+}
+
+:deep(.wujiang-item .hero-achieve) {
+  width: 16px;
+  height: 16px;
+}
+
+:deep(.wujiang-item .ji-badge) {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 16px;
+  height: 16px;
+}
+
+:deep(.wujiang-item .ji-10),
+:deep(.wujiang-item .ji-11) {
+  background-size: 16px 16px;
+}
+
+:deep(.wujiang-item .stars) {
+  bottom: -2px;
+}
+
+:deep(.wujiang-item .star) {
+  width: 8px;
+  height: 8px;
+  margin: 0 0.5px;
+}
+
+:deep(.wujiang-item .name) {
+  top: 20px;
+  left: 2px;
+  width: 10px;
+  height: 14px;
+  font-size: 8px;
 }
 
 .pagination-container {

@@ -103,9 +103,9 @@ export default {
 
 <style scoped>
 .skill-item {
-  width: 130px;
-  height: 130px;
-  margin: 10px;
+  width: 80px;
+  height: 80px;
+  margin: 5px;
   position: relative;
   display: inline-block;
 }
@@ -124,69 +124,75 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  background-size: 100% 100%;
+  background-size: 80px 80px;
   background-repeat: no-repeat;
   z-index: 1;
 }
 
 .quality-S {
   background-image: url('/images/skill-quality-s.png');
+  background-size: 80px 80px;
 }
 
 .quality-A {
   background-image: url('/images/skill-quality-a.png');
+  background-size: 80px 80px;
 }
 
 .quality-B {
   background-image: url('/images/skill-quality-b.png');
+  background-size: 80px 80px;
 }
 
 .quality-C {
   background-image: url('/images/skill-quality-c.png');
+  background-size: 80px 80px;
 }
 
 .quality-D {
   background-image: url('/images/skill-quality-d.png');
+  background-size: 80px 80px;
 }
 
 .type-bg {
   position: absolute;
   top: 0;
-  left: 15px;
+  left: 10px;
   width: 100%;
   height: 100%;
-  background-size: 100% 100%;
+  background-size: 80px 80px;
   background-repeat: no-repeat;
   z-index: 0;
 }
 
 .type-1 {
   background-image: url('/images/skill-type-1.png');
-  background-size: 100px 100px;
+  background-size: 60px 60px;
 }
 
 .type-2 {
   background-image: url('/images/skill-type-2.png');
-  background-size: 100px 100px;
+  background-size: 60px 60px;
 }
 
 .type-3 {
   background-image: url('/images/skill-type-3.png');
-  background-size: 100px 100px;
+  background-size: 60px 60px;
 }
 
 .type-4 {
   background-image: url('/images/skill-type-4.png');
-  background-size: 100px 100px;
+  background-size: 60px 60px;
 }
 
 .season-tag {
   position: absolute;
   top: 0px;
   right: -5px;
-  width: 32px;
-  height: 32px;
-  line-height: 32px;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  font-size: 10px;
   text-align: center;
   color: #a6a6a6;
   z-index: 3;
@@ -196,10 +202,10 @@ export default {
 
 .research-mask {
   position: absolute;
-  top: 6px;
-  left: 17px;
-  width: 96px;
-  height: 96px;
+  top: 3px;
+  left: 10px;
+  width: 60px;
+  height: 60px;
   background-color: rgba(0, 0, 0, 0.6);
   z-index: 4;
   display: flex;
@@ -210,7 +216,7 @@ export default {
 
 .research-text {
   color: white;
-  font-size: 18px;
+  font-size: 12px;
   text-align: center;
 }
 
@@ -225,10 +231,10 @@ export default {
 }
 
 .skill-name {
-  font-size: 16px;
+  font-size: 12px;
   color: #ffffff;
   text-align: center;
-  padding-top: 91px;
+  padding-top: 52px;
 }
 
 .skill-type {

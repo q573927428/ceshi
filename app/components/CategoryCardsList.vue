@@ -116,7 +116,6 @@ export default {
       const specialCardsData = [
         { id: 1, name: '王异', country: 2, quality: 5, awake_state: 1, policy_awake_state: 1, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100028, icon_hero_id: 100028 },
         { id: 2, name: '妲己', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100372, icon_hero_id: 100372 },
-        { id: 5, name: '貂蝉', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100337, icon_hero_id: 100337 },
         { id: 3, name: '吕布', country: 5, quality: 5, awake_state: 1, policy_awake_state: 1, hero_achieve: 0, advance_num: 0, is_support: false, season: 'S2', hero_id: 100479, icon_hero_id: 100479 },
         { id: 4, name: '庞统', country: 3, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'S2', hero_id: 100477, icon_hero_id: 100477 },
         { id: 5, name: '郭嘉', country: 2, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'S2', hero_id: 100476, icon_hero_id: 100476 },
@@ -124,7 +123,13 @@ export default {
         { id: 7, name: '董卓', country: 1, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'S2', hero_id: 100480, icon_hero_id: 100480 },
         { id: 8, name: '曹纯', country: 2, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'S3', hero_id: 100498, icon_hero_id: 100498 },
         { id: 9, name: '诸葛亮', country: 3, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'S3', hero_id: 100496, icon_hero_id: 100496 },
-        { id: 4, name: '袁绍', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100670, icon_hero_id: 100670 },
+        { id: 96, name: '沮授', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100771, icon_hero_id: 100771 },
+        { id: 97, name: '荀彧', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100794, icon_hero_id: 100794 },
+        { id: 8, name: '司马懿', country: 6, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100807, icon_hero_id: 100807 },
+        { id: 9, name: '文鸯', country: 6, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100704, icon_hero_id: 100704 },
+        { id: 10, name: '司马炎', country: 6, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100703, icon_hero_id: 100703 },
+        { id: 48, name: '贾充', country: 6, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100708, icon_hero_id: 100708 },
+        { id: 46, name: '马良', country: 3, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100792, icon_hero_id: 100792 },
       ];
 
       return specialCardsData.map(card => ({
@@ -147,7 +152,12 @@ export default {
         { id: 7, name: '马超', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100013, icon_hero_id: 100013 },
         { id: 8, name: '关羽', country: 3, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100451, icon_hero_id: 100451 },
         { id: 3, name: '马岱', country: 3, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100615, icon_hero_id: 100615 },
+        { id: 5, name: '貂蝉', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100337, icon_hero_id: 100337 },
         { id: 7, name: '乐进', country: 2, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100685, icon_hero_id: 100685 },
+        { id: 4, name: '袁绍', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100670, icon_hero_id: 100670 },
+        { id: 2, name: '田丰', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100692, icon_hero_id: 100692 },
+        { id: 40, name: '魏延', country: 3, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100649, icon_hero_id: 100649 },
+        { id: 11, name: '程昱', country: 2, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100787, icon_hero_id: 100787 },
       ];
 
       return sssCardsData.map(card => ({
@@ -160,17 +170,7 @@ export default {
     generateSSCards() {
       // 大核心SS类卡片 - 14个
       const ssCardsData = [
-        { id: 2, name: '田丰', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100692, icon_hero_id: 100692 },
-        { id: 96, name: '沮授', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100771, icon_hero_id: 100771 },
-        { id: 6, name: '孙权', country: 1, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100808, icon_hero_id: 100808 },
-        { id: 97, name: '荀彧', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100794, icon_hero_id: 100794 },
-        { id: 8, name: '司马懿', country: 6, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100807, icon_hero_id: 100807 },
-        { id: 9, name: '文鸯', country: 6, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100704, icon_hero_id: 100704 },
-        { id: 10, name: '司马炎', country: 6, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100703, icon_hero_id: 100703 },
-        { id: 48, name: '贾充', country: 6, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100708, icon_hero_id: 100708 },
-        { id: 11, name: '程昱', country: 2, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100787, icon_hero_id: 100787 },
-        { id: 40, name: '魏延', country: 3, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100649, icon_hero_id: 100649 },
-        { id: 46, name: '马良', country: 3, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100792, icon_hero_id: 100792 },
+        
       ];
 
       return ssCardsData.map(card => ({
@@ -183,6 +183,7 @@ export default {
     generateSCards() {
       // 小核心S类卡片 - 39个
       const sCardsData = [
+        { id: 6, name: '孙权', country: 1, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100808, icon_hero_id: 100808 },
         { id: 28, name: '夏侯惇', country: 2, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100449, icon_hero_id: 100449 },
         { id: 29, name: '李儒', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100604, icon_hero_id: 100604 },
         { id: 30, name: '陈宫', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100443, icon_hero_id: 100443 },

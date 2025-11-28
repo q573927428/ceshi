@@ -65,13 +65,13 @@ function highlightNumbers(text) {
   position: relative;
   display: inline-block;
   margin: 5px;
-  height: 298px;
+  height: 160px;
 }
 
 .wrap {
   position: relative;
-  width: 170px;
-  height: 242px;
+  width: 90px;
+  height: 128px;
 }
 
 .img-container {
@@ -106,22 +106,22 @@ function highlightNumbers(text) {
 .xishi-icon {
   position: absolute;
   top: 0;
-  left: 8px;
+  left: 3px;
   width: 100%;
   height: 100%;
-  background-size: 100% 100%;
+  background-size: 20px 60px;
   background-repeat: no-repeat;
   z-index: 3;
 }
 .xishi-bg{
   background-image: url('/images/xishi_bg.png');
-  background-size: 38px 100px;
+  background-size: 30px 80px;
 }
 
 .best-wrap {
   position: absolute;
-  top: -15px;
-  right: -145px;
+  top: -9px;
+  right: -79px;
   width: 100%;
   height: 100%;
   background-size: 100% 100%;
@@ -131,13 +131,13 @@ function highlightNumbers(text) {
 
 .ji-bg {
   background-image: url('/images/ji10.png');
-  background-size: 38px 38px;
+  background-size: 20px 20px;
 }
 
 .citiao {
   position: absolute;
-  top: 100px;
-  left: 8px;
+  top: 60px;
+  left: 7px;
   width: 100%;
   height: 100%;
   background-size: 100% 100%;
@@ -147,45 +147,45 @@ function highlightNumbers(text) {
 
 .citiao-21 {
   background-image: url('/images/citiao_3.png');
-  background-size: 38px 88px;
+  background-size: 22px 52px;
 }
 
 .citiao-20 {
   background-image: url('/images/citiao_2.png');
-  background-size: 38px 88px;
+  background-size: 22px 52px;
 }
 
 .citiao-1 {
   background-image: url('/images/citiao_1.png');
-  background-size: 38px 88px;
+  background-size: 22px 52px;
 }
 
 .citiao-00 {
   background-image: url('/images/citiao_0.png');
-  background-size: 38px 88px;
+  background-size: 22px 52px;
 }
 
 .citiao-text {
   position: absolute;
-  top: 20px;
-  left: 10px;
-  width: 20px;
+  top: 12px;
+  left: 5px;
+  font-size: 10px;
+  width: 10px;
   color: #dac6a2!important;
-  font-size: 18px;
 }
 
 .name {
   position: relative;
-  bottom: -250px;
-  font-size: 14px;
+  bottom: -130px;
+  font-size: 10px;
   margin-top: 5px;
   z-index: 2;
 }
 
 .feature-text {
   position: relative;
-  bottom: -250px;
-  font-size: 12px;
+  bottom: -130px;
+  font-size: 8px;
   width: 100%;
   word-wrap: break-word;
   word-break: break-word;
@@ -223,8 +223,8 @@ function highlightNumbers(text) {
   }
   .citiao-text {
     top: 12px;
-    left: 5px;
-    font-size: 10px;
+    left: 4px;
+    font-size: 8px;
     width: 10px;
   }
   .feature-text {

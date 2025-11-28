@@ -105,15 +105,15 @@ export default {
 <style scoped>
 .wujiang-item {
   list-style: none;
-  width: 136px;
+  width: 90px;
   margin: 15px auto;
   opacity: v-bind(opacity);
 }
 
 .wrap {
   position: relative;
-  width: 136px;
-  height: 200px;
+  width: 90px;
+  height: 132px;
   cursor: pointer;
 }
 
@@ -158,9 +158,9 @@ export default {
   position: absolute;
   top: 5px;
   left: 0;
-  width: 28px;
-  height: 28px;
-  line-height: 28px;
+  width: 14px;
+  height: 14px;
+  line-height: 14px;
   text-align: center;
   color: #fff;
   font-weight: 700;
@@ -171,45 +171,45 @@ export default {
 .state1 {
   background: url('/images/state1.png') no-repeat;
   background-position: 0 0;
-  background-size: 30px 30px;
+  background-size: 15px 15px;
 }
 
 .state2 {
   background: url('/images/state2.png') no-repeat;
   background-position: 0 0;
-  background-size: 30px 30px;
+  background-size: 15px 15px;
 }
 
 .state3 {
   background: url('/images/state3.png') no-repeat;
   background-position: 0 0;
-  background-size: 30px 30px;
+  background-size: 15px 15px;
 }
 
 .state4 {
   background: url('/images/state4.png') no-repeat;
   background-position: 0 0;
-  background-size: 30px 30px;
+  background-size: 15px 15px;
 }
 
 .state5 {
   background: url('/images/state5.png') no-repeat;
   background-position: 0 0;
-  background-size: 30px 30px;
+  background-size: 15px 15px;
 }
 
 .state6 {
   background: url('/images/state6.png') no-repeat;
   background-position: 0 0;
-  background-size: 30px 30px;
+  background-size: 15px 15px;
 }
 
 .season-wrap {
   position: absolute;
   bottom: 20px;
   right: 0;
-  width: 32px;
-  height: 32px;
+  width: 16px;
+  height: 16px;
   line-height: 28px;
   text-align: center;
   color: #fff;
@@ -221,39 +221,39 @@ export default {
 .season-N {
   background: url('/images/n.png') no-repeat;
   background-position: 0 0;
-  background-size: 32px 32px;
+  background-size: 16px 16px;
 }
 
 .season-S2 {
   background: url('/images/s2.png') no-repeat;
   background-position: 0 0;
-  background-size: 32px 32px;
+  background-size: 16px 16px;
 }
 
 .season-S3 {
   background: url('/images/s3.png') no-repeat;
   background-position: 0 0;
-  background-size: 32px 32px;
+  background-size: 16px 16px;
 }
 
 .season-XP {
   background: url('/images/xp.png') no-repeat;
   background-position: 0 0;
-  background-size: 32px 32px;
+  background-size: 16px 16px;
 }
 
 .season-SP {
   background: url('/images/sp.png') no-repeat;
   background-position: 0 0;
-  background-size: 32px 32px;
+  background-size: 16px 16px;
 }
 
 .hero-achieve {
   position: absolute;
   bottom: 30px;
   left: 10px;
-  width: 32px;
-  height: 32px;
+  width: 16px;
+  height: 16px;
   line-height: 28px;
   text-align: center;
   color: #fff;
@@ -295,10 +295,10 @@ export default {
 
 .ji-badge {
   position: absolute;
-  top: -12px;
-  right: -12px;
-  width: 32px;
-  height: 32px;
+  top: -6px;
+  right: -6px;
+  width: 16px;
+  height: 16px;
   line-height: 28px;
   text-align: center;
   color: #fff;
@@ -310,18 +310,18 @@ export default {
 .ji-10 {
   background: url('/images/ji10.png') no-repeat;
   background-position: 0 0;
-  background-size: 32px 32px;
+  background-size: 16px 16px;
 }
 
 .ji-11 {
   background: url('/images/ji11.png') no-repeat;
   background-position: 0 0;
-  background-size: 32px 32px;
+  background-size: 16px 16px;
 }
 
 .stars {
   position: absolute;
-  bottom: 0px;
+  bottom: -2px;
   left: 0;
   width: 100%;
   text-align: center;
@@ -330,9 +330,9 @@ export default {
 
 .star {
   display: inline-block;
-  width: 16px;
-  height: 16px;
-  margin: 0 1px;
+  width: 12px;
+  height: 12px;
+  margin: 0 0.5px;
 }
 
 .star .ico {
@@ -350,24 +350,24 @@ export default {
 
 .name {
   position: absolute;
-  top: 43px;
-  left: 4px;
-  width: 20px;
-  height: 28px;
+  top: 20px;
+  left: 2px;
+  width: 10px;
+  height: 14px;
+  font-size: 8px;
   text-align: center;
   color: #fbe385;
   font-style: normal;
   z-index: 2;
-  font-size: 16px;
 }
 
 @media (max-width: 576px) {
   .wujiang-item {
-    width: 66px;
+    width: 90px;
   }
   .wrap {
-    width: 66px;
-    height: 100px;
+    width: 90px;
+    height: 132px;
   }
   .state-wrap {
     width: 14px;
