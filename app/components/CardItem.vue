@@ -106,7 +106,7 @@ export default {
 .wujiang-item {
   list-style: none;
   width: 90px;
-  margin: 15px auto;
+  margin: 2px auto;
   opacity: v-bind(opacity);
 }
 
@@ -158,8 +158,8 @@ export default {
   position: absolute;
   top: 5px;
   left: 0;
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
   line-height: 14px;
   text-align: center;
   color: #fff;
@@ -171,37 +171,37 @@ export default {
 .state1 {
   background: url('/images/state1.png') no-repeat;
   background-position: 0 0;
-  background-size: 15px 15px;
+  background-size: 18px 18px;
 }
 
 .state2 {
   background: url('/images/state2.png') no-repeat;
   background-position: 0 0;
-  background-size: 15px 15px;
+  background-size: 18px 18px;
 }
 
 .state3 {
   background: url('/images/state3.png') no-repeat;
   background-position: 0 0;
-  background-size: 15px 15px;
+  background-size: 18px 18px;
 }
 
 .state4 {
   background: url('/images/state4.png') no-repeat;
   background-position: 0 0;
-  background-size: 15px 15px;
+  background-size: 18px 18px;
 }
 
 .state5 {
   background: url('/images/state5.png') no-repeat;
   background-position: 0 0;
-  background-size: 15px 15px;
+  background-size: 18px 18px;
 }
 
 .state6 {
   background: url('/images/state6.png') no-repeat;
   background-position: 0 0;
-  background-size: 15px 15px;
+  background-size: 18px 18px;
 }
 
 .season-wrap {
@@ -295,10 +295,10 @@ export default {
 
 .ji-badge {
   position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 16px;
-  height: 16px;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
   line-height: 28px;
   text-align: center;
   color: #fff;
@@ -310,13 +310,13 @@ export default {
 .ji-10 {
   background: url('/images/ji10.png') no-repeat;
   background-position: 0 0;
-  background-size: 16px 16px;
+  background-size: 22px 22px;
 }
 
 .ji-11 {
   background: url('/images/ji11.png') no-repeat;
   background-position: 0 0;
-  background-size: 16px 16px;
+  background-size: 22px 22px;
 }
 
 .stars {
@@ -354,7 +354,7 @@ export default {
   left: 2px;
   width: 10px;
   height: 14px;
-  font-size: 8px;
+  font-size: 12px;
   text-align: center;
   color: #fbe385;
   font-style: normal;
@@ -411,7 +411,7 @@ export default {
     left: 2px;
     width: 10px;
     height: 14px;
-    font-size: 8px;
+    font-size: 10px;
   }
 }
 </style>

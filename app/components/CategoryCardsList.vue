@@ -27,6 +27,10 @@
       <div class="toggle-button-container">
         <button @click="toggleCollapse" class="toggle-button">
           {{ isCollapsed ? '更多' : '收起' }}
+          <el-icon class="icon">
+            <ArrowDown v-if="isCollapsed" />
+            <ArrowUp v-else />
+          </el-icon>
         </button>
       </div>
 
@@ -58,11 +62,20 @@
 
 <script>
 import CardItem from './CardItem.vue'
+import { ArrowDown, ArrowUp } from '@element-plus/icons-vue'
 
 export default {
   name: 'CategoryCards',
   components: {
-    CardItem
+    CardItem,
+    ArrowDown,
+    ArrowUp
+  },
+  props: {
+    uniqueCards: {
+      type: Array,
+      default: () => []
+    }
   },
   data() {
     const sCards = this.generateSCards();
@@ -94,6 +107,14 @@ export default {
           cards: aCards
         }
       ]
+    }
+  },
+  watch: {
+    uniqueCards: {
+      handler(newVal) {
+        this.updateCardOpacity(newVal);
+      },
+      immediate: true
     }
   },
   computed: {
@@ -333,6 +354,10 @@ export default {
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
+  display: inline-flex;       /* 横向排列 */
+  align-items: center;        /* 垂直居中对齐 */
+  gap: 4px;                   /* 文字与图标间距 */
+  line-height: 1;             /* 避免行高导致偏移 */
 }
 
 .toggle-button:hover {

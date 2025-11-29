@@ -21,6 +21,12 @@ export default {
   components: {
     SkillItem
   },
+  props: {
+    skillData: {
+      type: Array,
+      default: () => []
+    }
+  },
   data() {
     return {
       categories: [
@@ -41,6 +47,14 @@ export default {
           skills: this.generatePassiveSkills()
         }
       ]
+    }
+  },
+  watch: {
+    skillData: {
+      handler(newVal) {
+        this.updateSkillOpacity(newVal);
+      },
+      immediate: true
     }
   },
   methods: {

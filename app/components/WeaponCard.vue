@@ -177,7 +177,7 @@ function highlightNumbers(text) {
 .name {
   position: relative;
   bottom: -130px;
-  font-size: 10px;
+  font-size: 12px;
   margin-top: 5px;
   z-index: 2;
 }
@@ -185,7 +185,7 @@ function highlightNumbers(text) {
 .feature-text {
   position: relative;
   bottom: -130px;
-  font-size: 8px;
+  font-size: 10px;
   width: 100%;
   word-wrap: break-word;
   word-break: break-word;
@@ -201,7 +201,7 @@ function highlightNumbers(text) {
     height: 128px;
   }
   .name {
-    font-size: 10px;
+    font-size: 12px;
     bottom: -130px;
   }
   .xishi-icon{
@@ -228,7 +228,7 @@ function highlightNumbers(text) {
     width: 10px;
   }
   .feature-text {
-    font-size: 8px;
+    font-size: 10px;
     bottom: -130px;
   }
 }

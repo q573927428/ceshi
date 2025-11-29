@@ -1,5 +1,5 @@
 <template>
-  <div v-if="accountData && accountData.gear" class="weapons-container">
+  <div class="weapons-container">
     <div class="weapon-group" v-if="redWeapons.length > 0">
       <h3>红武</h3>
       <div class="weapons-list">
@@ -44,10 +44,6 @@ export default {
     WeaponCard
   },
   props: {
-    accountData: {
-      type: Object,
-      default: () => ({})
-    },
     redWeapons: {
       type: Array,
       default: () => []
