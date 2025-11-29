@@ -24,13 +24,13 @@
 
       <!-- 筛选和排序 -->
       <div class="filter-sort">
-        <el-button type="primary" @click="toggleFilter">
+        <el-button @click="toggleFilter" plain :type="filterFavorites ? 'primary' : 'warning'">
           {{ filterFavorites ? '显示全部' : '仅看收藏' }}
         </el-button>
-        <el-button @click="setSort('price')" :type="sortKey === 'price' ? 'primary' : 'default'">
+        <el-button @click="setSort('price')" plain :type="sortKey === 'price' ? 'primary' : 'default'">
           价格排序 {{ sortKey === 'price' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
         </el-button>
-        <el-button @click="setSort('time')" :type="sortKey === 'time' ? 'primary' : 'default'">
+        <el-button @click="setSort('time')" plain :type="sortKey === 'time' ? 'primary' : 'default'">
           时间排序 {{ sortKey === 'time' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
         </el-button>
       </div>
@@ -76,6 +76,7 @@
               <el-button
                 type="danger"
                 circle
+                plain
                 @click="removeLink(item.globalIndex)"
               >
                 <el-icon><Delete /></el-icon>
