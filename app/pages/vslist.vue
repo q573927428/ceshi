@@ -27,10 +27,10 @@
         <el-button type="primary" @click="toggleFilter">
           {{ filterFavorites ? '显示全部' : '仅看收藏' }}
         </el-button>
-        <el-button @click="setSort('price')">
+        <el-button @click="setSort('price')" :type="sortKey === 'price' ? 'primary' : 'default'">
           价格排序 {{ sortKey === 'price' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
         </el-button>
-        <el-button @click="setSort('time')">
+        <el-button @click="setSort('time')" :type="sortKey === 'time' ? 'primary' : 'default'">
           时间排序 {{ sortKey === 'time' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
         </el-button>
       </div>
@@ -199,8 +199,8 @@ export default {
       currentPage: 1,
       pageSize: 6,
       filterFavorites: false,
-      sortKey: '',
-      sortOrder: 'asc',
+      sortKey: 'time',
+      sortOrder: 'desc',
     };
   },
 
@@ -216,7 +216,7 @@ export default {
       // 默认时间降序
       const key = this.sortKey || 'time';
       const order = this.sortKey ? this.sortOrder : 'desc';
-
+      
       if (key) {
         list = [...list].sort((a, b) => {
           let valA, valB;
