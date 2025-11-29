@@ -25,7 +25,7 @@
       <!-- 筛选和排序 -->
       <div class="filter-sort">
         <el-button type="primary" @click="toggleFilter">
-          {{ filterFavorites ? '显示全部' : '仅显示收藏' }}
+          {{ filterFavorites ? '显示全部' : '仅看收藏' }}
         </el-button>
         <el-button @click="setSort('price')">
           价格排序 {{ sortKey === 'price' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
