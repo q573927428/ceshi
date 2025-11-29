@@ -237,25 +237,16 @@ export default {
 
     displayedList() {
       const start = (this.currentPage - 1) * this.pageSize;
-      const pageLinks = this.filteredAndSortedLinks.slice(start, start + this.pageSize);
-
-      // 遍历当前页的链接，如果内存里没有数据，则触发加载
-      pageLinks.forEach((linkObj, i) => {
-        const globalIndex = this.zangbaoLinks.indexOf(linkObj);
-        if (!this.accountDataList[globalIndex]) {
-          this.fetchAndDisplayData(linkObj.link, globalIndex);
-        }
-      });
-
-      // 返回渲染用的对象
-      return pageLinks.map((linkObj, i) => {
-        const globalIndex = this.zangbaoLinks.indexOf(linkObj);
-        return {
-          globalIndex,
-          linkObj,
-          data: this.accountDataList[globalIndex] || null,
-        };
-      });
+      return this.filteredAndSortedLinks
+        .slice(start, start + this.pageSize)
+        .map((linkObj, i) => {
+          const globalIndex = this.zangbaoLinks.indexOf(linkObj);
+          return {
+            globalIndex,
+            linkObj,
+            data: this.accountDataList[globalIndex] || null,
+          };
+        });
     },
   },
 
@@ -481,15 +472,22 @@ export default {
     },
     loadFromLocalStorage() {
       this.isLoading = true;
-
       if (typeof window !== 'undefined') {
         const savedLinks = localStorage.getItem('zangbaoLinks');
         if (savedLinks) this.zangbaoLinks = JSON.parse(savedLinks);
 
-        // 只初始化 activeTabs
-        this.activeTabs = Array(this.zangbaoLinks.length).fill('first');
+        const cacheRaw = localStorage.getItem('zangbaoCache');
+        if (cacheRaw) {
+          const cache = JSON.parse(cacheRaw);
+          this.activeTabs = Array(this.zangbaoLinks.length).fill('first');
+          this.zangbaoLinks.forEach((linkObj, index) => {
+            if (cache[linkObj.link]?.data) {
+              while (this.accountDataList.length <= index) this.accountDataList.push(null);
+              this.accountDataList.splice(index, 1, cache[linkObj.link].data);
+            }
+          });
+        }
       }
-
       this.isLoading = false;
     },
 
