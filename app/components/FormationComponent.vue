@@ -253,12 +253,12 @@ export default {
 
 .formation-cards {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
 
 .formation-cards.single-column {
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr 1fr;
 }
 
 @media (min-width: 1200px) {
