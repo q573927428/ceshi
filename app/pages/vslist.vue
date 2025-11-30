@@ -62,23 +62,25 @@
                 </div>
               </div>
 
+              <!-- 跳转按钮 -->
+              <el-button type="info" circle plain >
+              <el-icon @click="openLink(item.data.link)"><Connection /></el-icon>
+              </el-button>
+
+              <!-- 复制按钮 -->
+              <el-button type="primary" circle  plain >
+              <el-icon @click="copyUrl(item.data.link)">
+                <DocumentCopy />
+              </el-icon>
+              </el-button>
+
               <!-- 收藏按钮 -->
-              <el-button
-                type="warning"
-                circle
-                :plain="!item.linkObj.isFavorite"
-                @click="toggleFavorite(item.globalIndex)"
-              >
+              <el-button type="warning" circle :plain="!item.linkObj.isFavorite"  @click="toggleFavorite(item.globalIndex)" >
                 <el-icon><Star /></el-icon>
               </el-button>
 
               <!-- 删除 -->
-              <el-button
-                type="danger"
-                circle
-                plain
-                @click="removeLink(item.globalIndex)"
-              >
+              <el-button  type="danger" circle plain  @click="removeLink(item.globalIndex)" >
                 <el-icon><Delete /></el-icon>
               </el-button>
             </div>
@@ -178,7 +180,7 @@ import CategoryCardsList from '~/components/CategoryCardsList.vue';
 import SkillCard from '~/components/SkillCard.vue';
 import WeaponList from '~/components/WeaponList.vue';
 import FormationComponent from '~/components/FormationComponent.vue';
-import { Delete, Star } from '@element-plus/icons-vue';
+import { Delete, Star, DocumentCopy, Link, Connection } from '@element-plus/icons-vue';
 
 export default {
   components: {
@@ -188,6 +190,8 @@ export default {
     FormationComponent,
     Delete,
     Star,
+    DocumentCopy,
+    Connection
   },
 
   data() {
@@ -366,6 +370,17 @@ export default {
       }
       this.currentPage = 1;
     },
+    copyUrl(cbgLink) {
+      navigator.clipboard.writeText(cbgLink)
+      ElMessage({
+        message: '复制成功',
+        type: 'success',
+        zIndex: 99999
+      })
+    },
+    openLink(url) {
+      window.open(url, "_blank")
+    },
 
     async fetchAndDisplayData(link, index) {
       try {
@@ -395,10 +410,12 @@ export default {
       if (!match) throw new Error('无效ID');
 
       const extractedId = match[1];
-      const { data } = await useFetch('/api/equip/detail', { params: { ordersn: extractedId } });
-      if (!data.value) throw new Error('API返回空');
+      const equip = await $fetch('/api/equip/detail', {
+        params: { ordersn: extractedId }
+      }).catch(e => { throw new Error('接口请求失败'); });
 
-      const equip = data.value;
+      
+      if (!equip) throw new Error('API返回空');
       const url = `https://cbg-other-desc.res.netease.com/stzb/static/equipdesc/${extractedId}.json`;
       const raw = await fetch(url);
       const rawText = await raw.text();
