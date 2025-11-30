@@ -519,14 +519,7 @@ export default {
     getCachedData(link) {
       if (typeof window === 'undefined') return null;
       const cache = JSON.parse(localStorage.getItem('zangbaoCache') || '{}');
-      const item = cache[link];
-      if (!item) return null;
-      if (Date.now() - item.timestamp > 24 * 3600 * 1000) {
-        delete cache[link];
-        localStorage.setItem('zangbaoCache', JSON.stringify(cache));
-        return null;
-      }
-      return item.data;
+      return cache[link]?.data || null;
     },
     saveToLocalStorage() {
       if (typeof window !== 'undefined') {
