@@ -33,6 +33,12 @@
         <el-button @click="setSort('time')" plain :type="sortKey === 'time' ? 'primary' : 'default'">
           时间排序 {{ sortKey === 'time' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
         </el-button>
+
+        <el-button-group class="column-selector">
+          <el-button :type="columnMode === 1 ? 'primary' : 'default'" @click="columnMode = 1">1 列</el-button>
+          <el-button :type="columnMode === 2 ? 'primary' : 'default'" @click="columnMode = 2">2 列</el-button>
+          <el-button :type="columnMode === 3 ? 'primary' : 'default'" @click="columnMode = 3">3 列</el-button>
+        </el-button-group>
       </div>
     </div>
 
@@ -43,7 +49,7 @@
     <!-- 对比区域 -->
     <div class="compare-results">
       <div class="compare-results" v-show="displayedList.length > 0">
-        <div class="compare-container">
+        <div class="compare-container" :style="gridStyle">
           <div
             v-for="item in displayedList"
             :key="item.globalIndex"
@@ -61,6 +67,11 @@
                   ID：{{ item.data.extractedId }}
                 </div>
               </div>
+
+              <!-- 刷新按钮 -->
+              <el-button type="Warning" circle plain >
+              <el-icon @click="refreshLink(item.data.link, item.globalIndex)"><Refresh /></el-icon>
+              </el-button>
 
               <!-- 跳转按钮 -->
               <el-button type="info" circle plain >
@@ -180,7 +191,7 @@ import CategoryCardsList from '~/components/CategoryCardsList.vue';
 import SkillCard from '~/components/SkillCard.vue';
 import WeaponList from '~/components/WeaponList.vue';
 import FormationComponent from '~/components/FormationComponent.vue';
-import { Delete, Star, DocumentCopy, Link, Connection } from '@element-plus/icons-vue';
+import { Delete, Star, DocumentCopy, Refresh, Connection } from '@element-plus/icons-vue';
 
 export default {
   components: {
@@ -191,7 +202,8 @@ export default {
     Delete,
     Star,
     DocumentCopy,
-    Connection
+    Refresh,
+    Connection,
   },
 
   data() {
@@ -206,6 +218,7 @@ export default {
       filterFavorites: false,
       sortKey: 'time',
       sortOrder: 'desc',
+      columnMode: 2,
     };
   },
 
@@ -261,6 +274,14 @@ export default {
         };
       });
     },
+    gridStyle() {
+      if (this.columnMode === '2') {
+        return {}; // 使用 CSS 原生规则
+      }
+      return {
+        gridTemplateColumns: `repeat(${this.columnMode}, 1fr)`
+      };
+    }
   },
 
   mounted() {
@@ -282,6 +303,10 @@ export default {
       if (!rawLink) return ElMessage.warning('请输入链接');
 
       const normalized = this.normalizeLink(rawLink);
+      // 👉 添加前删除缓存，确保读新数据
+      const cache = JSON.parse(localStorage.getItem('zangbaoCache') || '{}');
+      delete cache[normalized];
+      localStorage.setItem('zangbaoCache', JSON.stringify(cache));
       if (this.zangbaoLinks.some(l => l.link === normalized)) {
         return ElMessage.warning('该链接已存在');
       }
@@ -317,6 +342,11 @@ export default {
         this.zangbaoLinks.splice(globalIndex, 1);
         this.accountDataList.splice(globalIndex, 1);
         this.activeTabs.splice(globalIndex, 1);
+
+        // 2. 删除缓存中的数据  <<—— 新增
+        const cache = JSON.parse(localStorage.getItem('zangbaoCache') || '{}');
+        delete cache[item.link];
+        localStorage.setItem('zangbaoCache', JSON.stringify(cache));
 
         if (this.displayedList.length === 0 && this.currentPage > 1) {
           this.currentPage--;
@@ -380,6 +410,20 @@ export default {
     },
     openLink(url) {
       window.open(url, "_blank")
+    },
+    refreshLink(link, globalIndex) {
+      // 删除缓存
+      const cache = JSON.parse(localStorage.getItem('zangbaoCache') || '{}');
+      delete cache[link];
+      localStorage.setItem('zangbaoCache', JSON.stringify(cache));
+
+      this.fetchAndDisplayData(link, globalIndex)
+        .then(() => {
+          ElMessage.success("刷新成功");
+        })
+        .catch(err => {
+          ElMessage.error("刷新失败：" + err.message);
+        });
     },
 
     async fetchAndDisplayData(link, index) {
@@ -575,13 +619,17 @@ export default {
 
 .compare-container {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr; /* 默认 1 列 */
   gap: 20px;
   margin-top: 20px;
 }
 
+.column-selector {
+  margin-left: 10px;
+}
+
 @media (min-width: 1200px) {
-  .compare-container {
+  .compare-container:not([style*="grid-template-columns"]) {
     grid-template-columns: 1fr 1fr;
   }
 }
