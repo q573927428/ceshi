@@ -1,631 +1,739 @@
 <template>
-    <div class="zangbao-page">
-      <!-- 页面标题 -->
-      <!-- <el-page-header title="藏宝阁链接" /> -->
-  
-      <!-- 链接区域 -->
-      <div class="link-section">
-        <h3>藏宝阁链接:</h3>
-        <el-input
-          v-model="zangbaoLink"
-          type="textarea"
-          :rows="4"
-          placeholder="请输入藏宝阁链接，例如：https://stzb.cbg.163.com/cgi/mweb/equip/..."
-          maxlength="2000"
-          show-word-limit
-        />
-      </div>
-  
-      <!-- 按钮区域 -->
-      <div class="button-section">
-        <el-button type="primary" @click="extractData">一键估号</el-button>
-        <el-button type="primary" @click="resetOpacity">重置</el-button>
-        <el-button type="info" @click="handleShare">历史记录</el-button>
-      </div>
-  
-      <!-- 卡池价格信息 -->
-      <div class="season-info" v-if="accountData && equip">
-        <div class="season-item">
-          <div><span>区服：</span> {{ equip.area_name }}  {{ equip.server_name }} </div>
-          <div><span>状态：</span> {{ equip.status_desc }} </div>
+  <div class="zangbao-page">
+
+    <!-- 链接输入 + 筛选排序 -->
+    <div class="link-section">
+      <h3>藏宝阁链接对比:</h3>
+      <div class="link-input-container">
+        <div class="link-input">
+          <el-input
+            v-model="newLink"
+            type="textarea"
+            :rows="6"
+            placeholder="请输入藏宝阁链接，例如：https://stzb.cbg.163.com/cgi/mweb/equip/..."
+            maxlength="2000"
+            show-word-limit
+            @keyup.enter="addLink"
+          />
         </div>
-        <div class="season-item">
-          <div><span>藏宝阁价格：</span> {{ equipPrice}} </div>
-          <div><span>试师号价格：</span> {{ equipPriceShishi }} </div>
+        <div class="button-section">
+          <el-button type="primary" @click="addLink">添加链接</el-button>
+          <el-button type="info" @click="clearLinks">清空链接</el-button>
         </div>
       </div>
-  
-      <!-- 底部标签栏 -->
-      <el-tabs v-model="activeTab" class="tabs-assort">
-        <el-tab-pane label="武将" name="first">
-          <CategoryCards ref="categoryCards" />
-        </el-tab-pane>
-        <el-tab-pane label="技能" name="second">
-          <SkillCard ref="skillCard" />
-        </el-tab-pane>
-        <el-tab-pane label="武器" name="third">
-          <div v-if="accountData && accountData.gear" class="weapons-container">
-            <div class="weapon-group" v-if="redWeapons.length > 0">
-              <h3>红武</h3>
-              <div class="weapons-list">
-                <WeaponCard 
-                  v-for="weapon in redWeapons" 
-                  :key="weapon.gear_id"
-                  :card="weapon"
-                />
-              </div>
-            </div>
-            
-            <div class="weapon-group" v-if="pinkWeapons.length > 0">
-              <h3>粉武</h3>
-              <div class="weapons-list">
-                <WeaponCard 
-                  v-for="weapon in pinkWeapons" 
-                  :key="weapon.gear_id"
-                  :card="weapon"
-                />
-              </div>
-            </div>
-            
-            <div class="weapon-group" v-if="blueWeapons.length > 0">
-              <h3>蓝武</h3>
-              <div class="weapons-list">
-                <WeaponCard 
-                  v-for="weapon in blueWeapons" 
-                  :key="weapon.gear_id"
-                  :card="weapon"
-                />
-              </div>
-            </div>
-          </div>
-        </el-tab-pane>
-        <el-tab-pane label="阵容" name="fourth">
-          <!-- 条件渲染：只有当 uniqueCards 存在时才渲染 FormationComponent -->
-          <FormationComponent v-if="uniqueCards && uniqueCards.length > 0" :uniqueCards="uniqueCards" />
-        </el-tab-pane>
-        <el-tab-pane label="其他" name="fifth">
-          <div class="other-resources">
-            <ul>
-              <li>虎符：{{ tenures.hufu }}</li>
-              <li>普通玉符：{{ tenures.bind_yuan_bao }}</li>
-              <li>四通玉符：{{ tenures.yuan_bao }}</li>
-              <li>将令：{{ tenures.jiang_ling }}</li>
-              <li>荣誉：{{ tenures.honor }}</li>
-              <li>赤珠山铁：{{ tenures.chi_zhu_shan_tie }}个</li>
-              <li>小叶紫檀：{{ tenures.xiao_ye_zi_tan }}个</li>
-              <li>天工锤：{{ tenures.gear_feature_hammer }}个</li>
-              <li>皮肤：{{ tenures.dynamic_icon }}个</li>
-            </ul>
-          </div>
-          <div class="dynamic_icon">
-            <!-- 把所有武将画像遍历显示到这个位置 -->
-            <div v-if="accountData && accountData.dynamic_icon" class="dynamic-icon-container">
-              <div 
-                v-for="card in accountData.dynamic_icon"
-                :key="card.icon_hero_id"
-                class="dynamic-icon-item"
-              >
-                <img 
-                  :src="`https://cbg-stzb.res.netease.com/game_res/cards/cut/card_medium_${card.icon_hero_id}.jpg`"
-                  :alt="card.name"
-                  class="dynamic-icon-image"
-                >
-                <div class="card-name">{{ card.name }}</div>
-              </div>
-            </div>
-          </div>
-        </el-tab-pane>
-      </el-tabs>
-  
-      <!-- 历史记录弹窗 -->
-      <el-dialog v-model="historyDialogVisible" title="历史记录" width="80%" top="5vh">
-        <HistoryRecord />
-      </el-dialog>
-  
+
+      <!-- 筛选和排序 -->
+      <div class="filter-sort">
+        <el-button @click="toggleFilter" plain :type="filterFavorites ? 'primary' : 'warning'">
+          {{ filterFavorites ? '显示全部' : '仅看收藏' }}
+        </el-button>
+        <el-button @click="setSort('price')" plain :type="sortKey === 'price' ? 'primary' : 'default'">
+          价格排序 {{ sortKey === 'price' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+        </el-button>
+        <el-button @click="setSort('time')" plain :type="sortKey === 'time' ? 'primary' : 'default'">
+          时间排序 {{ sortKey === 'time' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+        </el-button>
+
+        <el-button-group class="column-selector">
+          <el-button :type="columnMode === 1 ? 'primary' : 'default'" @click="columnMode = 1">1 列</el-button>
+          <el-button :type="columnMode === 2 ? 'primary' : 'default'" @click="columnMode = 2">2 列</el-button>
+          <el-button :type="columnMode === 3 ? 'primary' : 'default'" @click="columnMode = 3">3 列</el-button>
+          <el-button :type="columnMode === 'auto' ? 'primary' : 'default'" @click="columnMode = 'auto'">自动</el-button>
+        </el-button-group>
+      </div>
     </div>
-  </template>
-  
-  <script>
-  import CategoryCards from '~/components/CategoryCards.vue';
-  import SkillCard from '~/components/SkillCard.vue';
-  import WeaponCard from '~/components/WeaponCard.vue';
-  import FormationComponent from '~/components/FormationComponent.vue'; // 新增导入 FormationComponent
-  import HistoryRecord from '~/components/HistoryRecord.vue';
 
-  export default {
-    components: {
-      CategoryCards,
-      SkillCard,
-      WeaponCard,
-      FormationComponent, // 新增 FormationComponent 组件
-      HistoryRecord
-    },
-    data() {
-      return {
-        zangbaoLink: 'https://stzb.cbg.163.com/cgi/mweb/equip/1/202510281502116-1-RU4G0IXMKDLWYW?refer_sn=019A910B-06A2-9A01-8E07-8A111122F68A',
-        activeTab: 'first',
-        serverid: 1,
-        extractedId: '',
-        jsonData: null,
-        uniqueCards: null,
-        accountData: null,  // 存储从藏宝阁链接提取的数据
-        equip:{
-          price:0,
-          server_name:"",
-          status_desc:"",
-          area_name:""
-        },
-        tenures: {
-          yuan_bao: 0,
-          jiang_ling: 0,
-          bind_yuan_bao: 0,
-          hufu: 0,
-          honor: 0,
-          chi_zhu_shan_tie: 0,
-          xiao_ye_zi_tan: 0,
-          gear_feature_hammer: 0,
-          dynamic_icon: 0,
-          season_info:"",
-          server_info:"",
-          combine_name:"",
-          server_id:0,
-          platform:"",
-          get_reward_time_limit:""
-        },
-        historyRecords: [], // 新增：用于存储历史记录
-        historyDialogVisible: false, // 控制历史记录弹窗显示
-      };
-    },
-    mounted() {
-      // 确保只在浏览器环境中访问localStorage
-      if (process.client && typeof localStorage !== 'undefined') {
-        const saved = localStorage.getItem('zangbaoHistory');
-        if (saved) {
-          try {
-            this.historyRecords = JSON.parse(saved);
-          } catch (e) {
-            console.error('解析历史记录失败:', e);
-            this.historyRecords = [];
-          }
-        }
+    <!-- 可选：没有数据提示 -->
+    <div class="compare-results-wrapper" v-show="isLoading">
+      数据加载中...
+    </div>
+    <!-- 对比区域 -->
+    <div class="compare-results">
+      <div class="compare-results" v-show="displayedList.length > 0">
+        <div class="compare-container" :style="gridStyle">
+          <div
+            v-for="item in displayedList"
+            :key="item.globalIndex"
+            class="compare-panel"
+          >
+            <!-- Header -->
+            <div class="panel-header" v-if="item.data?.equip">
+              <div class="header-info">
+                <h3>
+                  {{ item.data.equipPrice }} 元：
+                  {{ item.data.equip.status_desc }} -
+                  {{ item.data.equip.area_name }} {{ item.data.equip.server_name }}
+                </h3>
+                <div class="price-info">
+                  ID：{{ item.data.extractedId }}  <el-icon @click="copyUrl(item.data.link)"> <DocumentCopy /> </el-icon>
+                </div>
+              </div>
+
+              <!-- 刷新按钮 -->
+              <el-button type="info" circle plain >
+              <el-icon @click="refreshLink(item.data.link, item.globalIndex)"><Refresh /></el-icon>
+              </el-button>
+
+              <!-- 跳转按钮 -->
+              <el-button type="primary" circle plain >
+                <el-icon @click="openLink(item.data.link)"><Connection /></el-icon>
+              </el-button>
+
+              <!-- 收藏按钮 -->
+              <el-button type="warning" circle :plain="!item.linkObj.isFavorite"  @click="toggleFavorite(item.globalIndex)" >
+                <el-icon><Star /></el-icon>
+              </el-button>
+
+              <!-- 删除 -->
+              <el-button  type="danger" circle plain  @click="removeLink(item.globalIndex)" >
+                <el-icon><Delete /></el-icon>
+              </el-button>
+            </div>
+
+            <!-- 内容 -->
+            <div class="panel-content">
+              <el-tabs
+                v-model="activeTabs[item.globalIndex]"
+                class="tabs-assort"
+                v-if="item.data"
+              >
+                <el-tab-pane label="武将" name="first">
+                  <CategoryCardsList :unique-cards="item.data.uniqueCards || []" />
+                </el-tab-pane>
+
+                <el-tab-pane label="技能" name="second">
+                  <SkillCard :skill-data="item.data.skill || []" />
+                </el-tab-pane>
+
+                <el-tab-pane label="武器" name="third">
+                  <WeaponList
+                    :red-weapons="item.data.redWeapons"
+                    :pink-weapons="item.data.pinkWeapons"
+                    :blue-weapons="item.data.blueWeapons"
+                  />
+                </el-tab-pane>
+
+                <el-tab-pane label="阵容" name="fourth">
+                  <FormationComponent
+                    v-if="item.data.uniqueCards?.length"
+                    :uniqueCards="item.data.uniqueCards"
+                    :single-column="true"
+                  />
+                </el-tab-pane>
+
+                <el-tab-pane label="其他" name="fifth">
+                  <div class="other-resources">
+                    <ul>
+                      <li>虎符：{{ item.data.tenures.hufu }}</li>
+                      <li>普通玉符：{{ item.data.tenures.bind_yuan_bao }}</li>
+                      <li>四通玉符：{{ item.data.tenures.yuan_bao }}</li>
+                      <li>将令：{{ item.data.tenures.jiang_ling }}</li>
+                      <li>荣誉：{{ item.data.tenures.honor }}</li>
+                      <li>赤珠山铁：{{ item.data.tenures.chi_zhu_shan_tie }}个</li>
+                      <li>小叶紫檀：{{ item.data.tenures.xiao_ye_zi_tan }}个</li>
+                      <li>天工锤：{{ item.data.tenures.gear_feature_hammer }}个</li>
+                      <li>皮肤：{{ item.data.dynamic_icon.length }}个</li>
+                    </ul>
+                  </div>
+
+                  <div class="dynamic_icon">
+                    <div class="dynamic-icon-container" v-if="item.data.dynamic_icon">
+                      <div
+                        v-for="card in item.data.dynamic_icon"
+                        :key="card.icon_hero_id"
+                        class="dynamic-icon-item"
+                      >
+                        <img
+                          :src="`https://cbg-stzb.res.netease.com/game_res/cards/cut/card_medium_${card.icon_hero_id}.jpg`"
+                          :alt="card.name"
+                          class="dynamic-icon-image"
+                        />
+                        <div class="card-name">{{ card.name }}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                </el-tab-pane>
+              </el-tabs>
+            </div>
+          </div>
+        </div>
+
+        <!-- 分页 -->
+        <div class="pagination-container" v-if="filteredAndSortedLinks.length > pageSize">
+          <el-pagination
+            @current-change="handlePageChange"
+            :current-page="currentPage"
+            :page-size="pageSize"
+            :total="filteredAndSortedLinks.length"
+            layout="prev, pager, next, jumper"
+            background
+          />
+        </div>
+      </div>
+      <!-- 可选：没有数据提示 -->
+      <div v-show="!isLoading && displayedList.length === 0" class="no-data">
+        暂无数据
+      </div>
+    </div>
+
+  </div>
+</template>
+
+<script>
+import CategoryCardsList from '~/components/CategoryCardsList.vue';
+import SkillCard from '~/components/SkillCard.vue';
+import WeaponList from '~/components/WeaponList.vue';
+import FormationComponent from '~/components/FormationComponent.vue';
+import { Delete, Star, DocumentCopy, Refresh, Connection } from '@element-plus/icons-vue';
+
+export default {
+  components: {
+    CategoryCardsList,
+    SkillCard,
+    WeaponList,
+    FormationComponent,
+    Delete,
+    Star,
+    DocumentCopy,
+    Refresh,
+    Connection,
+  },
+
+  data() {
+    return {
+      isLoading: true,
+      newLink: '',
+      zangbaoLinks: [], // 现在是对象数组 { link, timestamp, isFavorite }
+      activeTabs: [],
+      accountDataList: [],
+      currentPage: 1,
+      pageSize: 6,
+      filterFavorites: false,
+      sortKey: 'time',
+      sortOrder: 'desc',
+      columnMode: 'auto',
+    };
+  },
+
+  computed: {
+    /** 先筛选再排序 */
+    filteredAndSortedLinks() {
+      let list = this.zangbaoLinks;
+
+      if (this.filterFavorites) {
+        list = list.filter(item => item.isFavorite);
       }
-    },
-    computed: {
-      // 先筛选phase值为3的武器
-      phase3Weapons() {
-        if (!this.accountData || !this.accountData.gear) {
-          return [];
-        }
-        return this.accountData.gear.filter(weapon => weapon.phase === 3);
-      },
+
+      // 默认时间降序
+      const key = this.sortKey || 'time';
+      const order = this.sortKey ? this.sortOrder : 'desc';
       
-      // 红武: advance值为1的武器（从phase3Weapons中筛选）
-      redWeapons() {
-        return this.phase3Weapons.filter(weapon => weapon.advance === 1);
-      },
-      
-      // 粉武: level_type值为2的武器（从phase3Weapons中筛选，但排除红武）
-      pinkWeapons() {
-        return this.phase3Weapons.filter(weapon => weapon.level_type === 2 && weapon.advance !== 1);
-      },
-      
-      // 蓝武: level_type值为0的武器（从phase3Weapons中筛选，但排除红武）
-      blueWeapons() {
-        return this.phase3Weapons.filter(weapon => weapon.level_type === 0 && weapon.advance !== 1);
-      },
-      
-      // 筛选出 phase 值为 3 的武器（保留原计算属性以保持代码兼容性）
-      filteredWeapons() {
-        return this.phase3Weapons;
-      },
-      //藏宝阁价格equip.price需要除以100
-      equipPrice() {
-        return this.equip?.price ? this.equip.price / 100 : 0;
-      },
-      //试师号价格equip.price乘以1.5需要除以100
-      equipPriceShishi() {
-        return this.equip?.price ? this.equip.price * 1.3 / 100 : 0;
-      }
-
-    },
-    methods: {
-      async extractData() {
-        //zangbaoLink不能为空
-        if (this.zangbaoLink ==='') {
-          ElMessage.error('请输入藏宝阁链接');
-          return;
-        }
-
-        // 重置卡片状态为初始状态
-        this.resetOpacity();
-        this.accountData = null;
-        
-        // 去除链接中?后面的部分
-        const cleanLink = this.zangbaoLink.split('?')[0];
-        
-        // 使用正则表达式提取ID
-        const regex = /\/equip\/1\/([a-zA-Z0-9\-]+)/;
-        const match = cleanLink.match(regex);
-
-        if (match && match[1]) {
-          this.extractedId = match[1];
-
-          const ordersn = this.extractedId;
-          // console.log('订单号:', ordersn);
-          
-          const { data, pending, error } = await useFetch('/api/equip/detail', {
-            params: { ordersn }
-          })
-
-          // 确保data.value存在再赋值给this.equip
-          if (data.value) {
-            this.equip = data.value
-            // console.log('获取装备信息成功:', this.equip)
-          } else {
-            console.error('API返回数据为空或无效')
-            ElMessage.error('获取装备信息失败')
-            return
+      if (key) {
+        list = [...list].sort((a, b) => {
+          let valA, valB;
+          if (key === 'price') {
+            valA = this.accountDataList[this.zangbaoLinks.indexOf(a)]?.equipPrice || 0;
+            valB = this.accountDataList[this.zangbaoLinks.indexOf(b)]?.equipPrice || 0;
+          } else if (key === 'time') {
+            valA = a.timestamp;
+            valB = b.timestamp;
           }
-          
-          // 构建API URL
-          const apiUrl = `https://cbg-other-desc.res.netease.com/stzb/static/equipdesc/${this.extractedId}.json`;
-
-          try {
-            // 获取JSON数据
-            const response = await fetch(apiUrl);
-            if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            // 获取响应文本
-            const textData = await response.text();
-            const parsedData = JSON.parse(textData); 
-
-            const decodedData = parsedData.equip_desc.replace(/\\u([0-9a-fA-F]{4})/g, (match, grp) => {
-              return String.fromCharCode(parseInt(grp, 16));
-            });
-            const aaData = JSON.parse(decodedData); 
-            // console.log('解析后的账号数据:', aaData);
-            
-
-            // 临时存储完整的账号数据，便于后续处理
-            this.accountData = aaData;
-
-            // 筛选 quality 为 5 的数据
-            const quality5Cards = aaData.card.filter(card => card.quality === 5);
-
-            // 根据 icon_hero_id 去重，保留 advance_num 最大的记录
-            const uniqueCards = quality5Cards.reduce((acc, card) => {
-              // 使用 icon_hero_id 作为唯一标识
-              const existingCard = acc.find(c => c.hero_id === card.hero_id && c.season === card.season);
-              
-              if (existingCard) {
-                // 如果已存在相同 icon_hero_id 的卡片，比较 advance_num 并保留较大的
-                if (card.advance_num > existingCard.advance_num) {
-                  existingCard.advance_num = card.advance_num;
-
-                }
-              } else {
-                // 如果不存在，则添加新卡片
-                acc.push(card);
-              }
-              return acc;
-            }, []);
-
-            this.uniqueCards = uniqueCards;
-            this.updateSomeCards()
-            this.updateSkill()
-            this.getTenure()
-
-            // 保存历史记录，增加边界检查，并确保在浏览器环境中使用localStorage
-            if (process.client && typeof localStorage !== 'undefined') {
-              if (this.equip && typeof this.equip.price !== 'undefined') {
-                const newRecord = {
-                  estimatedPrice: this.equip.price / 100,
-                  grid: this.accountData?.grid || 0,
-                  bao: this.accountData?.bao || 0,
-                  zangbaoPrice: this.equip.price / 100,
-                  cbgLink: `https://stzb.cbg.163.com/cgi/mweb/equip/1/${this.extractedId}`,
-                  timestamp: new Date().toLocaleString()
-                };
-
-                // 将记录添加到本地存储
-                const saved = localStorage.getItem('zangbaoHistory');
-                let records = saved ? JSON.parse(saved) : [];
-                
-                // 查找是否已存在相同链接的记录
-                const existingIndex = records.findIndex(record => record.cbgLink === newRecord.cbgLink);
-                
-                if (existingIndex !== -1) {
-                  // 如果存在，则更新时间戳
-                  records[existingIndex].timestamp = newRecord.timestamp;
-                  // 重新排序
-                  this.sortHistoryRecords(records);
-                } else {
-                  // 如果不存在，则添加新记录
-                  // 初始化收藏状态
-                  newRecord.isFavorited = false;
-                  records.push(newRecord);
-                  
-                  // 重新排序
-                  this.sortHistoryRecords(records);
-                }
-                
-                localStorage.setItem('zangbaoHistory', JSON.stringify(records));
-                
-                // 触发自定义事件通知HistoryRecord组件更新
-                if (typeof window !== 'undefined' && window.dispatchEvent) {
-                  window.dispatchEvent(new CustomEvent('historyRecordUpdated', { detail: records }));
-                }
-              } else {
-                console.error('equip或equip.price未定义');
-                ElMessage.error('无法获取价格信息');
-              }
-            }
-
-          } catch (error) {
-            console.error('获取或解析数据时出错:', error);
-            const errorMessage = error && error.message ? error.message : '未知错误';
-            ElMessage.error('获取或解析数据失败: ' + errorMessage);
-          }
-        } else {
-          ElMessage.error('未找到有效的ID');
-        }
-      },
-      
-      // 处理Unicode转义序列的函数
-      decodeUnicode(str) {
-        return str.replace(/\\u([0-9a-fA-F]{4})/g, (match, grp) => {
-          return String.fromCharCode(parseInt(grp, 16));
+          return order === 'asc' ? valA - valB : valB - valA;
         });
-      },
-      
-      handleShare() {
-        // 显示历史记录弹窗
-        this.historyDialogVisible = true;
-      },
-      
-      updateSomeCards() {
-        // 模拟从服务器获取到的卡片ID列表
-        if (this.$refs.categoryCards && this.uniqueCards) {
-          this.$refs.categoryCards.updateCardOpacity(this.uniqueCards);
-        }
-      },
-      updateSkill() {
-        // 模拟从服务器获取到的技能ID列表
-        if (this.$refs.skillCard && this.accountData?.skill) {
-          this.$refs.skillCard.updateSkillOpacity(this.accountData.skill);
-        }
-      },
-      
-      resetOpacity() {
-        // 重置所有卡片透明度
-        this.uniqueCards = null;
-        if (this.$refs.categoryCards) {
-          this.$refs.categoryCards.categories.forEach(category => {
-            category.cards.forEach(card => {
-              card.opacity = 0.3
-              card.advance_num = 0
-              card.policy_awake_state = 0
-            })
-          })
-        }
-        //重置技能透明度
-        if (this.$refs.skillCard) {
-          this.$refs.skillCard.categories.forEach(category => {
-            category.skills.forEach(skill => {
-              skill.opacity = 0.3
-              skill.research_progress = 100
-            })
-          })
-        }
-      },
-      getTenure(){
-        // 添加边界检查
-        if (!this.accountData) {
-          console.warn('accountData未定义，无法获取任期信息');
-          return;
-        }
+      }
 
-        const yuan_bao = this.accountData.tenure?.yuan_bao || 0;
-        const yue_ka_endtime = this.accountData.tenure?.yue_ka_endtime || '';
-        const jiang_ling = this.accountData.tenure?.jiang_ling || 0;
-        const bind_yuan_bao = this.accountData.tenure?.bind_yuan_bao || 0;
-        const hufu = this.accountData.tenure?.hufu || 0;
-        const honor = this.accountData.tenure?.honor || 0;
-        const chi_zhu_shan_tie = this.accountData.material?.chi_zhu_shan_tie?.value || 0;
-        const xiao_ye_zi_tan = this.accountData.material?.xiao_ye_zi_tan?.value || 0;
-        const gear_feature_hammer = this.accountData.material?.gear_feature_hammer?.value || 0;
-        const dynamic_icon = this.accountData.dynamic_icon?.length || 0;
+      return list;
+    },
 
-        const season_info = this.accountData.season_info || '';
-        const server_info = this.accountData.server_info || '';
-        const combine_name = this.accountData.combine_name || '';
-        const server_id = this.accountData.server_id || 0;
-        const platform = this.accountData.platform || '';
-        const get_reward_time_limit = this.accountData.get_reward_time_limit || '';
-        
-        this.tenures = {
-          yuan_bao,
-          yue_ka_endtime,
-          jiang_ling,
-          bind_yuan_bao,
-          hufu,
-          honor,
-          chi_zhu_shan_tie,
-          xiao_ye_zi_tan,
-          gear_feature_hammer,
-          dynamic_icon,
-          season_info,
-          server_info,
-          combine_name,
-          server_id,
-          platform,
-          get_reward_time_limit
+    displayedList() {
+      const start = (this.currentPage - 1) * this.pageSize;
+      const pageLinks = this.filteredAndSortedLinks.slice(start, start + this.pageSize);
+
+      // 遍历当前页的链接，如果内存里没有数据，则触发加载
+      pageLinks.forEach((linkObj, i) => {
+        const globalIndex = this.zangbaoLinks.indexOf(linkObj);
+        if (!this.accountDataList[globalIndex]) {
+          this.fetchAndDisplayData(linkObj.link, globalIndex);
+        }
+      });
+
+      // 返回渲染用的对象
+      return pageLinks.map((linkObj, i) => {
+        const globalIndex = this.zangbaoLinks.indexOf(linkObj);
+        return {
+          globalIndex,
+          linkObj,
+          data: this.accountDataList[globalIndex] || null,
         };
+      });
+    },
+    gridStyle() {
+      if (this.columnMode === 'auto') {
+        return {}; // 使用 CSS 原生规则
+      }
+      return {
+        gridTemplateColumns: `repeat(${this.columnMode}, 1fr)`
+      };
+    }
+  },
 
-      },
-      //处理gear数据
-      sortHistoryRecords(records) {
-        // 重新排序：收藏的记录在前，非收藏的记录按时间倒序排列
-        return records.sort((a, b) => {
-          // 将收藏的记录排在前面
-          if (a.isFavorited && !b.isFavorited) return -1;
-          if (!a.isFavorited && b.isFavorited) return 1;
-          
-          // 时间倒序排列（最新的在前面）
-          const timeA = new Date(a.timestamp).getTime();
-          const timeB = new Date(b.timestamp).getTime();
-          return timeB - timeA;
-        });
+  mounted() {
+    this.loadFromLocalStorage();
+  },
+
+  methods: {
+    normalizeLink(link) {
+      try {
+        const url = new URL(link);
+        return url.origin + url.pathname;
+      } catch {
+        return link;
+      }
+    },
+
+    addLink() {
+      const rawLink = this.newLink.trim();
+      if (!rawLink) return ElMessage.warning('请输入链接');
+
+      const normalized = this.normalizeLink(rawLink);
+      // 👉 添加前删除缓存，确保读新数据
+      const cache = JSON.parse(localStorage.getItem('zangbaoCache') || '{}');
+      delete cache[normalized];
+      localStorage.setItem('zangbaoCache', JSON.stringify(cache));
+      if (this.zangbaoLinks.some(l => l.link === normalized)) {
+        return ElMessage.warning('该链接已存在');
       }
 
+      const index = this.zangbaoLinks.length;
+      const linkObj = {
+        link: normalized,
+        timestamp: Date.now(),
+        isFavorite: false,
+      };
+      this.zangbaoLinks.push(linkObj);
+
+      this.fetchAndDisplayData(normalized, index);
+      this.newLink = '';
+      this.saveToLocalStorage();
+
+      ElMessage.success('链接添加成功');
     },
-    
-  };
-  </script>
-  
-  <style scoped>
-  .zangbao-page {
-    padding: 16px;
-  }
-  
-  .link-section textarea {
-    width: 100%;
-    height: 80px;
-    resize: none;
-  }
-  
-  .button-section {
-    margin-top: 16px;
-    text-align: center;
-  }
-  
-  .price-section {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 16px;
-  }
-  
-  .price-item {
-    flex: 1;
-    text-align: center;
-    padding-top: 10px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    background: #f5f5f5;
-    margin: 0 8px;
-  }
-  .price-item p{
-    color: crimson;
-    font-size: 20px;
-    font-weight: bold;
-    margin: 5px 0;
-    padding: 0px;
-  }
 
-  .season-info {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 16px;
-  }
-  .season-item { 
-    padding: 2px 0;
-    margin: 0 8px;
-  }
-  
-  .card-col {
-    margin-bottom: 20px;
-  }
-  
-  .card-assort {
-    background: #f5f5f5;
-    width: 100%;
-    padding: 20px 0;
-    border-radius: 20px;
-  }
-  .card-assort-title {
-    margin-bottom: 5px;
-    padding-left: 20px;
-    font-weight: 600;
-  }
+    removeLink(globalIndex) {
+      const item = this.zangbaoLinks[globalIndex];
 
-  .other-resources li{
-    list-style: none;
-  }
+      ElMessageBox.confirm(
+        '确定要删除该链接吗？',
+        '提示',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+        }
+      ).then(() => {
+        // 用户点击确认
+        this.zangbaoLinks.splice(globalIndex, 1);
+        this.accountDataList.splice(globalIndex, 1);
+        this.activeTabs.splice(globalIndex, 1);
 
-  .tabs-assort {
-    margin-top: 20px;
+        // 2. 删除缓存中的数据  <<—— 新增
+        const cache = JSON.parse(localStorage.getItem('zangbaoCache') || '{}');
+        delete cache[item.link];
+        localStorage.setItem('zangbaoCache', JSON.stringify(cache));
+
+        if (this.displayedList.length === 0 && this.currentPage > 1) {
+          this.currentPage--;
+        }
+
+        this.saveToLocalStorage();
+        ElMessage.success('已删除');
+      }).catch(() => {
+        // 用户点击取消
+        ElMessage.info('已取消');
+      });
+    },
+
+    clearLinks() {
+      ElMessageBox.confirm('确定要清空所有链接？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }).then(() => {
+        this.zangbaoLinks = [];
+        this.accountDataList = [];
+        this.activeTabs = [];
+        this.currentPage = 1;
+
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('zangbaoLinks');
+          localStorage.removeItem('zangbaoCache');
+        }
+        ElMessage.success('已清空');
+      });
+    },
+
+    toggleFavorite(globalIndex) {
+      const item = this.zangbaoLinks[globalIndex];
+      item.isFavorite = !item.isFavorite;
+      this.saveToLocalStorage();
+      ElMessage.success(item.isFavorite ? '已收藏' : '已取消收藏');
+    },
+
+    toggleFilter() {
+      this.filterFavorites = !this.filterFavorites;
+      this.currentPage = 1; // 切换后重置分页
+    },
+
+    setSort(key) {
+      if (this.sortKey === key) {
+        this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+      } else {
+        this.sortKey = key;
+        this.sortOrder = 'asc';
+      }
+      this.currentPage = 1;
+    },
+    copyUrl(cbgLink) {
+      navigator.clipboard.writeText(cbgLink)
+      ElMessage({
+        message: '复制成功',
+        type: 'success',
+        zIndex: 99999
+      })
+    },
+    openLink(url) {
+      window.open(url, "_blank")
+    },
+    refreshLink(link, globalIndex) {
+      // 删除缓存
+      const cache = JSON.parse(localStorage.getItem('zangbaoCache') || '{}');
+      delete cache[link];
+      localStorage.setItem('zangbaoCache', JSON.stringify(cache));
+
+      this.fetchAndDisplayData(link, globalIndex)
+        .then(() => {
+          ElMessage.success("刷新成功");
+        })
+        .catch(err => {
+          ElMessage.error("刷新失败：" + err.message);
+        });
+    },
+
+    async fetchAndDisplayData(link, index) {
+      try {
+        if (index >= this.activeTabs.length) this.activeTabs.push('first');
+        else this.activeTabs[index] = 'first';
+
+        const processed = await this.fetchAccountData(link);
+
+        while (this.accountDataList.length <= index) this.accountDataList.push(null);
+        this.accountDataList.splice(index, 1, processed);
+
+        this.saveToLocalStorage();
+      } catch (err) {
+        console.error(err);
+        ElMessage.error('获取数据失败');
+        while (this.accountDataList.length <= index) this.accountDataList.push(null);
+        this.accountDataList[index] = null;
+      }
+    },
+
+    async fetchAccountData(link) {
+      const cached = this.getCachedData(link);
+      if (cached) return cached;
+
+      const cleanLink = link.split('?')[0];
+      const match = cleanLink.match(/\/equip\/1\/([A-Za-z0-9-]+)/);
+      if (!match) throw new Error('无效ID');
+
+      const extractedId = match[1];
+      const equip = await $fetch('/api/equip/detail', {
+        params: { ordersn: extractedId }
+      }).catch(e => { throw new Error('接口请求失败'); });
+
+      
+      if (!equip) throw new Error('API返回空');
+      const url = `https://cbg-other-desc.res.netease.com/stzb/static/equipdesc/${extractedId}.json`;
+      const raw = await fetch(url);
+      const rawText = await raw.text();
+      const parsed = JSON.parse(rawText);
+      const decoded = parsed.equip_desc.replace(/\\u([0-9a-fA-F]{4})/g, (_, grp) =>
+        String.fromCharCode(parseInt(grp, 16))
+      );
+      const full = JSON.parse(decoded);
+
+      const quality5 = (full.card || []).filter(c => c.quality === 5);
+      const uniqueCards = [];
+      quality5.forEach(card => {
+        const exists = uniqueCards.find(c => c.hero_id === card.hero_id && c.season === card.season);
+        if (!exists) uniqueCards.push({ ...card });
+        else if (card.advance_num > exists.advance_num) exists.advance_num = card.advance_num;
+      });
+
+      const phase3 = (full.gear || []).filter(w => w.phase === 3);
+      const redWeapons = phase3.filter(w => w.advance === 1).map(w => ({ ...w }));
+      const pinkWeapons = phase3.filter(w => w.level_type === 2 && w.advance !== 1).map(w => ({ ...w }));
+      const blueWeapons = phase3.filter(w => w.level_type === 0 && w.advance !== 1).map(w => ({ ...w }));
+
+      const tenures = {
+        yuan_bao: full.tenure?.yuan_bao || 0,
+        bind_yuan_bao: full.tenure?.bind_yuan_bao || 0,
+        honor: full.tenure?.honor || 0,
+        jiang_ling: full.tenure?.jiang_ling || 0,
+        hufu: full.tenure?.hufu || 0,
+        chi_zhu_shan_tie: full.material?.chi_zhu_shan_tie?.value || 0,
+        xiao_ye_zi_tan: full.material?.xiao_ye_zi_tan?.value || 0,
+        gear_feature_hammer: full.material?.gear_feature_hammer?.value || 0,
+      };
+
+      const processed = {
+        extractedId,
+        link,
+        equip: {
+          price: equip.price || 0,
+          status_desc: equip.status_desc,
+          area_name: equip.area_name,
+          server_name: equip.server_name,
+        },
+        equipPrice: equip.price / 100,
+        uniqueCards,
+        skill: full.skill || [],
+        redWeapons,
+        pinkWeapons,
+        blueWeapons,
+        tenures,
+        dynamic_icon: full.dynamic_icon || [],
+      };
+
+      this.cacheData(link, processed);
+      return processed;
+    },
+
+    cacheData(link, processed) {
+      if (typeof window === 'undefined') return;
+      const cache = JSON.parse(localStorage.getItem('zangbaoCache') || '{}');
+      cache[link] = { data: processed, timestamp: Date.now() };
+      localStorage.setItem('zangbaoCache', JSON.stringify(cache));
+    },
+
+    getCachedData(link) {
+      if (typeof window === 'undefined') return null;
+      const cache = JSON.parse(localStorage.getItem('zangbaoCache') || '{}');
+      return cache[link]?.data || null;
+    },
+    saveToLocalStorage() {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('zangbaoLinks', JSON.stringify(this.zangbaoLinks));
+      }
+    },
+    loadFromLocalStorage() {
+      this.isLoading = true;
+
+      if (typeof window !== 'undefined') {
+        const savedLinks = localStorage.getItem('zangbaoLinks');
+        if (savedLinks) this.zangbaoLinks = JSON.parse(savedLinks);
+
+        // 只初始化 activeTabs
+        this.activeTabs = Array(this.zangbaoLinks.length).fill('first');
+      }
+
+      this.isLoading = false;
+    },
+
+    handlePageChange(page) {
+      this.currentPage = page;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+  },
+};
+</script>
+
+
+<style scoped>
+.zangbao-page {
+  padding: 0 16px;
+}
+.compare-results-wrapper{
+  width: 100%;
+  min-height: 300px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+}
+.link-section {
+  margin-bottom: 20px;
+}
+
+.link-input-container {
+  margin-bottom: 20px;
+}
+
+.link-input {
+  margin-bottom: 10px;
+}
+
+.links-list {
+  margin-top: 20px;
+}
+
+.link-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 10px;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+}
+
+.link-index {
+  font-weight: bold;
+  padding-top: 5px;
+  min-width: 60px;
+}
+
+.button-section {
+  margin: 16px 0;
+  text-align: center;
+}
+
+.compare-results {
+  margin-top: 20px;
+}
+
+.compare-container {
+  display: grid;
+  grid-template-columns: 1fr; /* 默认 1 列 */
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.column-selector {
+  margin-left: 10px;
+}
+
+@media (min-width: 1200px) {
+  .compare-container:not([style*="grid-template-columns"]) {
+    grid-template-columns: 1fr 1fr;
   }
-  
-  /* 添加平均分配标签宽度的样式 */
-  :deep(.el-tabs__header) {
-    margin-bottom: 0;
-  }
-  
-  :deep(.el-tabs__nav) {
-    display: flex;
-    width: 100%;
-  }
-  
-  :deep(.el-tabs__item) {
-    flex: 1;
-    text-align: center;
-  }
-  
-  .dynamic-icon-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  
-  .dynamic-icon-item {
-    text-align: center;
-    width: 100px;
-  }
-  
-  .dynamic-icon-image {
-    width: 100px;
-    height: auto;
-  }
-  
-  .card-name {
-    font-size: 12px;
-    margin-top: 5px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  .weapons-container {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    margin-top: 20px;
-  }
-  
-  .weapon-group h3 {
-    margin-bottom: 10px;
-    color: #333;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 5px;
-  }
-  
-  .weapons-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  
-  .weapons-container {
-    margin-top: 0;
-  }
-  @media (max-width: 576px) {
-    .season-info {
-      font-size: 12px;
-    }
-    .price-section {
-      font-size: 12px;
-    }
-  }
-  </style>
+}
+
+.compare-panel {
+  min-width: 100px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f5f5f5;
+  padding: 10px 16px;
+  border-bottom: 1px solid #ddd;
+}
+
+.header-info {
+  flex: 1;
+}
+
+.header-info h3 {
+  margin: 0 0 5px 0;
+  font-size: 14px;
+}
+
+.price-info {
+  font-size: 12px;
+  color: #666;
+}
+
+.panel-content {
+  margin-top: -20px;
+  padding: 0 10px;
+}
+
+.season-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.season-item {
+  padding: 2px 0;
+}
+
+.tabs-assort {
+  margin-top: 20px;
+}
+
+.other-resources li {
+  list-style: none;
+}
+
+.dynamic-icon-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dynamic-icon-item {
+  text-align: center;
+  width: 100px;
+}
+
+.dynamic-icon-image {
+  width: 100px;
+  height: auto;
+}
+
+.card-name {
+  font-size: 12px;
+  margin-top: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.loading-placeholder, .empty-placeholder {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+}
+
+.weapons-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.weapon-group h3 {
+  margin-bottom: 10px;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+.weapons-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 50px;
+  margin-bottom: 90px;
+}
+</style>
