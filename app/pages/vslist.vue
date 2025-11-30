@@ -64,25 +64,18 @@
                   {{ item.data.equip.area_name }} {{ item.data.equip.server_name }}
                 </h3>
                 <div class="price-info">
-                  ID：{{ item.data.extractedId }}
+                  ID：{{ item.data.extractedId }}  <el-icon @click="copyUrl(item.data.link)"> <DocumentCopy /> </el-icon>
                 </div>
               </div>
 
               <!-- 刷新按钮 -->
-              <el-button type="Warning" circle plain >
+              <el-button type="info" circle plain >
               <el-icon @click="refreshLink(item.data.link, item.globalIndex)"><Refresh /></el-icon>
               </el-button>
 
               <!-- 跳转按钮 -->
-              <el-button type="info" circle plain >
-              <el-icon @click="openLink(item.data.link)"><Connection /></el-icon>
-              </el-button>
-
-              <!-- 复制按钮 -->
-              <el-button type="primary" circle  plain >
-              <el-icon @click="copyUrl(item.data.link)">
-                <DocumentCopy />
-              </el-icon>
+              <el-button type="primary" circle plain >
+                <el-icon @click="openLink(item.data.link)"><Connection /></el-icon>
               </el-button>
 
               <!-- 收藏按钮 -->
