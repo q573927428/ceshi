@@ -22,7 +22,7 @@
       </div>
 
       <!-- 武器名称 -->
-      <div class="name">{{ card.name }}</div>
+      <div class="name">{{ card.name }} {{ card.calculatedValue !== 0 ? card.calculatedValue : "" }}</div>
       <div class="feature-text" v-if="hasFeature" v-html="highlightNumbers(card.feature[0][1])"></div>
     </div>
     

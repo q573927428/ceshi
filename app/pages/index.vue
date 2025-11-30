@@ -19,6 +19,9 @@
         <div class="button-section">
           <el-button type="primary" @click="addLink">添加链接</el-button>
           <el-button type="info" @click="clearLinks">清空链接</el-button>
+          <el-button  type="danger" circle plain  @click="removeLink(41)" >
+                <el-icon><Delete /></el-icon>
+              </el-button>
         </div>
       </div>
 
@@ -66,6 +69,9 @@
                 </h3>
                 <div class="price-info">
                   ID：{{ item.data.extractedId }}  <el-icon @click="copyUrl(item.data.link)"> <DocumentCopy /> </el-icon>
+                </div>
+                <div class="price-info">
+                  估算：武将卡池 {{ item.data.cardTotalValue || 0 }} + 武器 {{ item.data.weaponTotalValue || 0 }} = 共计 {{ item.data.cardTotalValue + item.data.weaponTotalValue }} 元
                 </div>
               </div>
 
@@ -185,6 +191,8 @@ import CategoryCardsList from '~/components/CategoryCardsList.vue';
 import SkillCard from '~/components/SkillCard.vue';
 import WeaponList from '~/components/WeaponList.vue';
 import FormationComponent from '~/components/FormationComponent.vue';
+import CardWeaponValue from '~/components/CardWeaponValue.vue';
+import { getCardValue, getWeaponValue } from '~/utils/valueCalculator.js';
 import { Delete, Star, DocumentCopy, Refresh, Connection } from '@element-plus/icons-vue';
 
 export default {
@@ -193,6 +201,7 @@ export default {
     SkillCard,
     WeaponList,
     FormationComponent,
+    CardWeaponValue,
     Delete,
     Star,
     DocumentCopy,
@@ -212,7 +221,7 @@ export default {
       filterFavorites: false,
       sortKey: 'time',
       sortOrder: 'desc',
-      columnMode: 'auto',
+      columnMode: 'auto'
     };
   },
 
@@ -296,13 +305,20 @@ export default {
       const rawLink = this.newLink.trim();
       if (!rawLink) return ElMessage.warning('请输入链接');
 
-      const normalized = this.normalizeLink(rawLink);
+      // 👉 用正则提取第一个有效的藏宝阁链接
+      const match = rawLink.match(/https:\/\/stzb\.cbg\.163\.com\/cgi\/mweb\/equip\/1\/[0-9\-A-Z]+/);
+      if (!match) return ElMessage.warning('链接格式不正确');
+      const normalized = match[0];
       // 👉 添加前删除缓存，确保读新数据
       const cache = JSON.parse(localStorage.getItem('zangbaoCache') || '{}');
       delete cache[normalized];
-      localStorage.setItem('zangbaoCache', JSON.stringify(cache));
-      if (this.zangbaoLinks.some(l => l.link === normalized)) {
-        return ElMessage.warning('该链接已存在');
+
+      const existingIndex = this.zangbaoLinks.findIndex(l => l.link === normalized);
+      if (existingIndex !== -1) {
+        // 如果已存在，更新 timestamp
+        this.zangbaoLinks[existingIndex].timestamp = Date.now();
+        this.saveToLocalStorage();
+        return ElMessage.success('链接已存在，已更新时间');
       }
 
       const index = this.zangbaoLinks.length;
@@ -314,8 +330,9 @@ export default {
       this.zangbaoLinks.push(linkObj);
 
       this.fetchAndDisplayData(normalized, index);
-      this.newLink = '';
+      localStorage.setItem('zangbaoCache', JSON.stringify(cache));
       this.saveToLocalStorage();
+      this.newLink = '';
 
       ElMessage.success('链接添加成功');
     },
@@ -472,9 +489,31 @@ export default {
       });
 
       const phase3 = (full.gear || []).filter(w => w.phase === 3);
-      const redWeapons = phase3.filter(w => w.advance === 1).map(w => ({ ...w }));
-      const pinkWeapons = phase3.filter(w => w.level_type === 2 && w.advance !== 1).map(w => ({ ...w }));
-      const blueWeapons = phase3.filter(w => w.level_type === 0 && w.advance !== 1).map(w => ({ ...w }));
+      const redWeapons = phase3
+        .filter(w => w.advance === 1)
+        .map(w => {
+          const color = '红';
+          const value = getWeaponValue({ ...w, color });
+          return { ...w, color, calculatedValue: value };
+        });
+        const pinkWeapons = phase3
+          .filter(w => w.level_type === 2 && w.advance !== 1)
+          .map(w => {
+            const color = '粉';
+            const value = getWeaponValue({ ...w, color });
+            return { ...w, color, calculatedValue: value };
+          });
+          const blueWeapons = phase3
+          .filter(w => w.level_type === 0 && w.advance !== 1)
+          .map(w => {
+            const color = '蓝';
+            const value = getWeaponValue({ ...w, color });
+            return { ...w, color, calculatedValue: value };
+          });
+
+      const cardTotalValue = uniqueCards.reduce((sum, c) => sum + getCardValue(c), 0);
+      const allWeapons = [...redWeapons, ...pinkWeapons, ...blueWeapons];
+      const weaponTotalValue = allWeapons.reduce((sum, w) => sum + w.calculatedValue, 0);
 
       const tenures = {
         yuan_bao: full.tenure?.yuan_bao || 0,
@@ -502,6 +541,8 @@ export default {
         redWeapons,
         pinkWeapons,
         blueWeapons,
+        cardTotalValue,
+        weaponTotalValue,
         tenures,
         dynamic_icon: full.dynamic_icon || [],
       };
