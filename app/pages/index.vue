@@ -42,7 +42,7 @@
           <el-button :type="columnMode === 1 ? 'primary' : 'default'" @click="columnMode = 1">1 列</el-button>
           <el-button :type="columnMode === 2 ? 'primary' : 'default'" @click="columnMode = 2">2 列</el-button>
           <el-button :type="columnMode === 3 ? 'primary' : 'default'" @click="columnMode = 3">3 列</el-button>
-          <el-button :type="columnMode === 'auto' ? 'primary' : 'default'" @click="columnMode = 'auto'">自动</el-button>
+          <el-button :type="columnMode === 4 ? 'primary' : 'default'" @click="columnMode = 4">4 列</el-button>
         </el-button-group>
       </div>
     </div>
@@ -725,7 +725,6 @@ export default {
     });
 
     const gridStyle = computed(() => {
-      if (columnMode.value === 'auto') return {};
       return { gridTemplateColumns: `repeat(${columnMode.value}, 1fr)` };
     });
 
