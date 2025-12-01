@@ -66,7 +66,7 @@
             <div class="panel-header">
               <div class="header-info" v-if="item.data?.equip">
                 <h3>
-                  {{ item.data.equipPrice }} 元：
+                  <span>¥{{ item.data.equipPrice }}</span>
                   {{ item.data.equip.status_desc }} -
                   {{ item.data.equip.area_name }} {{ item.data.equip.server_name }}
                 </h3>
@@ -871,9 +871,8 @@ export default {
 .filter-sort {
   margin-top: 12px;
   display: flex;
-  gap: 8px;
+  gap: 1px;
   flex-wrap: wrap;
-  justify-content: center;
 }
 .compare-results {
   margin-top: 16px;
@@ -884,7 +883,6 @@ export default {
 }
 .compare-panel {
   border: 1px solid #e6e6e6;
-  padding: 12px;
   border-radius: 8px;
   background: #fff;
 }
@@ -893,29 +891,29 @@ export default {
   justify-content: space-between;
   align-items: flex-start;
   gap: 8px;
-}
-.panel-header {
-  display: flex;
-  justify-content: space-between; /* 左右两边拉开 */
-  align-items: center;           /* 垂直居中 */
-  gap: 10px;                     /* 间距 */
-  flex-wrap: wrap;               /* 小屏幕自动换行 */
+  padding: 12px;
+  background: #f5f5f5;
+  flex-wrap: wrap; 
 }
 .header-info h3 {
   margin: 0 0 6px 0;
   font-size: 16px;
 }
-
+.header-info h3 span{
+  font-size: 20px;
+  margin-right: 8px;
+  color: #f02929;
+}
 .price-info {
   font-size: 12px;
   color: #666;
 }
 .header-actions {
   display: flex;
-  gap: 6px;
+  gap: 2px;
 }
 .panel-content {
-  margin-top: 12px;
+  padding: 0 12px;
 }
 .pagination-container {
   margin: 50px;
