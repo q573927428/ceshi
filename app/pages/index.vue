@@ -1,38 +1,39 @@
 <template>
   <div class="zangbao-page">
-
-    <!-- 链接输入 + 筛选排序 -->
+    <!-- 链接输入 + 操作 -->
     <div class="link-section">
       <h3>藏宝阁链接对比:</h3>
+
       <div class="link-input-container">
         <div class="link-input">
           <el-input
             v-model="newLink"
             type="textarea"
             :rows="6"
-            placeholder="请输入藏宝阁链接，例如：https://stzb.cbg.163.com/cgi/mweb/equip/..."
+            placeholder="请输入藏宝阁链接，例如：https://stzb.cbg.163.com/cgi/mweb/equip/1/..."
             maxlength="2000"
             show-word-limit
             @keyup.enter="addLink"
           />
         </div>
+
         <div class="button-section">
           <el-button type="primary" @click="addLink">添加链接</el-button>
+          <el-button type="warning" @click="updateAll">更新全部</el-button>
           <el-button type="info" @click="clearLinks">清空链接</el-button>
-          <el-button  type="danger" circle plain  @click="removeLink(41)" >
-                <el-icon><Delete /></el-icon>
-              </el-button>
         </div>
       </div>
 
-      <!-- 筛选和排序 -->
+      <!-- 筛选排序与列配置 -->
       <div class="filter-sort">
         <el-button @click="toggleFilter" plain :type="filterFavorites ? 'primary' : 'warning'">
           {{ filterFavorites ? '显示全部' : '仅看收藏' }}
         </el-button>
+
         <el-button @click="setSort('price')" plain :type="sortKey === 'price' ? 'primary' : 'default'">
           价格排序 {{ sortKey === 'price' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
         </el-button>
+
         <el-button @click="setSort('time')" plain :type="sortKey === 'time' ? 'primary' : 'default'">
           时间排序 {{ sortKey === 'time' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
         </el-button>
@@ -46,147 +47,192 @@
       </div>
     </div>
 
-    <!-- 可选：没有数据提示 -->
-    <div class="compare-results-wrapper" v-show="isLoading">
-      数据加载中...
+    <!-- 全局加载指示 -->
+    <div class="global-loading" v-if="globalLoading">
+      正在批量更新数据...
     </div>
+
     <!-- 对比区域 -->
     <div class="compare-results">
-      <div class="compare-results" v-show="displayedList.length > 0">
+      <div v-if="pagedLinks.length > 0">
         <div class="compare-container" :style="gridStyle">
           <div
-            v-for="item in displayedList"
-            :key="item.globalIndex"
+            v-for="(item) in pagedLinks"
+            :key="item.link"
             class="compare-panel"
           >
-            <!-- Header -->
-            <div class="panel-header" v-if="item.data?.equip">
-              <div class="header-info">
+            <!-- panel header -->
+            <div class="panel-header">
+              <div class="header-info" v-if="item.data?.equip">
                 <h3>
                   {{ item.data.equipPrice }} 元：
                   {{ item.data.equip.status_desc }} -
                   {{ item.data.equip.area_name }} {{ item.data.equip.server_name }}
                 </h3>
+
                 <div class="price-info">
-                  ID：{{ item.data.extractedId }}  <el-icon @click="copyUrl(item.data.link)"> <DocumentCopy /> </el-icon>
+                  ID：{{ item.data.extractedId }}
+                  <el-button type="text" @click="copyUrl(item.link)" title="复制链接">
+                    <el-icon><DocumentCopy /></el-icon>
+                  </el-button>
                 </div>
+
                 <div class="price-info">
-                  估算：武将卡池 {{ item.data.cardTotalValue || 0 }} + 武器 {{ item.data.weaponTotalValue || 0 }} = 共计 {{ item.data.cardTotalValue + item.data.weaponTotalValue }} 元
+                  估算：武将卡池 {{ item.data.cardTotalValue || 0 }} + 武器 {{ item.data.weaponTotalValue || 0 }} =
+                  共计 {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }} 元
                 </div>
               </div>
 
-              <!-- 刷新按钮 -->
-              <el-button type="info" circle plain >
-              <el-icon @click="refreshLink(item.data.link, item.globalIndex)"><Refresh /></el-icon>
-              </el-button>
+              <!-- 操作按钮组 -->
+              <div class="header-actions">
+                <el-button
+                  type="info"
+                  circle
+                  :loading="item.loading"
+                  @click="refreshLink(item.link)"
+                  title="刷新"
+                >
+                  <el-icon><Refresh /></el-icon>
+                </el-button>
 
-              <!-- 跳转按钮 -->
-              <el-button type="primary" circle plain >
-                <el-icon @click="openLink(item.data.link)"><Connection /></el-icon>
-              </el-button>
+                <el-button type="primary" circle plain @click="openLink(item.link)" title="打开链接">
+                  <el-icon><Connection /></el-icon>
+                </el-button>
 
-              <!-- 收藏按钮 -->
-              <el-button type="warning" circle :plain="!item.linkObj.isFavorite"  @click="toggleFavorite(item.globalIndex)" >
-                <el-icon><Star /></el-icon>
-              </el-button>
+                <el-button
+                  type="warning"
+                  circle
+                  :plain="!item.isFavorite"
+                  @click="toggleFavorite(item)"
+                  title="收藏/取消收藏"
+                >
+                  <el-icon><Star /></el-icon>
+                </el-button>
 
-              <!-- 删除 -->
-              <el-button  type="danger" circle plain  @click="removeLink(item.globalIndex)" >
-                <el-icon><Delete /></el-icon>
-              </el-button>
+                <el-button type="danger" circle plain @click="removeLink(item.link)" title="删除">
+                  <el-icon><Delete /></el-icon>
+                </el-button>
+              </div>
             </div>
 
-            <!-- 内容 -->
+            <!-- panel 内容 -->
             <div class="panel-content">
-              <el-tabs
-                v-model="activeTabs[item.globalIndex]"
-                class="tabs-assort"
-                v-if="item.data"
-              >
-                <el-tab-pane label="武将" name="first">
-                  <CategoryCardsList :unique-cards="item.data.uniqueCards || []" />
-                </el-tab-pane>
+              <!-- 如果正在加载，显示 skeleton -->
+              <div v-if="item.loading" class="panel-loading">
+                <el-skeleton rows="4" animated />
+              </div>
 
-                <el-tab-pane label="技能" name="second">
-                  <SkillCard :skill-data="item.data.skill || []" />
-                </el-tab-pane>
-
-                <el-tab-pane label="武器" name="third">
-                  <WeaponList
-                    :red-weapons="item.data.redWeapons"
-                    :pink-weapons="item.data.pinkWeapons"
-                    :blue-weapons="item.data.blueWeapons"
-                  />
-                </el-tab-pane>
-
-                <el-tab-pane label="阵容" name="fourth">
-                  <FormationComponent
-                    v-if="item.data.uniqueCards?.length"
-                    :uniqueCards="item.data.uniqueCards"
-                    :single-column="true"
-                  />
-                </el-tab-pane>
-
-                <el-tab-pane label="其他" name="fifth">
-                  <div class="other-resources">
-                    <ul>
-                      <li>虎符：{{ item.data.tenures.hufu }}</li>
-                      <li>普通玉符：{{ item.data.tenures.bind_yuan_bao }}</li>
-                      <li>四通玉符：{{ item.data.tenures.yuan_bao }}</li>
-                      <li>将令：{{ item.data.tenures.jiang_ling }}</li>
-                      <li>荣誉：{{ item.data.tenures.honor }}</li>
-                      <li>赤珠山铁：{{ item.data.tenures.chi_zhu_shan_tie }}个</li>
-                      <li>小叶紫檀：{{ item.data.tenures.xiao_ye_zi_tan }}个</li>
-                      <li>天工锤：{{ item.data.tenures.gear_feature_hammer }}个</li>
-                      <li>皮肤：{{ item.data.dynamic_icon.length }}个</li>
-                    </ul>
-                  </div>
-
-                  <div class="dynamic_icon">
-                    <div class="dynamic-icon-container" v-if="item.data.dynamic_icon">
-                      <div
-                        v-for="card in item.data.dynamic_icon"
-                        :key="card.icon_hero_id"
-                        class="dynamic-icon-item"
-                      >
-                        <img
-                          :src="`https://cbg-stzb.res.netease.com/game_res/cards/cut/card_medium_${card.icon_hero_id}.jpg`"
-                          :alt="card.name"
-                          class="dynamic-icon-image"
-                        />
-                        <div class="card-name">{{ card.name }}</div>
-                      </div>
+              <!-- 实际数据 -->
+              <div v-else-if="item.data">
+                <el-tabs v-model="activeTabs[item.link]" lazy class="tabs-assort">
+                  <el-tab-pane label="武将" name="first">
+                    <!-- 仅在当前 tab 激活时渲染大型组件 -->
+                    <div v-if="activeTabs[item.link] === 'first'">
+                      <CategoryCardsList :unique-cards="item.data.uniqueCards || []" />
                     </div>
-                  </div>
+                  </el-tab-pane>
 
-                </el-tab-pane>
-              </el-tabs>
+                  <el-tab-pane label="技能" name="second">
+                    <div v-if="activeTabs[item.link] === 'second'">
+                      <SkillCard :skill-data="item.data.skill || []" />
+                    </div>
+                  </el-tab-pane>
+
+                  <el-tab-pane label="武器" name="third">
+                    <div v-if="activeTabs[item.link] === 'third'">
+                      <WeaponList
+                        :red-weapons="item.data.redWeapons || []"
+                        :pink-weapons="item.data.pinkWeapons || []"
+                        :blue-weapons="item.data.blueWeapons || []"
+                      />
+                    </div>
+                  </el-tab-pane>
+
+                  <el-tab-pane label="阵容" name="fourth">
+                    <div v-if="activeTabs[item.link] === 'fourth'">
+                      <FormationComponent
+                        v-if="item.data.uniqueCards?.length"
+                        :uniqueCards="item.data.uniqueCards"
+                        :single-column="true"
+                      />
+                    </div>
+                  </el-tab-pane>
+
+                  <el-tab-pane label="其他" name="fifth">
+                    <div v-if="activeTabs[item.link] === 'fifth'">
+                      <div class="other-resources">
+                        <ul>
+                          <li>虎符：{{ item.data.tenures.hufu }}</li>
+                          <li>普通玉符：{{ item.data.tenures.bind_yuan_bao }}</li>
+                          <li>四通玉符：{{ item.data.tenures.yuan_bao }}</li>
+                          <li>将令：{{ item.data.tenures.jiang_ling }}</li>
+                          <li>荣誉：{{ item.data.tenures.honor }}</li>
+                          <li>赤珠山铁：{{ item.data.tenures.chi_zhu_shan_tie }}个</li>
+                          <li>小叶紫檀：{{ item.data.tenures.xiao_ye_zi_tan }}个</li>
+                          <li>天工锤：{{ item.data.tenures.gear_feature_hammer }}个</li>
+                          <li>皮肤：{{ item.data.dynamic_icon.length }}个</li>
+                        </ul>
+                      </div>
+
+                      <div class="dynamic_icon">
+                        <div class="dynamic-icon-container" v-if="item.data.dynamic_icon">
+                          <div
+                            v-for="card in item.data.dynamic_icon"
+                            :key="card.icon_hero_id"
+                            class="dynamic-icon-item"
+                          >
+                            <img
+                              :src="`https://cbg-stzb.res.netease.com/game_res/cards/cut/card_medium_${card.icon_hero_id}.jpg`"
+                              :alt="card.name"
+                              class="dynamic-icon-image"
+                            />
+                            <div class="card-name">{{ card.name }}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  </el-tab-pane>
+                </el-tabs>
+              </div>
+
+              <div v-else class="no-data">暂无数据</div>
             </div>
           </div>
         </div>
 
         <!-- 分页 -->
-        <div class="pagination-container" v-if="filteredAndSortedLinks.length > pageSize">
+        <div class="pagination-container" v-if="filteredLinks.length > pageSize">
           <el-pagination
             @current-change="handlePageChange"
             :current-page="currentPage"
             :page-size="pageSize"
-            :total="filteredAndSortedLinks.length"
+            :total="filteredLinks.length"
             layout="prev, pager, next, jumper"
             background
           />
         </div>
       </div>
-      <!-- 可选：没有数据提示 -->
-      <div v-show="!isLoading && displayedList.length === 0" class="no-data">
+
+      <div v-else class="no-data">
         暂无数据
       </div>
     </div>
-
   </div>
 </template>
 
 <script>
+/**
+ * 完整重构版 index.vue
+ * 关键点：
+ *  - zangbaoLinks 每项结构统一：{ link, timestamp, isFavorite, data, loading }
+ *  - 内存缓存 cacheStore，减少过多 JSON.parse/stringify
+ *  - updateAll 支持并发限流
+ *  - Tabs lazy + 仅在 active 时渲染大型组件
+ *  - fetchAccountData 拆分为小函数（便于维护）
+ */
+
+import { ref, reactive, computed, watch, onMounted } from 'vue';
 import CategoryCardsList from '~/components/CategoryCardsList.vue';
 import SkillCard from '~/components/SkillCard.vue';
 import WeaponList from '~/components/WeaponList.vue';
@@ -194,6 +240,9 @@ import FormationComponent from '~/components/FormationComponent.vue';
 import CardWeaponValue from '~/components/CardWeaponValue.vue';
 import { getCardValue, getWeaponValue } from '~/utils/valueCalculator.js';
 import { Delete, Star, DocumentCopy, Refresh, Connection } from '@element-plus/icons-vue';
+
+// 全局并发上限
+const DEFAULT_CONCURRENCY = 4;
 
 export default {
   components: {
@@ -209,277 +258,140 @@ export default {
     Connection,
   },
 
-  data() {
-    return {
-      isLoading: true,
-      newLink: '',
-      zangbaoLinks: [], // 现在是对象数组 { link, timestamp, isFavorite }
-      activeTabs: [],
-      accountDataList: [],
-      currentPage: 1,
-      pageSize: 6,
-      filterFavorites: false,
-      sortKey: 'time',
-      sortOrder: 'desc',
-      columnMode: 'auto'
-    };
-  },
+  setup() {
+    // UI / 状态
+    const newLink = ref('');
+    const zangbaoLinks = ref([]); // 每项 { link, timestamp, isFavorite, data|null, loading:false }
+    const activeTabs = reactive({}); // 用 link 作为 key，值为 tab 名称
+    const currentPage = ref(1);
+    const pageSize = ref(6);
+    const filterFavorites = ref(false);
+    const sortKey = ref('time');
+    const sortOrder = ref('desc');
+    const columnMode = ref(window.innerWidth < 768 ? 1 : 2);
+    const globalLoading = ref(false);
 
-  computed: {
-    /** 先筛选再排序 */
-    filteredAndSortedLinks() {
-      let list = this.zangbaoLinks;
-
-      if (this.filterFavorites) {
-        list = list.filter(item => item.isFavorite);
-      }
-
-      // 默认时间降序
-      const key = this.sortKey || 'time';
-      const order = this.sortKey ? this.sortOrder : 'desc';
-      
-      if (key) {
-        list = [...list].sort((a, b) => {
-          let valA, valB;
-          if (key === 'price') {
-            valA = this.accountDataList[this.zangbaoLinks.indexOf(a)]?.equipPrice || 0;
-            valB = this.accountDataList[this.zangbaoLinks.indexOf(b)]?.equipPrice || 0;
-          } else if (key === 'time') {
-            valA = a.timestamp;
-            valB = b.timestamp;
-          }
-          return order === 'asc' ? valA - valB : valB - valA;
-        });
-      }
-
-      return list;
-    },
-
-    displayedList() {
-      const start = (this.currentPage - 1) * this.pageSize;
-      const pageLinks = this.filteredAndSortedLinks.slice(start, start + this.pageSize);
-
-      // 遍历当前页的链接，如果内存里没有数据，则触发加载
-      pageLinks.forEach((linkObj, i) => {
-        const globalIndex = this.zangbaoLinks.indexOf(linkObj);
-        if (!this.accountDataList[globalIndex]) {
-          this.fetchAndDisplayData(linkObj.link, globalIndex);
+    // 内存 cache，避免频繁 JSON.parse
+    let cacheStore = null;
+    const ensureCacheLoaded = () => {
+      if (!cacheStore) {
+        try {
+          cacheStore = JSON.parse(localStorage.getItem('zangbaoCache') || '{}');
+        } catch {
+          cacheStore = {};
         }
-      });
-
-      // 返回渲染用的对象
-      return pageLinks.map((linkObj, i) => {
-        const globalIndex = this.zangbaoLinks.indexOf(linkObj);
-        return {
-          globalIndex,
-          linkObj,
-          data: this.accountDataList[globalIndex] || null,
-        };
-      });
-    },
-    gridStyle() {
-      if (this.columnMode === 'auto') {
-        return {}; // 使用 CSS 原生规则
       }
-      return {
-        gridTemplateColumns: `repeat(${this.columnMode}, 1fr)`
-      };
-    }
-  },
+      return cacheStore;
+    };
+    const persistCacheToLocal = () => {
+      try {
+        localStorage.setItem('zangbaoCache', JSON.stringify(cacheStore || {}));
+      } catch (e) {
+        // localStorage 写入失败不致命
+        console.warn('写入缓存失败', e);
+      }
+    };
 
-  mounted() {
-    this.loadFromLocalStorage();
-  },
+    // ---------- 辅助：本地保存 / 读取 zangbaoLinks ----------
+    const saveLinksToLocal = () => {
+      try {
+        localStorage.setItem('zangbaoLinks', JSON.stringify(zangbaoLinks.value.map(item => {
+          // 不把 data 的大对象全部存入，这里保存 data 以便页面重启后直接显示（可选）
+          return {
+            link: item.link,
+            timestamp: item.timestamp,
+            isFavorite: item.isFavorite,
+            data: item.data || null,
+          };
+        })));
+      } catch (e) {
+        console.warn('保存 links 失败', e);
+      }
+    };
 
-  methods: {
-    normalizeLink(link) {
+    const loadLinksFromLocal = () => {
+      try {
+        const raw = localStorage.getItem('zangbaoLinks');
+        if (!raw) return;
+        const arr = JSON.parse(raw);
+        zangbaoLinks.value = arr.map(i => ({
+          link: i.link,
+          timestamp: i.timestamp || Date.now(),
+          isFavorite: !!i.isFavorite,
+          data: i.data || null,
+          loading: false,
+        }));
+        // 初始化 activeTabs
+        zangbaoLinks.value.forEach(item => {
+          activeTabs[item.link] = 'first';
+        });
+      } catch (e) {
+        console.warn('读取 links 失败', e);
+      }
+    };
+
+    // ---------- 简单工具函数 ----------
+    const normalizeLink = (link) => {
       try {
         const url = new URL(link);
         return url.origin + url.pathname;
       } catch {
         return link;
       }
-    },
+    };
 
-    addLink() {
-      const rawLink = this.newLink.trim();
-      if (!rawLink) return ElMessage.warning('请输入链接');
+    // 解析并提取藏宝阁链接（更宽松的正则：支持大小写、数字、连字符）
+    const extractCbgLink = (text) => {
+      const match = text.match(/https:\/\/stzb\.cbg\.163\.com\/cgi\/mweb\/equip\/1\/[0-9a-zA-Z\-]+/i);
+      return match ? match[0] : null;
+    };
 
-      // 👉 用正则提取第一个有效的藏宝阁链接
-      const match = rawLink.match(/https:\/\/stzb\.cbg\.163\.com\/cgi\/mweb\/equip\/1\/[0-9\-A-Z]+/);
-      if (!match) return ElMessage.warning('链接格式不正确');
-      const normalized = match[0];
-      // 👉 添加前删除缓存，确保读新数据
-      const cache = JSON.parse(localStorage.getItem('zangbaoCache') || '{}');
-      delete cache[normalized];
+    // ---------- 缓存读写 ----------
+    const getCachedData = (link) => {
+      const cache = ensureCacheLoaded();
+      return cache[link]?.data || null;
+    };
 
-      const existingIndex = this.zangbaoLinks.findIndex(l => l.link === normalized);
-      if (existingIndex !== -1) {
-        // 如果已存在，更新 timestamp
-        this.zangbaoLinks[existingIndex].timestamp = Date.now();
-        this.saveToLocalStorage();
-        return ElMessage.success('链接已存在，已更新时间');
+    const cacheData = (link, processed) => {
+      const cache = ensureCacheLoaded();
+      cache[link] = { data: processed, timestamp: Date.now() };
+      persistCacheToLocal();
+    };
+
+    const deleteCacheForLink = (link) => {
+      const cache = ensureCacheLoaded();
+      if (cache[link]) {
+        delete cache[link];
+        persistCacheToLocal();
       }
+    };
 
-      const index = this.zangbaoLinks.length;
-      const linkObj = {
-        link: normalized,
-        timestamp: Date.now(),
-        isFavorite: false,
-      };
-      this.zangbaoLinks.push(linkObj);
+    // ---------- fetchAccountData 拆分：小函数 ----------
 
-      this.fetchAndDisplayData(normalized, index);
-      localStorage.setItem('zangbaoCache', JSON.stringify(cache));
-      this.saveToLocalStorage();
-      this.newLink = '';
-
-      ElMessage.success('链接添加成功');
-    },
-
-    removeLink(globalIndex) {
-      const item = this.zangbaoLinks[globalIndex];
-
-      ElMessageBox.confirm(
-        '确定要删除该链接吗？',
-        '提示',
-        {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning',
-        }
-      ).then(() => {
-        // 用户点击确认
-        this.zangbaoLinks.splice(globalIndex, 1);
-        this.accountDataList.splice(globalIndex, 1);
-        this.activeTabs.splice(globalIndex, 1);
-
-        // 2. 删除缓存中的数据  <<—— 新增
-        const cache = JSON.parse(localStorage.getItem('zangbaoCache') || '{}');
-        delete cache[item.link];
-        localStorage.setItem('zangbaoCache', JSON.stringify(cache));
-
-        if (this.displayedList.length === 0 && this.currentPage > 1) {
-          this.currentPage--;
-        }
-
-        this.saveToLocalStorage();
-        ElMessage.success('已删除');
-      }).catch(() => {
-        // 用户点击取消
-        ElMessage.info('已取消');
-      });
-    },
-
-    clearLinks() {
-      ElMessageBox.confirm('确定要清空所有链接？', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }).then(() => {
-        this.zangbaoLinks = [];
-        this.accountDataList = [];
-        this.activeTabs = [];
-        this.currentPage = 1;
-
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('zangbaoLinks');
-          localStorage.removeItem('zangbaoCache');
-        }
-        ElMessage.success('已清空');
-      });
-    },
-
-    toggleFavorite(globalIndex) {
-      const item = this.zangbaoLinks[globalIndex];
-      item.isFavorite = !item.isFavorite;
-      this.saveToLocalStorage();
-      ElMessage.success(item.isFavorite ? '已收藏' : '已取消收藏');
-    },
-
-    toggleFilter() {
-      this.filterFavorites = !this.filterFavorites;
-      this.currentPage = 1; // 切换后重置分页
-    },
-
-    setSort(key) {
-      if (this.sortKey === key) {
-        this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
-      } else {
-        this.sortKey = key;
-        this.sortOrder = 'asc';
-      }
-      this.currentPage = 1;
-    },
-    copyUrl(cbgLink) {
-      navigator.clipboard.writeText(cbgLink)
-      ElMessage({
-        message: '复制成功',
-        type: 'success',
-        zIndex: 99999
-      })
-    },
-    openLink(url) {
-      window.open(url, "_blank")
-    },
-    refreshLink(link, globalIndex) {
-      // 删除缓存
-      const cache = JSON.parse(localStorage.getItem('zangbaoCache') || '{}');
-      delete cache[link];
-      localStorage.setItem('zangbaoCache', JSON.stringify(cache));
-
-      this.fetchAndDisplayData(link, globalIndex)
-        .then(() => {
-          ElMessage.success("刷新成功");
-        })
-        .catch(err => {
-          ElMessage.error("刷新失败：" + err.message);
-        });
-    },
-
-    async fetchAndDisplayData(link, index) {
-      try {
-        if (index >= this.activeTabs.length) this.activeTabs.push('first');
-        else this.activeTabs[index] = 'first';
-
-        const processed = await this.fetchAccountData(link);
-
-        while (this.accountDataList.length <= index) this.accountDataList.push(null);
-        this.accountDataList.splice(index, 1, processed);
-
-        this.saveToLocalStorage();
-      } catch (err) {
-        console.error(err);
-        ElMessage.error('获取数据失败');
-        while (this.accountDataList.length <= index) this.accountDataList.push(null);
-        this.accountDataList[index] = null;
-      }
-    },
-
-    async fetchAccountData(link) {
-      const cached = this.getCachedData(link);
-      if (cached) return cached;
-
-      const cleanLink = link.split('?')[0];
-      const match = cleanLink.match(/\/equip\/1\/([A-Za-z0-9-]+)/);
-      if (!match) throw new Error('无效ID');
-
-      const extractedId = match[1];
+    // 1. 获取 equip detail（后端接口）
+    const fetchEquipDetail = async (extractedId) => {
       const equip = await $fetch('/api/equip/detail', {
-        params: { ordersn: extractedId }
-      }).catch(e => { throw new Error('接口请求失败'); });
+        params: { ordersn: extractedId },
+      });
+      return equip;
+    };
 
-      
-      if (!equip) throw new Error('API返回空');
+    // 2. 获取 equipdesc JSON（静态文件）
+    const fetchFullJson = async (extractedId) => {
       const url = `https://cbg-other-desc.res.netease.com/stzb/static/equipdesc/${extractedId}.json`;
       const raw = await fetch(url);
       const rawText = await raw.text();
       const parsed = JSON.parse(rawText);
+      // decode \uXXXX
       const decoded = parsed.equip_desc.replace(/\\u([0-9a-fA-F]{4})/g, (_, grp) =>
         String.fromCharCode(parseInt(grp, 16))
       );
       const full = JSON.parse(decoded);
+      return full;
+    };
 
+    // 3. 提取 unique cards（quality 5 且按 hero_id + season 唯一）
+    const extractUniqueCards = (full) => {
       const quality5 = (full.card || []).filter(c => c.quality === 5);
       const uniqueCards = [];
       quality5.forEach(card => {
@@ -487,7 +399,11 @@ export default {
         if (!exists) uniqueCards.push({ ...card });
         else if (card.advance_num > exists.advance_num) exists.advance_num = card.advance_num;
       });
+      return uniqueCards;
+    };
 
+    // 4. 提取武器并计算价值
+    const extractWeapons = (full) => {
       const phase3 = (full.gear || []).filter(w => w.phase === 3);
       const redWeapons = phase3
         .filter(w => w.advance === 1)
@@ -496,24 +412,34 @@ export default {
           const value = getWeaponValue({ ...w, color });
           return { ...w, color, calculatedValue: value };
         });
-        const pinkWeapons = phase3
-          .filter(w => w.level_type === 2 && w.advance !== 1)
-          .map(w => {
-            const color = '粉';
-            const value = getWeaponValue({ ...w, color });
-            return { ...w, color, calculatedValue: value };
-          });
-          const blueWeapons = phase3
-          .filter(w => w.level_type === 0 && w.advance !== 1)
-          .map(w => {
-            const color = '蓝';
-            const value = getWeaponValue({ ...w, color });
-            return { ...w, color, calculatedValue: value };
-          });
+      const pinkWeapons = phase3
+        .filter(w => w.level_type === 2 && w.advance !== 1)
+        .map(w => {
+          const color = '粉';
+          const value = getWeaponValue({ ...w, color });
+          return { ...w, color, calculatedValue: value };
+        });
+      const blueWeapons = phase3
+        .filter(w => w.level_type === 0 && w.advance !== 1)
+        .map(w => {
+          const color = '蓝';
+          const value = getWeaponValue({ ...w, color });
+          return { ...w, color, calculatedValue: value };
+        });
 
-      const cardTotalValue = uniqueCards.reduce((sum, c) => sum + getCardValue(c), 0);
-      const allWeapons = [...redWeapons, ...pinkWeapons, ...blueWeapons];
-      const weaponTotalValue = allWeapons.reduce((sum, w) => sum + w.calculatedValue, 0);
+      return { redWeapons, pinkWeapons, blueWeapons };
+    };
+
+    // 5. 计算卡片价值总和
+    const calcCardTotalValue = (uniqueCards) => {
+      return uniqueCards.reduce((sum, c) => sum + getCardValue(c), 0);
+    };
+
+    // 6. 组装最终 processed 对象
+    const buildProcessedData = (extractedId, link, equip, full, weapons, uniqueCards) => {
+      const cardTotalValue = calcCardTotalValue(uniqueCards);
+      const allWeapons = [...(weapons.redWeapons || []), ...(weapons.pinkWeapons || []), ...(weapons.blueWeapons || [])];
+      const weaponTotalValue = allWeapons.reduce((sum, w) => sum + (w.calculatedValue || 0), 0);
 
       const tenures = {
         yuan_bao: full.tenure?.yuan_bao || 0,
@@ -538,243 +464,480 @@ export default {
         equipPrice: equip.price / 100,
         uniqueCards,
         skill: full.skill || [],
-        redWeapons,
-        pinkWeapons,
-        blueWeapons,
+        redWeapons: weapons.redWeapons || [],
+        pinkWeapons: weapons.pinkWeapons || [],
+        blueWeapons: weapons.blueWeapons || [],
         cardTotalValue,
         weaponTotalValue,
         tenures,
         dynamic_icon: full.dynamic_icon || [],
       };
-
-      this.cacheData(link, processed);
       return processed;
-    },
+    };
 
-    cacheData(link, processed) {
-      if (typeof window === 'undefined') return;
-      const cache = JSON.parse(localStorage.getItem('zangbaoCache') || '{}');
-      cache[link] = { data: processed, timestamp: Date.now() };
-      localStorage.setItem('zangbaoCache', JSON.stringify(cache));
-    },
+    // ---------- 主流程：fetchAccountData ----------
+    const fetchAccountData = async (link) => {
+      // 1. 先查缓存
+      const cached = getCachedData(link);
+      if (cached) return cached;
 
-    getCachedData(link) {
-      if (typeof window === 'undefined') return null;
-      const cache = JSON.parse(localStorage.getItem('zangbaoCache') || '{}');
-      return cache[link]?.data || null;
-    },
-    saveToLocalStorage() {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('zangbaoLinks', JSON.stringify(this.zangbaoLinks));
+      const cleanLink = link.split('?')[0];
+      const match = cleanLink.match(/\/equip\/1\/([A-Za-z0-9-]+)/);
+      if (!match) throw new Error('无效ID');
+
+      const extractedId = match[1];
+      const equip = await fetchEquipDetail(extractedId).catch(() => { throw new Error('接口请求失败'); });
+
+      if (!equip) throw new Error('API返回空');
+
+      const full = await fetchFullJson(extractedId);
+
+      const uniqueCards = extractUniqueCards(full);
+      const weapons = extractWeapons(full);
+      const processed = buildProcessedData(extractedId, link, equip, full, weapons, uniqueCards);
+
+      cacheData(link, processed);
+      return processed;
+    };
+
+    // ---------- 操作：添加 / 删除 / 刷新 / 更新全部 等 ----------
+
+    // 添加链接
+    const addLink = async () => {
+      if (!newLink.value || !newLink.value.trim()) {
+        ElMessage.warning('请输入链接');
+        return;
       }
-    },
-    loadFromLocalStorage() {
-      this.isLoading = true;
+      const raw = newLink.value.trim();
+      const match = extractCbgLink(raw);
+      if (!match) {
+        ElMessage.warning('链接格式不正确');
+        return;
+      }
+      const normalized = normalizeLink(match);
 
-      if (typeof window !== 'undefined') {
-        const savedLinks = localStorage.getItem('zangbaoLinks');
-        if (savedLinks) this.zangbaoLinks = JSON.parse(savedLinks);
+      // 删除缓存，确保获取最新（可选策略）
+      deleteCacheForLink(normalized);
 
-        // 只初始化 activeTabs
-        this.activeTabs = Array(this.zangbaoLinks.length).fill('first');
+      const existing = zangbaoLinks.value.find(i => i.link === normalized);
+      if (existing) {
+        existing.timestamp = Date.now();
+        saveLinksToLocal();
+        ElMessage.success('链接已存在，已更新时间');
+        newLink.value = '';
+        return;
       }
 
-      this.isLoading = false;
-    },
+      // push 新项
+      const item = {
+        link: normalized,
+        timestamp: Date.now(),
+        isFavorite: false,
+        data: null,
+        loading: true,
+      };
+      zangbaoLinks.value.push(item);
+      activeTabs[item.link] = 'first';
+      saveLinksToLocal();
 
-    handlePageChange(page) {
-      this.currentPage = page;
+      // 异步抓取并展示
+      try {
+        const processed = await fetchAccountData(normalized);
+        item.data = processed;
+        item.loading = false;
+        saveLinksToLocal();
+        ElMessage.success('链接添加成功并已获取数据');
+      } catch (err) {
+        item.loading = false;
+        item.data = null;
+        ElMessage.error('获取数据失败：' + (err.message || err));
+      } finally {
+        newLink.value = '';
+      }
+    };
+
+    // 删除链接（按 link 匹配）
+    const removeLink = (link) => {
+      ElMessageBox.confirm('确定要删除该链接吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }).then(() => {
+        const idx = zangbaoLinks.value.findIndex(i => i.link === link);
+        if (idx !== -1) {
+          const item = zangbaoLinks.value[idx];
+          // 删除缓存
+          deleteCacheForLink(item.link);
+          zangbaoLinks.value.splice(idx, 1);
+          delete activeTabs[link];
+          saveLinksToLocal();
+          ElMessage.success('已删除');
+          // 调整分页
+          if (pagedLinks.value.length === 0 && currentPage.value > 1) currentPage.value--;
+        }
+      }).catch(() => {
+        ElMessage.info('已取消');
+      });
+    };
+
+    // 清空所有
+    const clearLinks = () => {
+      ElMessageBox.confirm('确定要清空所有链接？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }).then(() => {
+        zangbaoLinks.value = [];
+        for (const k in activeTabs) delete activeTabs[k];
+        try {
+          localStorage.removeItem('zangbaoLinks');
+          localStorage.removeItem('zangbaoCache');
+          cacheStore = null;
+        } catch (e) {}
+        ElMessage.success('已清空');
+      }).catch(() => {
+        ElMessage.info('已取消');
+      });
+    };
+
+    // 收藏切换（传 item）
+    const toggleFavorite = (item) => {
+      item.isFavorite = !item.isFavorite;
+      saveLinksToLocal();
+      ElMessage.success(item.isFavorite ? '已收藏' : '已取消收藏');
+    };
+
+    // 复制 URL
+    const copyUrl = (cbgLink) => {
+      navigator.clipboard.writeText(cbgLink).then(() => {
+        ElMessage({ message: '复制成功', type: 'success', zIndex: 99999 });
+      }).catch(() => {
+        ElMessage({ message: '复制失败', type: 'error' });
+      });
+    };
+
+    // 打开新窗口
+    const openLink = (url) => {
+      window.open(url, "_blank");
+    };
+
+    // 刷新单条（删除缓存再拉取）
+    const refreshLink = async (link) => {
+      const item = zangbaoLinks.value.find(i => i.link === link);
+      if (!item) return;
+      item.loading = true;
+      deleteCacheForLink(link);
+      try {
+        const processed = await fetchAccountData(link);
+        item.data = processed;
+        item.loading = false;
+        saveLinksToLocal();
+        ElMessage.success('刷新成功');
+      } catch (err) {
+        item.loading = false;
+        ElMessage.error('刷新失败：' + (err.message || err));
+      }
+    };
+
+    // updateAll：并发限流版本
+    const updateAll = async (concurrency = DEFAULT_CONCURRENCY) => {
+      if (!zangbaoLinks.value.length) {
+        ElMessage.info('没有链接需要更新');
+        return;
+      }
+      globalLoading.value = true;
+
+      // 先清除所有对应缓存（可选），这里我们选择只删除需要更新的缓存
+      // 并行执行，但限制并发
+      const queue = [...zangbaoLinks.value];
+      let running = 0;
+      const errors = [];
+
+      const runNext = () => {
+        if (queue.length === 0) return Promise.resolve();
+        if (running >= concurrency) return Promise.resolve();
+        const item = queue.shift();
+        running++;
+        item.loading = true;
+        // 删除缓存确保拉到最新
+        deleteCacheForLink(item.link);
+
+        return fetchAccountData(item.link)
+          .then(processed => {
+            item.data = processed;
+            item.timestamp = Date.now();
+            item.loading = false;
+          })
+          .catch(err => {
+            item.loading = false;
+            errors.push({ link: item.link, error: err });
+          })
+          .finally(() => {
+            running--;
+          })
+          .then(() => runNext());
+      };
+
+      // 启动 concurrency 个任务
+      const starters = [];
+      for (let i = 0; i < concurrency; i++) starters.push(runNext());
+      await Promise.all(starters);
+
+      // 所有任务完成（或失败）
+      saveLinksToLocal();
+      globalLoading.value = false;
+
+      if (errors.length) {
+        ElMessage.warning(`部分链接更新失败（${errors.length}）`);
+      } else {
+        ElMessage.success('更新所有数据成功');
+      }
+    };
+
+    // ---------- 分页、过滤、排序（都是基于 zangbaoLinks.value） ----------
+    const filteredLinks = computed(() => {
+      let list = zangbaoLinks.value;
+      if (filterFavorites.value) {
+        list = list.filter(item => item.isFavorite);
+      }
+      // 排序
+      const key = sortKey.value || 'time';
+      const order = sortOrder.value || 'desc';
+      const copy = [...list];
+      copy.sort((a, b) => {
+        let valA = 0, valB = 0;
+        if (key === 'price') {
+          valA = a.data?.equipPrice || 0;
+          valB = b.data?.equipPrice || 0;
+        } else if (key === 'time') {
+          valA = a.timestamp || 0;
+          valB = b.timestamp || 0;
+        }
+        return order === 'asc' ? valA - valB : valB - valA;
+      });
+      return copy;
+    });
+
+    const pagedLinks = computed(() => {
+      const start = (currentPage.value - 1) * pageSize.value;
+      return filteredLinks.value.slice(start, start + pageSize.value);
+    });
+
+    const gridStyle = computed(() => {
+      if (columnMode.value === 'auto') return {};
+      return { gridTemplateColumns: `repeat(${columnMode.value}, 1fr)` };
+    });
+
+    const handlePageChange = (page) => {
+      currentPage.value = page;
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    },
-  },
+    };
+
+    // 切换排序
+    const setSort = (key) => {
+      if (sortKey.value === key) {
+        sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortKey.value = key;
+        sortOrder.value = 'asc';
+      }
+      currentPage.value = 1;
+    };
+
+    // 切换收藏过滤
+    const toggleFilter = () => {
+      filterFavorites.value = !filterFavorites.value;
+      currentPage.value = 1;
+    };
+
+    // ---------- 页面初始化 ----------
+    onMounted(() => {
+      loadLinksFromLocal();
+      ensureCacheLoaded();
+      // 对于页面打开后未加载 data 的项，可以选择预热（按当前页）
+      // 这里默认不自动批量加载全部，避免大量请求。如果需要可以调用 updateAll()
+    });
+
+    // ---------- 小提示：当某项的 data 是 null 且当前页包含该项时可自动触发加载（节制） ----------
+    watch([currentPage, () => filteredLinks.value.length], () => {
+      // 自动加载当前页但只加载未有 data 的项，避免在 computed 中触发请求
+      const pageLinks = pagedLinks.value;
+      pageLinks.forEach(item => {
+        if (!item.data && !item.loading) {
+          // 触发加载（不阻塞 UI）
+          item.loading = true;
+          fetchAccountData(item.link)
+            .then(processed => {
+              item.data = processed;
+              item.loading = false;
+              saveLinksToLocal();
+            })
+            .catch(() => {
+              item.loading = false;
+            });
+        }
+      });
+    });
+
+    // ---------- 返回到模板 ----------
+    return {
+      // state
+      newLink,
+      zangbaoLinks,
+      activeTabs,
+      currentPage,
+      pageSize,
+      filterFavorites,
+      sortKey,
+      sortOrder,
+      columnMode,
+      globalLoading,
+
+      // computed
+      filteredLinks,
+      pagedLinks,
+      gridStyle,
+
+      // methods
+      addLink,
+      removeLink,
+      clearLinks,
+      toggleFavorite,
+      copyUrl,
+      openLink,
+      refreshLink,
+      updateAll,
+      handlePageChange,
+      setSort,
+      toggleFilter,
+    };
+  }
 };
 </script>
 
-
 <style scoped>
-.zangbao-page {
-  padding: 0 16px;
-}
-.compare-results-wrapper{
-  width: 100%;
-  min-height: 300px;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-}
-.link-section {
-  margin-bottom: 20px;
-}
-
-.link-input-container {
-  margin-bottom: 20px;
-}
-
-.link-input {
-  margin-bottom: 10px;
-}
-
-.links-list {
-  margin-top: 20px;
-}
-
-.link-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 10px;
-  padding: 10px;
-  border: 1px solid #ebeef5;
-  border-radius: 4px;
-}
-
-.link-index {
-  font-weight: bold;
-  padding-top: 5px;
-  min-width: 60px;
-}
-
-.button-section {
-  margin: 16px 0;
-  text-align: center;
-}
-
-.compare-results {
-  margin-top: 20px;
-}
-
-.compare-container {
-  display: grid;
-  grid-template-columns: 1fr; /* 默认 1 列 */
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.column-selector {
-  margin-left: 10px;
-}
-
-@media (min-width: 1200px) {
-  .compare-container:not([style*="grid-template-columns"]) {
-    grid-template-columns: 1fr 1fr;
+/* 手机端屏幕宽度小于 768px 时隐藏按钮组 */
+@media (max-width: 767px) {
+  .column-selector {
+    display: none;
+  }
+  .panel-header {
+    flex-direction: column;
+    align-items: stretch; /* 子元素宽度撑满父容器 */
+  }
+  .panel-header > div {
+    width: 100%;
   }
 }
 
-.compare-panel {
-  min-width: 100px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+/* 桌面端大于 768px 显示按钮组 */
+@media (min-width: 768px) {
+  .column-selector {
+    display: inline-flex;
+  }
 }
-
+.zangbao-page {
+  padding: 16px;
+}
+.link-section {
+  margin-bottom: 16px;
+}
+.link-input-container {
+  display: flex;
+  flex-direction: column;  /* 上下排列 */
+  
+  gap: 12px;
+}
+.link-input {
+  flex: 1;
+}
+.button-section {
+  display: flex;
+  gap: 10px; /* 按钮之间的间距 */
+  flex-wrap: wrap; /* 屏幕窄时按钮换行 */
+  justify-content: center; /* 水平居中按钮组 */
+}
+.filter-sort {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.compare-results {
+  margin-top: 16px;
+}
+.compare-container {
+  display: grid;
+  gap: 16px;
+}
+.compare-panel {
+  border: 1px solid #e6e6e6;
+  padding: 12px;
+  border-radius: 8px;
+  background: #fff;
+}
 .panel-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  background-color: #f5f5f5;
-  padding: 10px 16px;
-  border-bottom: 1px solid #ddd;
+  align-items: flex-start;
+  gap: 8px;
 }
-
-.header-info {
-  flex: 1;
+.panel-header {
+  display: flex;
+  justify-content: space-between; /* 左右两边拉开 */
+  align-items: center;           /* 垂直居中 */
+  gap: 10px;                     /* 间距 */
+  flex-wrap: wrap;               /* 小屏幕自动换行 */
 }
-
 .header-info h3 {
-  margin: 0 0 5px 0;
-  font-size: 14px;
+  margin: 0 0 6px 0;
+  font-size: 16px;
 }
 
 .price-info {
   font-size: 12px;
   color: #666;
 }
-
+.header-actions {
+  display: flex;
+  gap: 6px;
+}
 .panel-content {
-  margin-top: -20px;
-  padding: 0 10px;
+  margin-top: 12px;
 }
-
-.season-info {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  padding: 10px;
-  background-color: #f9f9f9;
-  border-radius: 4px;
-}
-
-.season-item {
-  padding: 2px 0;
-}
-
-.tabs-assort {
-  margin-top: 20px;
-}
-
-.other-resources li {
-  list-style: none;
-}
-
-.dynamic-icon-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.dynamic-icon-item {
+.pagination-container {
+  margin-top: 16px;
   text-align: center;
-  width: 100px;
 }
-
-.dynamic-icon-image {
-  width: 100px;
-  height: auto;
-}
-
-.card-name {
-  font-size: 12px;
-  margin-top: 5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.loading-placeholder, .empty-placeholder {
+.no-data {
   text-align: center;
-  padding: 20px;
+  padding: 40px 0;
   color: #999;
 }
-
-.weapons-container {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  margin-top: 20px;
+.panel-loading {
+  padding: 8px 0;
 }
-
-.weapon-group h3 {
-  margin-bottom: 10px;
-  color: #333;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 5px;
-}
-
-.weapons-list {
+.dynamic-icon-container {
   display: flex;
+  gap: 8px;
   flex-wrap: wrap;
-  gap: 10px;
 }
-
-.pagination-container {
-  display: flex;
-  justify-content: center;
-  margin-top: 50px;
-  margin-bottom: 90px;
+.dynamic-icon-item {
+  width: 64px;
+  text-align: center;
+}
+.dynamic-icon-image {
+  width: 64px;
+  height: 92px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+.card-name {
+  font-size: 12px;
+  margin-top: 4px;
+}
+.global-loading {
+  margin-top: 8px;
+  color: #f56c6c;
 }
 </style>
