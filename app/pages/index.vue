@@ -208,7 +208,7 @@
             @current-change="handlePageChange"
             :current-page="currentPage"
             :page-size="pageSize"
-            :pager-count="6"
+
             :total="filteredLinks.length"
             layout="prev, pager, next"
             background
