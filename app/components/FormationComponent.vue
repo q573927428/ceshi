@@ -253,29 +253,23 @@ export default {
 
 .formation-cards {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 16px;
 }
 
-.formation-cards.single-column {
+.formation-cards .single-column {
   grid-template-columns: 1fr 1fr;
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 1388px) {
   .formation-cards:not(.single-column) {
     grid-template-columns: 1fr 1fr;
   }
 }
 
-@media (min-width: 1599px) {
-  .formation-cards:not(.single-column) {
-    grid-template-columns: 1fr 1fr 1fr;
-  }
-}
-
 .team-group {
   margin: 5px auto;
-  padding: 10px 30px;
+  padding: 10px 15px;
   border-radius: 8px;
   background-color: #f7ecec;
   transition: background-color 0.3s;

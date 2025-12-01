@@ -16,7 +16,7 @@ export const cardBaseValues = {
 export function getCardValue(card) {
   const defaultCardBaseValue = 50;
   const baseValue = cardBaseValues[card.hero_id] ?? defaultCardBaseValue;
-  const advanceRate = 0.2;
+  const advanceRate = 0.3;
   return Math.round(baseValue * (1 + Math.min(card.advance_num, 5) * advanceRate));
 }
 

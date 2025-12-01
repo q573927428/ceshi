@@ -26,19 +26,19 @@
 
       <!-- 筛选排序与列配置 -->
       <div class="filter-sort">
-        <el-button size="small" @click="toggleFilter" plain :type="filterFavorites ? 'primary' : 'warning'">
+        <el-button @click="toggleFilter" plain :type="filterFavorites ? 'primary' : 'warning'">
           {{ filterFavorites ? '显示全部' : '仅看收藏' }}
         </el-button>
 
-        <el-button size="small" @click="setSort('price')" plain :type="sortKey === 'price' ? 'primary' : 'default'">
+        <el-button @click="setSort('price')" plain :type="sortKey === 'price' ? 'primary' : 'default'">
           价格排序 {{ sortKey === 'price' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
         </el-button>
 
-        <el-button size="small" @click="setSort('time')" plain :type="sortKey === 'time' ? 'primary' : 'default'">
+        <el-button @click="setSort('time')" plain :type="sortKey === 'time' ? 'primary' : 'default'">
           时间排序 {{ sortKey === 'time' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
         </el-button>
 
-        <el-button-group class="column-selector" size="small">
+        <el-button-group class="column-selector">
           <el-button :type="columnMode === 1 ? 'primary' : 'default'" @click="columnMode = 1">1 列</el-button>
           <el-button :type="columnMode === 2 ? 'primary' : 'default'" @click="columnMode = 2">2 列</el-button>
           <el-button :type="columnMode === 3 ? 'primary' : 'default'" @click="columnMode = 3">3 列</el-button>
@@ -844,9 +844,6 @@ export default {
     display: inline-flex;
   }
 }
-.column-selector{
-  margin-left: 15px;
-}
 .zangbao-page {
   padding: 16px;
 }
@@ -872,8 +869,7 @@ export default {
   margin-top: 12px;
   display: flex;
   gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
+  align-items: center;
 }
 .compare-results {
   margin-top: 16px;
@@ -918,10 +914,8 @@ export default {
   margin-top: 12px;
 }
 .pagination-container {
-  margin: 50px;
-  display: flex;
-  flex-wrap: wrap; /* 屏幕窄时按钮换行 */
-  justify-content: center; /* 水平居中按钮组 */
+  margin-top: 16px;
+  text-align: center;
 }
 .no-data {
   text-align: center;
