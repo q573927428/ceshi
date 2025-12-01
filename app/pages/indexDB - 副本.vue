@@ -222,8 +222,8 @@
 </template>
 
 <script>
-import { ref, reactive, computed, watch, onMounted, toRaw } from 'vue';
-import { openDB } from 'idb';
+import { ref, reactive, computed, watch, onMounted } from 'vue';
+import { openDB } from 'idb'; // IndexedDB 封装库
 import CategoryCardsList from '~/components/CategoryCardsList.vue';
 import SkillCard from '~/components/SkillCard.vue';
 import WeaponList from '~/components/WeaponList.vue';
@@ -290,13 +290,14 @@ export default {
       const allLinks = await db.getAll('links');
       zangbaoLinks.value = allLinks.map(i => ({
         ...i,
-        loading: false, // UI状态单独加回
+        loading: false,
       }));
       zangbaoLinks.value.forEach(item => { activeTabs[item.link] = 'first'; });
     };
 
     const saveCacheToDB = async (link, data) => {
       const db = await dbPromise;
+      // 去掉 Vue 代理，深拷贝
       const plainData = JSON.parse(JSON.stringify(data));
       await db.put('cache', { link, data: plainData, timestamp: Date.now() });
     };
@@ -312,7 +313,7 @@ export default {
       await db.delete('cache', link);
     };
 
-    // ---------- 工具函数 ----------
+    // ---------- 辅助函数 ----------
     const normalizeLink = (link) => {
       try { return new URL(link).origin + new URL(link).pathname; } catch { return link; }
     };
@@ -335,16 +336,14 @@ export default {
       if (!equip) throw new Error('API返回空');
 
       const url = `https://cbg-other-desc.res.netease.com/stzb/static/equipdesc/${extractedId}.json`;
-      const raw = await fetch(url); 
-      const parsed = JSON.parse(await raw.text());
+      const raw = await fetch(url); const parsed = JSON.parse(await raw.text());
       const decoded = parsed.equip_desc.replace(/\\u([0-9a-fA-F]{4})/g, (_, g) => String.fromCharCode(parseInt(g,16)));
       const full = JSON.parse(decoded);
 
       const uniqueCards = (full.card || []).filter(c => c.quality === 5)
         .reduce((acc, card) => {
           const exists = acc.find(c => c.hero_id === card.hero_id && c.season === card.season);
-          if (!exists) acc.push({...card}); 
-          else if(card.advance_num>exists.advance_num) exists.advance_num = card.advance_num;
+          if (!exists) acc.push({...card}); else if(card.advance_num>exists.advance_num) exists.advance_num = card.advance_num;
           return acc;
         }, []);
 
@@ -371,26 +370,16 @@ export default {
       };
 
       const processed = {
-        extractedId,
-        link,
-        equip: { price:equip.price||0, status_desc:equip.status_desc, area_name:equip.area_name, server_name:equip.server_name },
-        equipPrice: equip.price/100,
-        uniqueCards,
-        skill: full.skill||[],
-        redWeapons: weapons.redWeapons,
-        pinkWeapons: weapons.pinkWeapons,
-        blueWeapons: weapons.blueWeapons,
-        cardTotalValue,
-        weaponTotalValue,
-        tenures,
-        dynamic_icon: full.dynamic_icon||[]
+        extractedId, link, equip:{ price:equip.price||0, status_desc:equip.status_desc, area_name:equip.area_name, server_name:equip.server_name },
+        equipPrice: equip.price/100, uniqueCards, skill:full.skill||[],
+        ...weapons, cardTotalValue, weaponTotalValue, tenures, dynamic_icon:full.dynamic_icon||[]
       };
 
       await saveCacheToDB(link, processed);
       return processed;
     };
 
-    // ---------- 操作函数 ----------
+    // ---------- 操作 ----------
     const addLink = async () => {
       if (!newLink.value.trim()) { ElMessage.warning('请输入链接'); return; }
       const match = extractCbgLink(newLink.value.trim());
@@ -399,7 +388,7 @@ export default {
       await deleteCacheFromDB(normalized);
 
       const existing = zangbaoLinks.value.find(i=>i.link===normalized);
-      if(existing){ existing.timestamp=Date.now(); await saveLinkToDB(existing); ElMessage.success('链接已存在，已更新时间'); newLink.value=''; return; }
+      if(existing){ existing.timestamp=Date.now(); saveLinkToDB(existing); ElMessage.success('链接已存在，已更新时间'); newLink.value=''; return; }
 
       const item = { link:normalized, timestamp:Date.now(), isFavorite:false, data:null, loading:true };
       zangbaoLinks.value.push(item);
@@ -489,7 +478,6 @@ export default {
       if(errors.length){ElMessage.warning(`部分链接更新失败（${errors.length}）`);}else{ElMessage.success('更新所有数据成功');}
     };
 
-    // ---------- 分页、过滤、排序 ----------
     const filteredLinks = computed(()=>{
       let list=zangbaoLinks.value;
       if(filterFavorites.value) list=list.filter(item=>item.isFavorite);
@@ -512,7 +500,6 @@ export default {
     const setSort=(key)=>{if(sortKey.value===key){sortOrder.value=sortOrder.value==='asc'?'desc':'asc';}else{sortKey.value=key;sortOrder.value='asc';}currentPage.value=1;};
     const toggleFilter=()=>{filterFavorites.value=!filterFavorites.value;currentPage.value=1;};
 
-    // ---------- 页面初始化 ----------
     onMounted(async ()=>{
       await loadLinksFromDB();
     });
@@ -538,7 +525,6 @@ export default {
   }
 };
 </script>
-
 
 <style scoped>
 /* 手机端屏幕宽度小于 768px 时隐藏按钮组 */
