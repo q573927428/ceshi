@@ -207,8 +207,9 @@
             @current-change="handlePageChange"
             :current-page="currentPage"
             :page-size="pageSize"
+            :pager-count="6"
             :total="filteredLinks.length"
-            layout="prev, pager, next, jumper"
+            layout="prev, pager, next"
             background
           />
         </div>
@@ -268,7 +269,7 @@ export default {
     const filterFavorites = ref(false);
     const sortKey = ref('time');
     const sortOrder = ref('desc');
-    const columnMode = ref(window.innerWidth < 768 ? 1 : 2);
+    const columnMode = ref(2);
     const globalLoading = ref(false);
 
     // 内存 cache，避免频繁 JSON.parse
@@ -827,6 +828,13 @@ export default {
   }
   .panel-header > div {
     width: 100%;
+  }
+  .compare-container{
+    grid-template-columns: repeat(1, 1fr) !important;
+  }
+  .pagination-container {
+    transform: scale(0.85);
+    transform-origin: center;
   }
 }
 

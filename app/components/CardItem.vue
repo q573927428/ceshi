@@ -105,15 +105,15 @@ export default {
 <style scoped>
 .wujiang-item {
   list-style: none;
-  width: 86px;
+  width: 82px;
   margin: 2px auto;
   opacity: v-bind(opacity);
 }
 
 .wrap {
   position: relative;
-  width: 86px;
-  height: 128px;
+  width: 82px;
+  height: 120px;
   cursor: pointer;
 }
 
@@ -363,11 +363,11 @@ export default {
 
 @media (max-width: 576px) {
   .wujiang-item {
-    width: 86px;
+    width: 82px;
   }
   .wrap {
-    width: 86px;
-    height: 128px;
+    width: 82px;
+    height: 120px;
   }
   .state-wrap {
     width: 14px;
