@@ -303,7 +303,7 @@ export default {
             link: item.link,
             timestamp: item.timestamp,
             isFavorite: item.isFavorite,
-            data: item.data || null,
+            // data: item.data || null,
           };
         })));
       } catch (e) {
