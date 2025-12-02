@@ -2,7 +2,7 @@
   <div class="zangbao-page">
     <!-- 链接输入 + 操作 -->
     <div class="link-section">
-      <h3>藏宝阁链接对比:</h3>
+      <h3>藏宝阁链接:</h3>
 
       <div class="link-input-container">
         <div class="link-input">
@@ -19,7 +19,7 @@
 
         <div class="button-section">
           <el-button type="primary" @click="addLink">添加链接</el-button>
-          <el-button type="warning" @click="updateAll">更新全部</el-button>
+          <!-- <el-button type="warning" @click="updateAll">更新全部</el-button> -->
           <el-button type="info" @click="clearLinks">清空链接</el-button>
         </div>
       </div>

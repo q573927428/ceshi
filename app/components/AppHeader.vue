@@ -66,7 +66,7 @@ const go = (path) => {
 
   width: 100%;
   height: 50px;
-  background: #fff;
+  background: #e8f3ff;
 
   display: flex;
   z-index: 99999; /* 保证永远不被遮挡 */
