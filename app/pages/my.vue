@@ -26,19 +26,19 @@
 
       <!-- 筛选排序与列配置 -->
       <div class="filter-sort">
-        <el-button size="small" @click="toggleFilter" plain :type="filterFavorites ? 'primary' : 'warning'">
+        <el-button @click="toggleFilter" plain :type="filterFavorites ? 'primary' : 'warning'">
           {{ filterFavorites ? '显示全部' : '仅看收藏' }}
         </el-button>
 
-        <el-button size="small" @click="setSort('price')" plain :type="sortKey === 'price' ? 'primary' : 'default'">
+        <el-button @click="setSort('price')" plain :type="sortKey === 'price' ? 'primary' : 'default'">
           价格排序 {{ sortKey === 'price' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
         </el-button>
 
-        <el-button size="small" @click="setSort('time')" plain :type="sortKey === 'time' ? 'primary' : 'default'">
+        <el-button @click="setSort('time')" plain :type="sortKey === 'time' ? 'primary' : 'default'">
           时间排序 {{ sortKey === 'time' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
         </el-button>
 
-        <el-button-group class="column-selector" size="small">
+        <el-button-group class="column-selector">
           <el-button :type="columnMode === 1 ? 'primary' : 'default'" @click="columnMode = 1">1 列</el-button>
           <el-button :type="columnMode === 2 ? 'primary' : 'default'" @click="columnMode = 2">2 列</el-button>
           <el-button :type="columnMode === 3 ? 'primary' : 'default'" @click="columnMode = 3">3 列</el-button>
@@ -341,6 +341,7 @@ export default {
 
     // 主流程：直接抓，不存 cache
     const fetchAccountData = async (link) => {
+      console.log('请求触发 → ', link, new Date().toLocaleTimeString());
       const cleanLink = link.split('?')[0];
       const match = cleanLink.match(/\/equip\/1\/([A-Za-z0-9-]+)/);
 

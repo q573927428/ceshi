@@ -1,56 +1,98 @@
 <template>
-  <el-menu
-    :default-active="activeIndex"
-    class="el-menu-demo fixed-menu"
-    mode="horizontal"
-    router
-  >
-    <el-menu-item index="/">首页</el-menu-item>
-    <el-menu-item index="/">对比</el-menu-item>
-    <el-menu-item index="/">收藏</el-menu-item>
-  </el-menu>
+  <nav class="top-nav">
+    <div 
+      class="nav-item" 
+      :class="{ active: activeIndex === '/' }"
+      @click="go('/')"
+    >
+      <el-icon><House /></el-icon> 首页
+    </div>
+
+    <div 
+      class="nav-item"
+      :class="{ active: activeIndex === '/rent' }"
+      @click="go('/rent')"
+    >
+      <el-icon><Switch /></el-icon> 对比
+    </div>
+
+    <div 
+      class="nav-item"
+      :class="{ active: activeIndex === '/favorite' }"
+      @click="go('/favorite')"
+    >
+      <el-icon><Star /></el-icon> 收藏
+    </div>
+
+    <div 
+      class="nav-item"
+      :class="{ active: activeIndex === '/my' }"
+      @click="go('/my')"
+    >
+      <el-icon><User /></el-icon> 我的
+    </div>
+  </nav>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      activeIndex: '/'
-    }
-  },
-  watch: {
-    '$route'(to) {
-      this.activeIndex = to.path
-    }
-  },
-  mounted() {
-    this.activeIndex = this.$route.path
+<script setup>
+import { useRouter, useRoute } from 'vue-router'
+import { ref, watch } from 'vue'
+import { House, Star, Switch, User } from '@element-plus/icons-vue';
+
+const router = useRouter()
+const route = useRoute()
+
+// 必须是 ref，否则不会更新
+const activeIndex = ref(route.path)
+
+// route 变化后更新高亮
+watch(
+  () => route.path,
+  (newPath) => {
+    activeIndex.value = newPath
   }
+)
+
+const go = (path) => {
+  router.push(path)
 }
 </script>
 
 <style scoped>
-.fixed-menu {
+.top-nav {
   position: fixed;
   bottom: 0;
   left: 0;
+
   width: 100%;
-  z-index: 9999;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  height: 50px;
+  background: #fff;
 
   display: flex;
-  padding: 0;           /* 去掉默认 padding */
-  justify-content: space-between; /* 等分 */
+  z-index: 99999; /* 保证永远不被遮挡 */
+
+  border-top: 1px solid #e4e4e4;
 }
 
-.el-menu-demo {
-  width: 100%;
+.nav-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer; /* 必须给 cursor 指示可点击 */
+  user-select: none;
+
+  white-space: nowrap;
+  overflow: visible;
+
+  font-size: 15px;
+  color: #666;
 }
 
-.el-menu-demo .el-menu-item {
-  flex: 1;              /* 平均分配 */
-  text-align: center;
-  min-width: 0;         /* 防止折叠成 ... */
+.nav-item.active {
+  color: #409EFF;
+  font-weight: 600;
+  border-top: 2px solid #409EFF;
 }
-
 </style>
