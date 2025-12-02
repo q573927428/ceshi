@@ -238,7 +238,7 @@ import CardWeaponValue from '~/components/CardWeaponValue.vue';
 import { getCardValue, getWeaponValue } from '~/utils/valueCalculator.js';
 import { Delete, Star, DocumentCopy, Refresh, Connection } from '@element-plus/icons-vue';
 
-const DEFAULT_CONCURRENCY = 4;
+const DEFAULT_CONCURRENCY = 2;
 
 export default {
   components: {
@@ -605,17 +605,17 @@ export default {
 
     onMounted(() => { loadLinksFromLocal(); });
 
-    watch([currentPage, () => filteredLinks.value.length], () => {
-      const pageLinks = pagedLinks.value;
-      pageLinks.forEach(item => {
-        if (!item.data && !item.loading) {
-          item.loading = true;
-          fetchAccountData(item.link)
-            .then(processed => { item.data = processed; item.loading = false; saveLinksToLocal(); })
-            .catch(() => { item.loading = false; });
-        }
-      });
-    });
+    // watch([currentPage, () => filteredLinks.value.length], () => {
+    //   const pageLinks = pagedLinks.value;
+    //   pageLinks.forEach(item => {
+    //     if (!item.data && !item.loading) {
+    //       item.loading = true;
+    //       fetchAccountData(item.link)
+    //         .then(processed => { item.data = processed; item.loading = false; saveLinksToLocal(); })
+    //         .catch(() => { item.loading = false; });
+    //     }
+    //   });
+    // });
 
     return {
       newLink, zangbaoLinks, activeTabs, currentPage, pageSize, filterFavorites, sortKey, sortOrder, columnMode, globalLoading,
