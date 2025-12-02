@@ -32,12 +32,29 @@
       <el-icon><User /></el-icon> 我的
     </div>
   </nav>
+  <el-backtop :bottom="100">
+    <div
+      style="
+        height: 100%;
+        width: 100%;
+        background-color: var(--el-bg-color-overlay);
+        box-shadow: var(--el-box-shadow-lighter);
+        text-align: center;
+        line-height: 40px;
+        color: #1989fa;
+        border-radius: 50%;
+      "
+    >
+    <el-icon style="margin-top: 10px;"><ArrowUpBold /></el-icon>
+    </div>
+  </el-backtop>
 </template>
 
 <script setup>
 import { useRouter, useRoute } from 'vue-router'
 import { ref, watch } from 'vue'
 import { House, Star, Switch, User } from '@element-plus/icons-vue';
+import { ArrowUpBold } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()

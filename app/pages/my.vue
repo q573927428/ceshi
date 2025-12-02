@@ -501,11 +501,30 @@ export default {
     
     //清空链接
     const clearLinks = async () => {
-      if (!dbPromise) return;
-      const db = await dbPromise;
-      await db.clear('records');
-      await loadLinksFromDB();
-      ElMessage.success('已清空');
+      try {
+        // 使用 await 等待用户确认
+        await ElMessageBox.confirm(
+          '确定要清空所有链接？',
+          '提示',
+          {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }
+        );
+
+        if (!dbPromise) return;
+
+        const db = await dbPromise;
+        await db.clear('records');
+
+        await loadLinksFromDB();
+
+        ElMessage.success('已清空');
+      } catch (error) {
+        // 用户点击取消会进入这里
+        ElMessage.info('已取消');
+      }
     };
 
     const openLink = (link) => {
