@@ -225,8 +225,13 @@
 
 <script>
 /**
- * zangbaoLinks 统一存储缓存数据
- * 不再使用 zangbaoCache
+ * 完整重构版 index.vue
+ * 关键点：
+ *  - zangbaoLinks 每项结构统一：{ link, timestamp, isFavorite, data, loading }
+ *  - 内存缓存 cacheStore，减少过多 JSON.parse/stringify
+ *  - updateAll 支持并发限流
+ *  - Tabs lazy + 仅在 active 时渲染大型组件
+ *  - fetchAccountData 拆分为小函数（便于维护）
  */
 
 import { ref, reactive, computed, watch, onMounted } from 'vue';
@@ -238,6 +243,7 @@ import CardWeaponValue from '~/components/CardWeaponValue.vue';
 import { getCardValue, getWeaponValue } from '~/utils/valueCalculator.js';
 import { Delete, Star, DocumentCopy, Refresh, Connection } from '@element-plus/icons-vue';
 
+// 全局并发上限
 const DEFAULT_CONCURRENCY = 4;
 
 export default {
@@ -255,9 +261,10 @@ export default {
   },
 
   setup() {
+    // UI / 状态
     const newLink = ref('');
-    const zangbaoLinks = ref([]); // 每项 { link, timestamp, isFavorite, data, loading }
-    const activeTabs = reactive({});
+    const zangbaoLinks = ref([]); // 每项 { link, timestamp, isFavorite, data|null, loading:false }
+    const activeTabs = reactive({}); // 用 link 作为 key，值为 tab 名称
     const currentPage = ref(1);
     const pageSize = ref(6);
     const filterFavorites = ref(false);
@@ -266,10 +273,39 @@ export default {
     const columnMode = ref(2);
     const globalLoading = ref(false);
 
-    // ---------- 本地读取/保存 zangbaoLinks ----------
+    // 内存 cache，避免频繁 JSON.parse
+    let cacheStore = null;
+    const ensureCacheLoaded = () => {
+      if (!cacheStore) {
+        try {
+          cacheStore = JSON.parse(localStorage.getItem('zangbaoCache') || '{}');
+        } catch {
+          cacheStore = {};
+        }
+      }
+      return cacheStore;
+    };
+    const persistCacheToLocal = () => {
+      try {
+        localStorage.setItem('zangbaoCache', JSON.stringify(cacheStore || {}));
+      } catch (e) {
+        // localStorage 写入失败不致命
+        console.warn('写入缓存失败', e);
+      }
+    };
+
+    // ---------- 辅助：本地保存 / 读取 zangbaoLinks ----------
     const saveLinksToLocal = () => {
       try {
-        localStorage.setItem('zangbaoLinks', JSON.stringify(zangbaoLinks.value));
+        localStorage.setItem('zangbaoLinks', JSON.stringify(zangbaoLinks.value.map(item => {
+          // 不把 data 的大对象全部存入，这里保存 data 以便页面重启后直接显示（可选）
+          return {
+            link: item.link,
+            timestamp: item.timestamp,
+            isFavorite: item.isFavorite,
+            // data: item.data || null,
+          };
+        })));
       } catch (e) {
         console.warn('保存 links 失败', e);
       }
@@ -287,6 +323,7 @@ export default {
           data: i.data || null,
           loading: false,
         }));
+        // 初始化 activeTabs
         zangbaoLinks.value.forEach(item => {
           activeTabs[item.link] = 'first';
         });
@@ -295,7 +332,7 @@ export default {
       }
     };
 
-    // ---------- 工具函数 ----------
+    // ---------- 简单工具函数 ----------
     const normalizeLink = (link) => {
       try {
         const url = new URL(link);
@@ -305,22 +342,49 @@ export default {
       }
     };
 
+    // 解析并提取藏宝阁链接（更宽松的正则：支持大小写、数字、连字符）
     const extractCbgLink = (text) => {
       const match = text.match(/https:\/\/stzb\.cbg\.163\.com\/cgi\/mweb\/equip\/1\/[0-9a-zA-Z\-]+/i);
       return match ? match[0] : null;
     };
 
-    // ---------- fetchAccountData 拆分小函数 ----------
+    // ---------- 缓存读写 ----------
+    const getCachedData = (link) => {
+      const cache = ensureCacheLoaded();
+      return cache[link]?.data || null;
+    };
+
+    const cacheData = (link, processed) => {
+      const cache = ensureCacheLoaded();
+      cache[link] = { data: processed, timestamp: Date.now() };
+      persistCacheToLocal();
+    };
+
+    const deleteCacheForLink = (link) => {
+      const cache = ensureCacheLoaded();
+      if (cache[link]) {
+        delete cache[link];
+        persistCacheToLocal();
+      }
+    };
+
+    // ---------- fetchAccountData 拆分：小函数 ----------
+
+    // 1. 获取 equip detail（后端接口）
     const fetchEquipDetail = async (extractedId) => {
-      const equip = await $fetch('/api/equip/detail', { params: { ordersn: extractedId } });
+      const equip = await $fetch('/api/equip/detail', {
+        params: { ordersn: extractedId },
+      });
       return equip;
     };
 
+    // 2. 获取 equipdesc JSON（静态文件）
     const fetchFullJson = async (extractedId) => {
       const url = `https://cbg-other-desc.res.netease.com/stzb/static/equipdesc/${extractedId}.json`;
       const raw = await fetch(url);
       const rawText = await raw.text();
       const parsed = JSON.parse(rawText);
+      // decode \uXXXX
       const decoded = parsed.equip_desc.replace(/\\u([0-9a-fA-F]{4})/g, (_, grp) =>
         String.fromCharCode(parseInt(grp, 16))
       );
@@ -328,6 +392,7 @@ export default {
       return full;
     };
 
+    // 3. 提取 unique cards（quality 5 且按 hero_id + season 唯一）
     const extractUniqueCards = (full) => {
       const quality5 = (full.card || []).filter(c => c.quality === 5);
       const uniqueCards = [];
@@ -339,6 +404,7 @@ export default {
       return uniqueCards;
     };
 
+    // 4. 提取武器并计算价值
     const extractWeapons = (full) => {
       const phase3 = (full.gear || []).filter(w => w.phase === 3);
       const redWeapons = phase3
@@ -362,11 +428,16 @@ export default {
           const value = getWeaponValue({ ...w, color });
           return { ...w, color, calculatedValue: value };
         });
+
       return { redWeapons, pinkWeapons, blueWeapons };
     };
 
-    const calcCardTotalValue = (uniqueCards) => uniqueCards.reduce((sum, c) => sum + getCardValue(c), 0);
+    // 5. 计算卡片价值总和
+    const calcCardTotalValue = (uniqueCards) => {
+      return uniqueCards.reduce((sum, c) => sum + getCardValue(c), 0);
+    };
 
+    // 6. 组装最终 processed 对象
     const buildProcessedData = (extractedId, link, equip, full, weapons, uniqueCards) => {
       const cardTotalValue = calcCardTotalValue(uniqueCards);
       const allWeapons = [...(weapons.redWeapons || []), ...(weapons.pinkWeapons || []), ...(weapons.blueWeapons || [])];
@@ -383,7 +454,7 @@ export default {
         gear_feature_hammer: full.material?.gear_feature_hammer?.value || 0,
       };
 
-      return {
+      const processed = {
         extractedId,
         link,
         equip: {
@@ -403,12 +474,14 @@ export default {
         tenures,
         dynamic_icon: full.dynamic_icon || [],
       };
+      return processed;
     };
 
-    // ---------- fetchAccountData 主流程 ----------
+    // ---------- 主流程：fetchAccountData ----------
     const fetchAccountData = async (link) => {
-      const existing = zangbaoLinks.value.find(i => i.link === link);
-      if (existing?.data) return existing.data;
+      // 1. 先查缓存
+      const cached = getCachedData(link);
+      if (cached) return cached;
 
       const cleanLink = link.split('?')[0];
       const match = cleanLink.match(/\/equip\/1\/([A-Za-z0-9-]+)/);
@@ -416,22 +489,24 @@ export default {
 
       const extractedId = match[1];
       const equip = await fetchEquipDetail(extractedId).catch(() => { throw new Error('接口请求失败'); });
+
       if (!equip) throw new Error('API返回空');
 
       const full = await fetchFullJson(extractedId);
+
       const uniqueCards = extractUniqueCards(full);
       const weapons = extractWeapons(full);
       const processed = buildProcessedData(extractedId, link, equip, full, weapons, uniqueCards);
 
-      if (existing) existing.data = processed;
-
-      saveLinksToLocal();
+      cacheData(link, processed);
       return processed;
     };
 
-    // ---------- 链接操作 ----------
+    // ---------- 操作：添加 / 删除 / 刷新 / 更新全部 等 ----------
+
+    // 添加链接
     const addLink = async () => {
-      if (!newLink.value?.trim()) {
+      if (!newLink.value || !newLink.value.trim()) {
         ElMessage.warning('请输入链接');
         return;
       }
@@ -443,6 +518,9 @@ export default {
       }
       const normalized = normalizeLink(match);
 
+      // 删除缓存，确保获取最新（可选策略）
+      deleteCacheForLink(normalized);
+
       const existing = zangbaoLinks.value.find(i => i.link === normalized);
       if (existing) {
         existing.timestamp = Date.now();
@@ -452,11 +530,19 @@ export default {
         return;
       }
 
-      const item = { link: normalized, timestamp: Date.now(), isFavorite: false, data: null, loading: true };
+      // push 新项
+      const item = {
+        link: normalized,
+        timestamp: Date.now(),
+        isFavorite: false,
+        data: null,
+        loading: true,
+      };
       zangbaoLinks.value.push(item);
       activeTabs[item.link] = 'first';
       saveLinksToLocal();
 
+      // 异步抓取并展示
       try {
         const processed = await fetchAccountData(normalized);
         item.data = processed;
@@ -472,49 +558,77 @@ export default {
       }
     };
 
+    // 删除链接（按 link 匹配）
     const removeLink = (link) => {
-      ElMessageBox.confirm('确定要删除该链接吗？', '提示', { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' })
-        .then(() => {
-          const idx = zangbaoLinks.value.findIndex(i => i.link === link);
-          if (idx !== -1) {
-            zangbaoLinks.value.splice(idx, 1);
-            delete activeTabs[link];
-            saveLinksToLocal();
-            ElMessage.success('已删除');
-            if (pagedLinks.value.length === 0 && currentPage.value > 1) currentPage.value--;
-          }
-        }).catch(() => ElMessage.info('已取消'));
+      ElMessageBox.confirm('确定要删除该链接吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }).then(() => {
+        const idx = zangbaoLinks.value.findIndex(i => i.link === link);
+        if (idx !== -1) {
+          const item = zangbaoLinks.value[idx];
+          // 删除缓存
+          deleteCacheForLink(item.link);
+          zangbaoLinks.value.splice(idx, 1);
+          delete activeTabs[link];
+          saveLinksToLocal();
+          ElMessage.success('已删除');
+          // 调整分页
+          if (pagedLinks.value.length === 0 && currentPage.value > 1) currentPage.value--;
+        }
+      }).catch(() => {
+        ElMessage.info('已取消');
+      });
     };
 
+    // 清空所有
     const clearLinks = () => {
-      ElMessageBox.confirm('确定要清空所有链接？', '提示', { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' })
-        .then(() => {
-          zangbaoLinks.value = [];
-          for (const k in activeTabs) delete activeTabs[k];
-          try { localStorage.removeItem('zangbaoLinks'); } catch (e) {}
-          ElMessage.success('已清空');
-        }).catch(() => ElMessage.info('已取消'));
+      ElMessageBox.confirm('确定要清空所有链接？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }).then(() => {
+        zangbaoLinks.value = [];
+        for (const k in activeTabs) delete activeTabs[k];
+        try {
+          localStorage.removeItem('zangbaoLinks');
+          localStorage.removeItem('zangbaoCache');
+          cacheStore = null;
+        } catch (e) {}
+        ElMessage.success('已清空');
+      }).catch(() => {
+        ElMessage.info('已取消');
+      });
     };
 
+    // 收藏切换（传 item）
     const toggleFavorite = (item) => {
       item.isFavorite = !item.isFavorite;
       saveLinksToLocal();
       ElMessage.success(item.isFavorite ? '已收藏' : '已取消收藏');
     };
 
+    // 复制 URL
     const copyUrl = (cbgLink) => {
       navigator.clipboard.writeText(cbgLink).then(() => {
         ElMessage({ message: '复制成功', type: 'success', zIndex: 99999 });
-      }).catch(() => { ElMessage({ message: '复制失败', type: 'error' }); });
+      }).catch(() => {
+        ElMessage({ message: '复制失败', type: 'error' });
+      });
     };
 
-    const openLink = (url) => { window.open(url, "_blank"); };
+    // 打开新窗口
+    const openLink = (url) => {
+      window.open(url, "_blank");
+    };
 
+    // 刷新单条（删除缓存再拉取）
     const refreshLink = async (link) => {
       const item = zangbaoLinks.value.find(i => i.link === link);
       if (!item) return;
       item.loading = true;
-      item.data = null;
+      deleteCacheForLink(link);
       try {
         const processed = await fetchAccountData(link);
         item.data = processed;
@@ -527,12 +641,16 @@ export default {
       }
     };
 
+    // updateAll：并发限流版本
     const updateAll = async (concurrency = DEFAULT_CONCURRENCY) => {
       if (!zangbaoLinks.value.length) {
         ElMessage.info('没有链接需要更新');
         return;
       }
       globalLoading.value = true;
+
+      // 先清除所有对应缓存（可选），这里我们选择只删除需要更新的缓存
+      // 并行执行，但限制并发
       const queue = [...zangbaoLinks.value];
       let running = 0;
       const errors = [];
@@ -543,7 +661,8 @@ export default {
         const item = queue.shift();
         running++;
         item.loading = true;
-        item.data = null;
+        // 删除缓存确保拉到最新
+        deleteCacheForLink(item.link);
 
         return fetchAccountData(item.link)
           .then(processed => {
@@ -551,33 +670,51 @@ export default {
             item.timestamp = Date.now();
             item.loading = false;
           })
-          .catch(err => { item.loading = false; errors.push({ link: item.link, error: err }); })
-          .finally(() => { running--; })
+          .catch(err => {
+            item.loading = false;
+            errors.push({ link: item.link, error: err });
+          })
+          .finally(() => {
+            running--;
+          })
           .then(() => runNext());
       };
 
+      // 启动 concurrency 个任务
       const starters = [];
       for (let i = 0; i < concurrency; i++) starters.push(runNext());
       await Promise.all(starters);
 
+      // 所有任务完成（或失败）
       saveLinksToLocal();
       globalLoading.value = false;
 
-      if (errors.length) ElMessage.warning(`部分链接更新失败（${errors.length}）`);
-      else ElMessage.success('更新所有数据成功');
+      if (errors.length) {
+        ElMessage.warning(`部分链接更新失败（${errors.length}）`);
+      } else {
+        ElMessage.success('更新所有数据成功');
+      }
     };
 
-    // ---------- 分页、过滤、排序 ----------
+    // ---------- 分页、过滤、排序（都是基于 zangbaoLinks.value） ----------
     const filteredLinks = computed(() => {
       let list = zangbaoLinks.value;
-      if (filterFavorites.value) list = list.filter(item => item.isFavorite);
+      if (filterFavorites.value) {
+        list = list.filter(item => item.isFavorite);
+      }
+      // 排序
       const key = sortKey.value || 'time';
       const order = sortOrder.value || 'desc';
       const copy = [...list];
       copy.sort((a, b) => {
         let valA = 0, valB = 0;
-        if (key === 'price') { valA = a.data?.equipPrice || 0; valB = b.data?.equipPrice || 0; }
-        else if (key === 'time') { valA = a.timestamp || 0; valB = b.timestamp || 0; }
+        if (key === 'price') {
+          valA = a.data?.equipPrice || 0;
+          valB = b.data?.equipPrice || 0;
+        } else if (key === 'time') {
+          valA = a.timestamp || 0;
+          valB = b.timestamp || 0;
+        }
         return order === 'asc' ? valA - valB : valB - valA;
       });
       return copy;
@@ -588,45 +725,96 @@ export default {
       return filteredLinks.value.slice(start, start + pageSize.value);
     });
 
-    const gridStyle = computed(() => ({ gridTemplateColumns: `repeat(${columnMode.value}, 1fr)` }));
+    const gridStyle = computed(() => {
+      return { gridTemplateColumns: `repeat(${columnMode.value}, 1fr)` };
+    });
 
     const handlePageChange = (page) => {
       currentPage.value = page;
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
+    // 切换排序
     const setSort = (key) => {
-      if (sortKey.value === key) sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
-      else { sortKey.value = key; sortOrder.value = 'asc'; }
+      if (sortKey.value === key) {
+        sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortKey.value = key;
+        sortOrder.value = 'asc';
+      }
       currentPage.value = 1;
     };
 
-    const toggleFilter = () => { filterFavorites.value = !filterFavorites.value; currentPage.value = 1; };
+    // 切换收藏过滤
+    const toggleFilter = () => {
+      filterFavorites.value = !filterFavorites.value;
+      currentPage.value = 1;
+    };
 
-    onMounted(() => { loadLinksFromLocal(); });
+    // ---------- 页面初始化 ----------
+    onMounted(() => {
+      loadLinksFromLocal();
+      ensureCacheLoaded();
+      // 对于页面打开后未加载 data 的项，可以选择预热（按当前页）
+      // 这里默认不自动批量加载全部，避免大量请求。如果需要可以调用 updateAll()
+    });
 
+    // ---------- 小提示：当某项的 data 是 null 且当前页包含该项时可自动触发加载（节制） ----------
     watch([currentPage, () => filteredLinks.value.length], () => {
+      // 自动加载当前页但只加载未有 data 的项，避免在 computed 中触发请求
       const pageLinks = pagedLinks.value;
       pageLinks.forEach(item => {
         if (!item.data && !item.loading) {
+          // 触发加载（不阻塞 UI）
           item.loading = true;
           fetchAccountData(item.link)
-            .then(processed => { item.data = processed; item.loading = false; saveLinksToLocal(); })
-            .catch(() => { item.loading = false; });
+            .then(processed => {
+              item.data = processed;
+              item.loading = false;
+              saveLinksToLocal();
+            })
+            .catch(() => {
+              item.loading = false;
+            });
         }
       });
     });
 
+    // ---------- 返回到模板 ----------
     return {
-      newLink, zangbaoLinks, activeTabs, currentPage, pageSize, filterFavorites, sortKey, sortOrder, columnMode, globalLoading,
-      filteredLinks, pagedLinks, gridStyle,
-      addLink, removeLink, clearLinks, toggleFavorite, copyUrl, openLink, refreshLink, updateAll,
-      handlePageChange, setSort, toggleFilter,
+      // state
+      newLink,
+      zangbaoLinks,
+      activeTabs,
+      currentPage,
+      pageSize,
+      filterFavorites,
+      sortKey,
+      sortOrder,
+      columnMode,
+      globalLoading,
+
+      // computed
+      filteredLinks,
+      pagedLinks,
+      gridStyle,
+
+      // methods
+      addLink,
+      removeLink,
+      clearLinks,
+      toggleFavorite,
+      copyUrl,
+      openLink,
+      refreshLink,
+      updateAll,
+      handlePageChange,
+      setSort,
+      toggleFilter,
     };
   }
 };
 </script>
-
 
 <style scoped>
 /* 手机端屏幕宽度小于 768px 时隐藏按钮组 */

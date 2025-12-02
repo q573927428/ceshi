@@ -222,17 +222,14 @@
 </template>
 
 <script>
-import { ref, reactive, computed, watch, onMounted, toRaw } from 'vue';
+import { ref, reactive, computed, watch, onMounted } from 'vue';
 import { openDB } from 'idb';
 import CategoryCardsList from '~/components/CategoryCardsList.vue';
 import SkillCard from '~/components/SkillCard.vue';
 import WeaponList from '~/components/WeaponList.vue';
 import FormationComponent from '~/components/FormationComponent.vue';
-import CardWeaponValue from '~/components/CardWeaponValue.vue';
 import { getCardValue, getWeaponValue } from '~/utils/valueCalculator.js';
 import { Delete, Star, DocumentCopy, Refresh, Connection } from '@element-plus/icons-vue';
-
-const DEFAULT_CONCURRENCY = 4;
 
 export default {
   components: {
@@ -240,7 +237,6 @@ export default {
     SkillCard,
     WeaponList,
     FormationComponent,
-    CardWeaponValue,
     Delete,
     Star,
     DocumentCopy,
@@ -249,6 +245,7 @@ export default {
   },
 
   setup() {
+    // UI
     const newLink = ref('');
     const zangbaoLinks = ref([]);
     const activeTabs = reactive({});
@@ -260,285 +257,356 @@ export default {
     const columnMode = ref(2);
     const globalLoading = ref(false);
 
-    // ---------- IndexedDB ----------
-    const dbPromise = openDB('zangbaoDB', 1, {
-      upgrade(db) {
-        if (!db.objectStoreNames.contains('links')) db.createObjectStore('links', { keyPath: 'link' });
-        if (!db.objectStoreNames.contains('cache')) db.createObjectStore('cache', { keyPath: 'link' });
-      }
+    // IndexedDB
+    let dbPromise = null;
+
+    onMounted(async () => {
+      if (!process.client) return;
+
+      dbPromise = openDB('zangbaoDB', 1, {
+        upgrade(db) {
+          if (!db.objectStoreNames.contains('records')) {
+            db.createObjectStore('records', { keyPath: 'link' });
+          }
+        },
+      });
+
+      await loadLinksFromDB();
     });
 
-    const saveLinkToDB = async (item) => {
+    // ========================
+    //       IndexedDB 操作
+    // ========================
+
+    const saveRecord = async (record) => {
+      if (!dbPromise) return;
       const db = await dbPromise;
-      // 只存必要字段，并去掉 Vue 代理
-      const plainItem = {
-        link: item.link,
-        timestamp: item.timestamp,
-        isFavorite: item.isFavorite,
-        data: item.data ? JSON.parse(JSON.stringify(item.data)) : null
-      };
-      await db.put('links', plainItem);
+
+      // 深拷贝，避免 "could not be cloned" 错误
+      const cloned = JSON.parse(JSON.stringify(record));
+
+      await db.put('records', cloned);
     };
 
-    const deleteLinkFromDB = async (link) => {
+    const getRecord = async (link) => {
+      if (!dbPromise) return null;
       const db = await dbPromise;
-      await db.delete('links', link);
+      return await db.get('records', link);
+    };
+
+    const deleteRecord = async (link) => {
+      if (!dbPromise) return;
+      const db = await dbPromise;
+      await db.delete('records', link);
     };
 
     const loadLinksFromDB = async () => {
+      if (!dbPromise) return;
+
       const db = await dbPromise;
-      const allLinks = await db.getAll('links');
-      zangbaoLinks.value = allLinks.map(i => ({
-        ...i,
-        loading: false, // UI状态单独加回
+      const tx = db.transaction('records', 'readonly');
+      const store = tx.objectStore('records');
+      const all = await store.getAll();
+
+      zangbaoLinks.value = all.map(r => ({
+        link: r.link,
+        timestamp: r.timestamp,
+        isFavorite: r.isFavorite,
+        data: r.data || null,
+        loading: false,
       }));
-      zangbaoLinks.value.forEach(item => { activeTabs[item.link] = 'first'; });
+
+      zangbaoLinks.value.forEach(i => {
+        activeTabs[i.link] = 'first';
+      });
     };
 
-    const saveCacheToDB = async (link, data) => {
-      const db = await dbPromise;
-      const plainData = JSON.parse(JSON.stringify(data));
-      await db.put('cache', { link, data: plainData, timestamp: Date.now() });
-    };
+    // ========================
+    // 抓取数据流程（无 cache）
+    // ========================
 
-    const getCacheFromDB = async (link) => {
-      const db = await dbPromise;
-      const cached = await db.get('cache', link);
-      return cached?.data || null;
-    };
-
-    const deleteCacheFromDB = async (link) => {
-      const db = await dbPromise;
-      await db.delete('cache', link);
-    };
-
-    // ---------- 工具函数 ----------
-    const normalizeLink = (link) => {
-      try { return new URL(link).origin + new URL(link).pathname; } catch { return link; }
-    };
     const extractCbgLink = (text) => {
       const match = text.match(/https:\/\/stzb\.cbg\.163\.com\/cgi\/mweb\/equip\/1\/[0-9a-zA-Z\-]+/i);
       return match ? match[0] : null;
     };
 
-    // ---------- fetchAccountData ----------
-    const fetchAccountData = async (link) => {
-      const cached = await getCacheFromDB(link);
-      if (cached) return cached;
+    const normalizeLink = (link) => {
+      try {
+        const url = new URL(link);
+        return url.origin + url.pathname;
+      } catch {
+        return link;
+      }
+    };
 
+    // 主流程：直接抓，不存 cache
+    const fetchAccountData = async (link) => {
       const cleanLink = link.split('?')[0];
       const match = cleanLink.match(/\/equip\/1\/([A-Za-z0-9-]+)/);
+
       if (!match) throw new Error('无效ID');
       const extractedId = match[1];
 
-      const equip = await $fetch('/api/equip/detail', { params: { ordersn: extractedId } }).catch(() => { throw new Error('接口请求失败'); });
-      if (!equip) throw new Error('API返回空');
+      // 1. 获取 equip 详情
+      const equip = await $fetch('/api/equip/detail', {
+        params: { ordersn: extractedId },
+      });
 
-      const url = `https://cbg-other-desc.res.netease.com/stzb/static/equipdesc/${extractedId}.json`;
-      const raw = await fetch(url); 
-      const parsed = JSON.parse(await raw.text());
-      const decoded = parsed.equip_desc.replace(/\\u([0-9a-fA-F]{4})/g, (_, g) => String.fromCharCode(parseInt(g,16)));
+      // 2. 解析 full.json
+      const jsonUrl = `https://cbg-other-desc.res.netease.com/stzb/static/equipdesc/${extractedId}.json`;
+      const raw = await fetch(jsonUrl);
+      const text = await raw.text();
+      const parsed = JSON.parse(text);
+
+      const decoded = parsed.equip_desc.replace(/\\u([0-9a-fA-F]{4})/g, (_, g) =>
+        String.fromCharCode(parseInt(g, 16))
+      );
       const full = JSON.parse(decoded);
 
-      const uniqueCards = (full.card || []).filter(c => c.quality === 5)
-        .reduce((acc, card) => {
-          const exists = acc.find(c => c.hero_id === card.hero_id && c.season === card.season);
-          if (!exists) acc.push({...card}); 
-          else if(card.advance_num>exists.advance_num) exists.advance_num = card.advance_num;
-          return acc;
-        }, []);
+      // 3. 提取数据
+      const uniqueCards = extractUniqueCards(full);
+      const weapons = extractWeapons(full);
 
-      const phase3 = (full.gear || []).filter(w => w.phase ===3);
-      const weapons = {
-        redWeapons: phase3.filter(w=>w.advance===1).map(w=>({ ...w, color:'红', calculatedValue: getWeaponValue({...w, color:'红'}) })),
-        pinkWeapons: phase3.filter(w=>w.level_type===2&&w.advance!==1).map(w=>({ ...w, color:'粉', calculatedValue: getWeaponValue({...w, color:'粉'}) })),
-        blueWeapons: phase3.filter(w=>w.level_type===0&&w.advance!==1).map(w=>({ ...w, color:'蓝', calculatedValue: getWeaponValue({...w, color:'蓝'}) }))
-      };
+      // 4. 组装 processed
+      return buildProcessedData(extractedId, link, equip, full, weapons, uniqueCards);
+    };
 
-      const cardTotalValue = uniqueCards.reduce((sum,c)=>sum+getCardValue(c),0);
-      const allWeapons = [...weapons.redWeapons,...weapons.pinkWeapons,...weapons.blueWeapons];
-      const weaponTotalValue = allWeapons.reduce((sum,w)=>sum+(w.calculatedValue||0),0);
+    // ========================
+    // 数据提取
+    // ========================
+    const extractUniqueCards = (full) => {
+      const list = (full.card || []).filter(c => c.quality === 5);
+      const result = [];
+      list.forEach(c => {
+        const ex = result.find(r => r.hero_id === c.hero_id && r.season === c.season);
+        if (!ex) result.push({ ...c });
+        else if (c.advance_num > ex.advance_num) ex.advance_num = c.advance_num;
+      });
+      return result;
+    };
 
-      const tenures = {
-        yuan_bao: full.tenure?.yuan_bao||0,
-        bind_yuan_bao: full.tenure?.bind_yuan_bao||0,
-        honor: full.tenure?.honor||0,
-        jiang_ling: full.tenure?.jiang_ling||0,
-        hufu: full.tenure?.hufu||0,
-        chi_zhu_shan_tie: full.material?.chi_zhu_shan_tie?.value||0,
-        xiao_ye_zi_tan: full.material?.xiao_ye_zi_tan?.value||0,
-        gear_feature_hammer: full.material?.gear_feature_hammer?.value||0
-      };
+    const extractWeapons = (full) => {
+      const phase3 = (full.gear || []).filter(w => w.phase === 3);
 
-      const processed = {
+      const red = phase3.filter(w => w.advance === 1).map(w => ({
+        ...w,
+        color: '红',
+        calculatedValue: getWeaponValue(w),
+      }));
+
+      const pink = phase3.filter(w => w.level_type === 2 && w.advance !== 1).map(w => ({
+        ...w,
+        color: '粉',
+        calculatedValue: getWeaponValue(w),
+      }));
+
+      const blue = phase3.filter(w => w.level_type === 0 && w.advance !== 1).map(w => ({
+        ...w,
+        color: '蓝',
+        calculatedValue: getWeaponValue(w),
+      }));
+
+      return { redWeapons: red, pinkWeapons: pink, blueWeapons: blue };
+    };
+
+    const buildProcessedData = (extractedId, link, equip, full, weapons, uniqueCards) => {
+      const cardTotalValue = uniqueCards.reduce((sum, c) => sum + getCardValue(c), 0);
+      const allW = [...weapons.redWeapons, ...weapons.pinkWeapons, ...weapons.blueWeapons];
+      const weaponTotalValue = allW.reduce((s, w) => s + w.calculatedValue, 0);
+
+      return {
         extractedId,
         link,
-        equip: { price:equip.price||0, status_desc:equip.status_desc, area_name:equip.area_name, server_name:equip.server_name },
-        equipPrice: equip.price/100,
+        equipPrice: equip.price / 100,
+        equip: {
+          price: equip.price,
+          status_desc: equip.status_desc,
+          area_name: equip.area_name,
+          server_name: equip.server_name,
+        },
         uniqueCards,
-        skill: full.skill||[],
-        redWeapons: weapons.redWeapons,
-        pinkWeapons: weapons.pinkWeapons,
-        blueWeapons: weapons.blueWeapons,
+        skill: full.skill || [],
+        ...weapons,
         cardTotalValue,
         weaponTotalValue,
-        tenures,
-        dynamic_icon: full.dynamic_icon||[]
+        tenures: {
+          yuan_bao: full.tenure?.yuan_bao || 0,
+          bind_yuan_bao: full.tenure?.bind_yuan_bao || 0,
+          honor: full.tenure?.honor || 0,
+          jiang_ling: full.tenure?.jiang_ling || 0,
+          hufu: full.tenure?.hufu || 0,
+          chi_zhu_shan_tie: full.material?.chi_zhu_shan_tie?.value || 0,
+          xiao_ye_zi_tan: full.material?.xiao_ye_zi_tan?.value || 0,
+          gear_feature_hammer: full.material?.gear_feature_hammer?.value || 0,
+        },
+        dynamic_icon: full.dynamic_icon || [],
       };
-
-      await saveCacheToDB(link, processed);
-      return processed;
     };
 
-    // ---------- 操作函数 ----------
+    // ========================
+    // 添加链接
+    // ========================
     const addLink = async () => {
-      if (!newLink.value.trim()) { ElMessage.warning('请输入链接'); return; }
-      const match = extractCbgLink(newLink.value.trim());
-      if(!match){ ElMessage.warning('链接格式不正确'); return; }
-      const normalized = normalizeLink(match);
-      await deleteCacheFromDB(normalized);
+      if (!newLink.value.trim()) {
+        ElMessage.warning('请输入链接');
+        return;
+      }
 
-      const existing = zangbaoLinks.value.find(i=>i.link===normalized);
-      if(existing){ existing.timestamp=Date.now(); await saveLinkToDB(existing); ElMessage.success('链接已存在，已更新时间'); newLink.value=''; return; }
+      const real = extractCbgLink(newLink.value.trim());
+      if (!real) return ElMessage.warning('链接格式不正确');
 
-      const item = { link:normalized, timestamp:Date.now(), isFavorite:false, data:null, loading:true };
-      zangbaoLinks.value.push(item);
-      activeTabs[item.link]='first';
-      await saveLinkToDB(item);
+      const link = normalizeLink(real);
 
-      try{
-        const processed = await fetchAccountData(normalized);
-        item.data = processed; item.loading=false;
-        await saveLinkToDB(item);
-        ElMessage.success('链接添加成功并已获取数据');
-      }catch(err){
-        item.loading=false; item.data=null;
-        ElMessage.error('获取数据失败：'+(err.message||err));
-      }finally{ newLink.value=''; }
-    };
+      let record = await getRecord(link);
 
-    const removeLink = async (link)=>{
-      ElMessageBox.confirm('确定要删除该链接吗？','提示',{ confirmButtonText:'确定', cancelButtonText:'取消', type:'warning'})
-      .then(async ()=>{
-        const idx=zangbaoLinks.value.findIndex(i=>i.link===link);
-        if(idx!==-1){
-          const item=zangbaoLinks.value[idx];
-          await deleteCacheFromDB(item.link);
-          await deleteLinkFromDB(item.link);
-          zangbaoLinks.value.splice(idx,1);
-          delete activeTabs[link];
-          ElMessage.success('已删除');
-          if(pagedLinks.value.length===0 && currentPage.value>1) currentPage.value--;
-        }
-      }).catch(()=>{ ElMessage.info('已取消'); });
-    };
+      // 已存在
+      if (record) {
+        record.timestamp = Date.now();
+        await saveRecord(record);
+        await loadLinksFromDB();
+        newLink.value = '';
+        ElMessage.success('链接已存在，已更新时间');
+        return;
+      }
 
-    const clearLinks = async ()=>{
-      ElMessageBox.confirm('确定要清空所有链接？','提示',{ confirmButtonText:'确定', cancelButtonText:'取消', type:'warning'})
-      .then(async ()=>{
-        zangbaoLinks.value=[];
-        for(const k in activeTabs) delete activeTabs[k];
-        const db = await dbPromise;
-        await db.clear('links'); await db.clear('cache');
-        ElMessage.success('已清空');
-      }).catch(()=>{ ElMessage.info('已取消'); });
-    };
-
-    const toggleFavorite = async (item)=>{
-      item.isFavorite=!item.isFavorite;
-      await saveLinkToDB(item);
-      ElMessage.success(item.isFavorite?'已收藏':'已取消收藏');
-    };
-
-    const copyUrl = (cbgLink)=>{
-      navigator.clipboard.writeText(cbgLink).then(()=>{ElMessage({message:'复制成功',type:'success',zIndex:99999})}).catch(()=>{ElMessage({message:'复制失败',type:'error'})});
-    };
-    const openLink = (url)=>window.open(url,'_blank');
-
-    const refreshLink = async (link)=>{
-      const item = zangbaoLinks.value.find(i=>i.link===link); if(!item) return;
-      item.loading=true;
-      await deleteCacheFromDB(link);
-      try{
-        const processed = await fetchAccountData(link);
-        item.data=processed; item.loading=false;
-        await saveLinkToDB(item);
-        ElMessage.success('刷新成功');
-      }catch(err){ item.loading=false; ElMessage.error('刷新失败：'+(err.message||err)); }
-    };
-
-    const updateAll = async (concurrency=DEFAULT_CONCURRENCY)=>{
-      if(!zangbaoLinks.value.length){ElMessage.info('没有链接需要更新');return;}
-      globalLoading.value=true;
-      const queue=[...zangbaoLinks.value]; let running=0; const errors=[];
-      const runNext = async ()=>{
-        if(queue.length===0) return;
-        if(running>=concurrency) return;
-        const item = queue.shift(); running++; item.loading=true;
-        await deleteCacheFromDB(item.link);
-        try{
-          const processed = await fetchAccountData(item.link);
-          item.data=processed; item.timestamp=Date.now(); item.loading=false;
-          await saveLinkToDB(item);
-        }catch(err){ item.loading=false; errors.push({link:item.link,error:err}); }
-        running--; await runNext();
+      // 新增
+      const newRecord = {
+        link,
+        timestamp: Date.now(),
+        isFavorite: false,
+        data: null,
       };
-      const starters=[]; for(let i=0;i<concurrency;i++) starters.push(runNext());
-      await Promise.all(starters);
-      globalLoading.value=false;
-      if(errors.length){ElMessage.warning(`部分链接更新失败（${errors.length}）`);}else{ElMessage.success('更新所有数据成功');}
+
+      await saveRecord(newRecord);
+
+      // 抓取数据
+      const processed = await fetchAccountData(link);
+      newRecord.data = processed;
+      await saveRecord(newRecord);
+
+      await loadLinksFromDB();
+      newLink.value = '';
+      ElMessage.success('添加成功');
     };
 
-    // ---------- 分页、过滤、排序 ----------
-    const filteredLinks = computed(()=>{
-      let list=zangbaoLinks.value;
-      if(filterFavorites.value) list=list.filter(item=>item.isFavorite);
-      const key = sortKey.value||'time';
-      const order=sortOrder.value||'desc';
-      return [...list].sort((a,b)=>{
-        let valA=0,valB=0;
-        if(key==='price'){valA=a.data?.equipPrice||0;valB=b.data?.equipPrice||0;}
-        else if(key==='time'){valA=a.timestamp||0;valB=b.timestamp||0;}
-        return order==='asc'?valA-valB:valB-valA;
-      });
-    });
-
-    const pagedLinks = computed(()=>{
-      const start=(currentPage.value-1)*pageSize.value;
-      return filteredLinks.value.slice(start,start+pageSize.value);
-    });
-    const gridStyle = computed(()=>({gridTemplateColumns:`repeat(${columnMode.value},1fr)`}));
-    const handlePageChange=(page)=>{currentPage.value=page;window.scrollTo({top:0,behavior:'smooth'});};
-    const setSort=(key)=>{if(sortKey.value===key){sortOrder.value=sortOrder.value==='asc'?'desc':'asc';}else{sortKey.value=key;sortOrder.value='asc';}currentPage.value=1;};
-    const toggleFilter=()=>{filterFavorites.value=!filterFavorites.value;currentPage.value=1;};
-
-    // ---------- 页面初始化 ----------
-    onMounted(async ()=>{
+    // ========================
+    // 删除链接
+    // ========================
+    const removeLink = async (link) => {
+      await deleteRecord(link);
       await loadLinksFromDB();
-    });
+      ElMessage.success('已删除');
+    };
 
-    // 自动加载当前页未加载的数据
-    watch([currentPage,()=>filteredLinks.value.length],()=>{
-      const pageLinks=pagedLinks.value;
-      pageLinks.forEach(async item=>{
-        if(!item.data&&!item.loading){
-          item.loading=true;
-          try{item.data=await fetchAccountData(item.link);}catch{}finally{item.loading=false;}
+    // ========================
+    // 刷新
+    // ========================
+    const refreshLink = async (link) => {
+      let record = await getRecord(link);
+      if (!record) return;
+
+      const processed = await fetchAccountData(link);
+      record.data = processed;
+      record.timestamp = Date.now();
+
+      await saveRecord(record);
+      await loadLinksFromDB();
+
+      ElMessage.success('刷新成功');
+    };
+
+    // ========================
+    // 更新全部
+    // ========================
+    const updateAll = async () => {
+      globalLoading.value = true;
+
+      for (const item of zangbaoLinks.value) {
+        const record = await getRecord(item.link);
+        if (!record) continue;
+
+        try {
+          const processed = await fetchAccountData(item.link);
+          record.data = processed;
+          record.timestamp = Date.now();
+          await saveRecord(record);
+        } catch (err) {
+          console.error(err);
         }
+      }
+
+      await loadLinksFromDB();
+      globalLoading.value = false;
+
+      ElMessage.success('全部更新完成');
+    };
+
+    // ========================
+    // 收藏
+    // ========================
+    const toggleFavorite = async (item) => {
+      const record = await getRecord(item.link);
+      if (!record) return;
+
+      record.isFavorite = !record.isFavorite;
+      await saveRecord(record);
+      await loadLinksFromDB();
+    };
+
+    // ========================
+    // 排序 & 分页
+    // ========================
+    const filteredLinks = computed(() => {
+      let list = zangbaoLinks.value;
+
+      if (filterFavorites.value) {
+        list = list.filter(i => i.isFavorite);
+      }
+
+      const key = sortKey.value;
+      const order = sortOrder.value;
+
+      return [...list].sort((a, b) => {
+        const A = key === 'price' ? (a.data?.equipPrice || 0) : a.timestamp;
+        const B = key === 'price' ? (b.data?.equipPrice || 0) : b.timestamp;
+        return order === 'asc' ? A - B : B - A;
       });
     });
+
+    const pagedLinks = computed(() => {
+      const start = (currentPage.value - 1) * pageSize.value;
+      return filteredLinks.value.slice(start, start + pageSize.value);
+    });
+
+    const gridStyle = computed(() => ({
+      gridTemplateColumns: `repeat(${columnMode.value}, 1fr)`
+    }));
 
     return {
-      newLink, zangbaoLinks, activeTabs, currentPage, pageSize, filterFavorites,
-      sortKey, sortOrder, columnMode, globalLoading,
-      filteredLinks, pagedLinks, gridStyle,
-      addLink, removeLink, clearLinks, toggleFavorite, copyUrl, openLink,
-      refreshLink, updateAll, handlePageChange, setSort, toggleFilter
+      newLink,
+      zangbaoLinks,
+      activeTabs,
+      filteredLinks,
+      pagedLinks,
+      gridStyle,
+
+      addLink,
+      removeLink,
+      refreshLink,
+      updateAll,
+      toggleFavorite,
+
+      currentPage,
+      pageSize,
+      sortKey,
+      sortOrder,
+      filterFavorites,
+      columnMode,
+      globalLoading,
     };
   }
 };
 </script>
-
 
 <style scoped>
 /* 手机端屏幕宽度小于 768px 时隐藏按钮组 */
