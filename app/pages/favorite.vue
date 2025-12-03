@@ -429,6 +429,7 @@ export default {
     const buildProcessedData = (extractedId, link, equip, full, weapons, uniqueCards) => {
       const cardTotalValue = uniqueCards.reduce((sum, c) => sum + getCardValue(c), 0);
       const allW = [...weapons.redWeapons, ...weapons.pinkWeapons, ...weapons.blueWeapons];
+      allW.forEach(w => w.calculatedValue = getWeaponValue(w));
       const weaponTotalValue = allW.reduce((s, w) => s + w.calculatedValue, 0);
 
       return {
