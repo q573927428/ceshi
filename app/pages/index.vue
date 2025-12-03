@@ -381,7 +381,7 @@ export default {
     };
 
     // 主流程：直接抓，不存 cache
-    const fetchAccountData = async (link) => {
+    const fetchAccountData = async (link, record = null) => {
       console.log('请求触发 → ', link, new Date().toLocaleTimeString());
       const cleanLink = link.split('?')[0];
       const match = cleanLink.match(/\/equip\/1\/([A-Za-z0-9-]+)/);
@@ -390,9 +390,17 @@ export default {
       const extractedId = match[1];
 
       // 1. 获取 equip 详情
-      const equip = await $fetch('/api/equip/detail', {
-        params: { ordersn: extractedId },
-      });
+      // const equip = await $fetch('/api/equip/detail', {
+      //   params: { ordersn: extractedId },
+      // });
+
+      // 1. 暂不请求 equip（只测试价值计算）
+      let equip = {
+        price: record?.data?.equip?.price || 0,
+        status_desc: record?.data?.equip?.status_desc || '',
+        area_name: record?.data?.equip?.area_name || '',
+        server_name: record?.data?.equip?.server_name || ''
+      };
 
       // 2. 解析 full.json
       const jsonUrl = `https://cbg-other-desc.res.netease.com/stzb/static/equipdesc/${extractedId}.json`;
@@ -454,6 +462,7 @@ export default {
     const buildProcessedData = (extractedId, link, equip, full, weapons, uniqueCards) => {
       const cardTotalValue = uniqueCards.reduce((sum, c) => sum + getCardValue(c), 0);
       const allW = [...weapons.redWeapons, ...weapons.pinkWeapons, ...weapons.blueWeapons];
+      allW.forEach(w => w.calculatedValue = getWeaponValue(w));
       const weaponTotalValue = allW.reduce((s, w) => s + w.calculatedValue, 0);
 
       return {
@@ -543,7 +552,6 @@ export default {
 
       // 抓取数据
       const processed = await fetchAccountData(link);
-      console.log(processed);
       
       newRecord.data = processed;
       await saveRecord(newRecord);
@@ -617,7 +625,7 @@ export default {
       let record = await getRecord(link);
       if (!record) return;
 
-      const processed = await fetchAccountData(link);
+      const processed = await fetchAccountData(link, record);
       record.data = processed;
       // record.timestamp = Date.now();
 

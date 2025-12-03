@@ -577,7 +577,7 @@ export default {
 
       const processed = await fetchAccountData(link);
       record.data = processed;
-      record.timestamp = Date.now();
+      // record.timestamp = Date.now();
 
       await saveRecord(record);
       await loadLinksFromDB();
