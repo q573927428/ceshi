@@ -47,8 +47,8 @@ export const cardBaseValues = {
     100526: 100, 100030: 200, 100016: 200, 100035: 100, 100023: 200, 100027: 100, 100013: 200, 100451: 100, 100619: 100, 
 
     // SS卡 ssCardsData
-    100615: 50, 100337: 100, 100685: 100, 100670: 50, 100692: 50, 100649: 100, 100787: 600, 100807: 500, 100808: 200, 
-    100771: 100, 100794: 300, 100704: 500, 100703: 300, 100708: 200, 100709: 200, 100792: 300, 100799: 300, 100785: 100, 
+    100615: 50, 100337: 100, 100685: 100, 100670: 50, 100692: 50, 100649: 100, 100787: 300, 100807: 300, 100808: 200, 
+    100771: 100, 100794: 200, 100704: 300, 100703: 200, 100708: 200, 100709: 200, 100792: 200, 100799: 200, 100785: 100, 
     
     // S卡 sCardsData
     100449: 30, 100604: 30, 100443: 30, 100620: 30, 100021: 30, 102001: 30, 100648: 30, 100074: 30, 102012: 30, 
@@ -68,7 +68,7 @@ function getAdvanceMultiplier(card) {
     const advanceNum = card.advance_num || 0;
   
     // 只对特殊卡和SSS卡生效
-    if (!(specialCardsData.includes(card.hero_id) || sssCardsData.includes(card.hero_id) || ssCardsData.includes(card.hero_id) || sCardsData.includes(card.hero_id)) ) {
+    if (!(specialCardsData.includes(card.hero_id) || sssCardsData.includes(card.hero_id) || ssCardsData.includes(card.hero_id)) ) {
       return 1; // 无加成
     }
   
@@ -77,7 +77,7 @@ function getAdvanceMultiplier(card) {
   
     for (let i = 1; i <= advanceNum; i++) {
       total += factor;
-      factor *= 3.2; // 每多一星，贡献递增，指数增长
+      factor *= 3; // 每多一星，贡献递增，指数增长
     }
   
     return total;

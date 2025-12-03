@@ -543,6 +543,8 @@ export default {
 
       // 抓取数据
       const processed = await fetchAccountData(link);
+      console.log(processed);
+      
       newRecord.data = processed;
       await saveRecord(newRecord);
 
@@ -555,9 +557,24 @@ export default {
     // 删除链接
     // ========================
     const removeLink = async (link) => {
-      await deleteRecord(link);
-      await loadLinksFromDB();
-      ElMessage.success('已删除');
+      try {
+        await ElMessageBox.confirm(
+          '确定要删除该链接？',
+          '提示',
+          {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }
+        );
+
+        await deleteRecord(link);
+        await loadLinksFromDB();
+        ElMessage.success('删除成功');
+      } catch (error) {
+        // 用户点击取消会进入这里
+        ElMessage.info('已取消');
+      }
     };
     
     //清空链接
