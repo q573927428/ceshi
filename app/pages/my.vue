@@ -80,7 +80,8 @@
 
                 <div class="price-info">
                   估算：武将卡池 {{ item.data.cardTotalValue || 0 }} + 武器 {{ item.data.weaponTotalValue || 0 }} =
-                  共计 {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }} 元 备注：{{ item.remark || "" }}
+                  共计 {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }} 元 
+                  <span class="remark-bz" v-if="item.remark">备注：{{ item.remark || "" }}</span>
                 </div>
               </div>
 
@@ -542,6 +543,8 @@ export default {
 
       // 抓取数据
       const processed = await fetchAccountData(link);
+      console.log(processed);
+      
       newRecord.data = processed;
       await saveRecord(newRecord);
 
@@ -554,9 +557,24 @@ export default {
     // 删除链接
     // ========================
     const removeLink = async (link) => {
-      await deleteRecord(link);
-      await loadLinksFromDB();
-      ElMessage.success('已删除');
+      try {
+        await ElMessageBox.confirm(
+          '确定要删除该链接？',
+          '提示',
+          {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }
+        );
+
+        await deleteRecord(link);
+        await loadLinksFromDB();
+        ElMessage.success('删除成功');
+      } catch (error) {
+        // 用户点击取消会进入这里
+        ElMessage.info('已取消');
+      }
     };
     
     //清空链接
@@ -601,7 +619,7 @@ export default {
 
       const processed = await fetchAccountData(link);
       record.data = processed;
-      record.timestamp = Date.now();
+      // record.timestamp = Date.now();
 
       await saveRecord(record);
       await loadLinksFromDB();
@@ -721,6 +739,10 @@ export default {
     const gridStyle = computed(() => ({
       gridTemplateColumns: `repeat(${columnMode.value}, 1fr)`
     }));
+    // 排在 return 之前
+    const handlePageChange = (page) => {
+      currentPage.value = page;
+    };
 
     return {
       newLink,
@@ -743,6 +765,7 @@ export default {
       copyUrl,
       editRecord,
       saveRemark,
+      handlePageChange,
 
       currentPage,
       pageSize,
@@ -891,6 +914,9 @@ export default {
 }
 .global-loading {
   margin-top: 8px;
+  color: #f56c6c;
+}
+.remark-bz{
   color: #f56c6c;
 }
 </style>

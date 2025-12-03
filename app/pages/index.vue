@@ -81,7 +81,7 @@
                 <div class="price-info">
                   估算：武将卡池 {{ item.data.cardTotalValue || 0 }} + 武器 {{ item.data.weaponTotalValue || 0 }} =
                   共计 {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }} 元 
-                  <span v-if="item.remark">备注：{{ item.remark || "" }}</span>
+                  <span class="remark-bz" v-if="item.remark">备注：{{ item.remark || "" }}</span>
                 </div>
               </div>
 
@@ -619,7 +619,7 @@ export default {
 
       const processed = await fetchAccountData(link);
       record.data = processed;
-      record.timestamp = Date.now();
+      // record.timestamp = Date.now();
 
       await saveRecord(record);
       await loadLinksFromDB();
@@ -739,6 +739,10 @@ export default {
     const gridStyle = computed(() => ({
       gridTemplateColumns: `repeat(${columnMode.value}, 1fr)`
     }));
+    // 排在 return 之前
+    const handlePageChange = (page) => {
+      currentPage.value = page;
+    };
 
     return {
       newLink,
@@ -761,6 +765,7 @@ export default {
       copyUrl,
       editRecord,
       saveRemark,
+      handlePageChange,
 
       currentPage,
       pageSize,
@@ -909,6 +914,9 @@ export default {
 }
 .global-loading {
   margin-top: 8px;
+  color: #f56c6c;
+}
+.remark-bz{
   color: #f56c6c;
 }
 </style>
