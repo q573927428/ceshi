@@ -2,7 +2,7 @@
   <div class="zangbao-page">
     <!-- 链接输入 + 操作 -->
     <div class="link-section">
-      <h3>藏宝阁链接对比:</h3>
+      <h3>藏宝阁链接:</h3>
 
       <div class="link-input-container">
         <div class="link-input">
@@ -19,26 +19,26 @@
 
         <div class="button-section">
           <el-button type="primary" @click="addLink">添加链接</el-button>
-          <el-button type="warning" @click="updateAll">更新全部</el-button>
+          <!-- <el-button type="warning" @click="updateAll">更新全部</el-button> -->
           <el-button type="info" @click="clearLinks">清空链接</el-button>
         </div>
       </div>
 
       <!-- 筛选排序与列配置 -->
       <div class="filter-sort">
-        <el-button size="small" @click="toggleFilter" plain :type="filterFavorites ? 'primary' : 'warning'">
+        <el-button @click="toggleFilter" plain :type="filterFavorites ? 'primary' : 'warning'">
           {{ filterFavorites ? '显示全部' : '仅看收藏' }}
         </el-button>
 
-        <el-button size="small" @click="setSort('price')" plain :type="sortKey === 'price' ? 'primary' : 'default'">
+        <el-button @click="setSort('price')" plain :type="sortKey === 'price' ? 'primary' : 'default'">
           价格排序 {{ sortKey === 'price' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
         </el-button>
 
-        <el-button size="small" @click="setSort('time')" plain :type="sortKey === 'time' ? 'primary' : 'default'">
+        <el-button @click="setSort('time')" plain :type="sortKey === 'time' ? 'primary' : 'default'">
           时间排序 {{ sortKey === 'time' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
         </el-button>
 
-        <el-button-group class="column-selector" size="small">
+        <el-button-group class="column-selector">
           <el-button :type="columnMode === 1 ? 'primary' : 'default'" @click="columnMode = 1">1 列</el-button>
           <el-button :type="columnMode === 2 ? 'primary' : 'default'" @click="columnMode = 2">2 列</el-button>
           <el-button :type="columnMode === 3 ? 'primary' : 'default'" @click="columnMode = 3">3 列</el-button>
@@ -80,7 +80,8 @@
 
                 <div class="price-info">
                   估算：武将卡池 {{ item.data.cardTotalValue || 0 }} + 武器 {{ item.data.weaponTotalValue || 0 }} =
-                  共计 {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }} 元
+                  共计 {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }} 元 
+                  <span v-if="item.remark">备注：{{ item.remark || "" }}</span>
                 </div>
               </div>
 
@@ -89,11 +90,23 @@
                 <el-button
                   type="info"
                   circle
+                  plain
                   :loading="item.loading"
                   @click="refreshLink(item.link)"
                   title="刷新"
                 >
                   <el-icon><Refresh /></el-icon>
+                </el-button>
+
+                <el-button
+                  type="warning"
+                  circle
+                  plain
+                  :loading="item.loading"
+                  @click="editRecord(item)"
+                  title="编辑"
+                >
+                  <el-icon><Edit /></el-icon>
                 </el-button>
 
                 <el-button type="primary" circle plain @click="openLink(item.link)" title="打开链接">
@@ -219,6 +232,26 @@
       </div>
     </div>
   </div>
+
+  <!-- 编辑备注对话框 -->
+  <el-dialog
+    v-model="editDialog.visible"
+    title="编辑备注"
+    width="400px"
+  >
+    <el-input
+      type="textarea"
+      v-model="editDialog.remark"
+      placeholder="请输入备注（例如账号适合什么阵容、亮点等）"
+      :rows="5"
+    />
+
+    <template #footer>
+      <el-button @click="editDialog.visible = false">取消</el-button>
+      <el-button type="primary" @click="saveRemark">保存</el-button>
+    </template>
+  </el-dialog>
+
 </template>
 
 <script>
@@ -229,7 +262,7 @@ import SkillCard from '~/components/SkillCard.vue';
 import WeaponList from '~/components/WeaponList.vue';
 import FormationComponent from '~/components/FormationComponent.vue';
 import { getCardValue, getWeaponValue } from '~/utils/valueCalculator.js';
-import { Delete, Star, DocumentCopy, Refresh, Connection } from '@element-plus/icons-vue';
+import { Delete, Star, DocumentCopy, Refresh, Edit, Connection } from '@element-plus/icons-vue';
 
 export default {
   components: {
@@ -242,6 +275,7 @@ export default {
     DocumentCopy,
     Refresh,
     Connection,
+    Edit
   },
 
   setup() {
@@ -260,6 +294,12 @@ export default {
     // IndexedDB
     let dbPromise = null;
 
+    const editDialog = reactive({
+      visible: false,
+      link: '',
+      remark: ''
+    });
+
     onMounted(async () => {
       if (!process.client) return;
 
@@ -273,7 +313,7 @@ export default {
 
       await loadLinksFromDB();
     });
-
+    
     // ========================
     //       IndexedDB 操作
     // ========================
@@ -314,6 +354,7 @@ export default {
         isFavorite: r.isFavorite,
         data: r.data || null,
         loading: false,
+        remark: r.remark || '',
       }));
 
       zangbaoLinks.value.forEach(i => {
@@ -341,6 +382,7 @@ export default {
 
     // 主流程：直接抓，不存 cache
     const fetchAccountData = async (link) => {
+      console.log('请求触发 → ', link, new Date().toLocaleTimeString());
       const cleanLink = link.split('?')[0];
       const match = cleanLink.match(/\/equip\/1\/([A-Za-z0-9-]+)/);
 
@@ -424,8 +466,27 @@ export default {
           area_name: equip.area_name,
           server_name: equip.server_name,
         },
-        uniqueCards,
-        skill: full.skill || [],
+        uniqueCards: (uniqueCards || []).map(c => ({
+          name: c.name,
+          imageUrl: c.imageUrl || '',
+          country: c.country,
+          quality: c.quality,
+          awake_state: c.awake_state,
+          policy_awake_state: c.policy_awake_state,
+          hero_achieve: c.hero_achieve,
+          advance_num: c.advance_num,
+          is_support: c.is_support,
+          season: c.season,
+          hero_id: c.hero_id,
+          icon_hero_id: c.icon_hero_id,
+          opacity: c.opacity ?? 1
+        })),
+        skill: (full.skill || []).map(s => ({
+          skill_id: s.skill_id,
+          name: s.name,
+          skill_type: s.skill_type,
+          research_progress: s.research_progress
+        })),
         ...weapons,
         cardTotalValue,
         weaponTotalValue,
@@ -475,6 +536,7 @@ export default {
         timestamp: Date.now(),
         isFavorite: false,
         data: null,
+        remark: ''
       };
 
       await saveRecord(newRecord);
@@ -500,12 +562,32 @@ export default {
     
     //清空链接
     const clearLinks = async () => {
-      if (!dbPromise) return;
-      const db = await dbPromise;
-      await db.clear('records');
-      await loadLinksFromDB();
-      ElMessage.success('已清空');
+      try {
+        // 使用 await 等待用户确认
+        await ElMessageBox.confirm(
+          '确定要清空所有链接？',
+          '提示',
+          {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }
+        );
+
+        if (!dbPromise) return;
+
+        const db = await dbPromise;
+        await db.clear('records');
+
+        await loadLinksFromDB();
+
+        ElMessage.success('已清空');
+      } catch (error) {
+        // 用户点击取消会进入这里
+        ElMessage.info('已取消');
+      }
     };
+
 
     const openLink = (link) => {
       window.open(link, '_blank');
@@ -566,6 +648,35 @@ export default {
       await saveRecord(record);
       await loadLinksFromDB();
     };
+    // 打开编辑对话框
+    const editRecord = (item) => {
+      editDialog.link = item.link;
+      editDialog.remark = item.remark || '';
+      editDialog.visible = true;
+    };
+
+    // 保存备注
+    const saveRemark = async () => {
+      if (!dbPromise) return;
+
+      const db = await dbPromise;
+      const record = await db.get('records', editDialog.link);
+
+      if (record) {
+        record.remark = editDialog.remark || '';
+        await db.put('records', JSON.parse(JSON.stringify(record)));
+      }
+
+      await loadLinksFromDB();
+      editDialog.visible = false;
+      ElMessage.success('备注已保存');
+    };
+
+    const copyUrl = (cbgLink) => {
+      navigator.clipboard.writeText(cbgLink).then(() => {
+        ElMessage({ message: '复制成功', type: 'success', zIndex: 99999 });
+      }).catch(() => { ElMessage({ message: '复制失败', type: 'error' }); });
+    };
     // toggleFilter
     const toggleFilter = () => {
       filterFavorites.value = !filterFavorites.value;
@@ -619,6 +730,7 @@ export default {
       filteredLinks,
       pagedLinks,
       gridStyle,
+      editDialog,
 
       addLink,
       removeLink,
@@ -629,6 +741,9 @@ export default {
       toggleFavorite,
       toggleFilter,
       setSort,
+      copyUrl,
+      editRecord,
+      saveRemark,
 
       currentPage,
       pageSize,

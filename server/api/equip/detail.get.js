@@ -1,34 +1,24 @@
-import fs from 'fs'
-import path from 'path'
-import { promisify } from 'util'
-import formidable from 'formidable'
-
-const writeFile = promisify(fs.writeFile)
-
 export default defineEventHandler(async (event) => {
-  const form = formidable({ multiples: true })
-
-  const { files } = await new Promise((resolve, reject) => {
-    form.parse(event.node.req, (err, fields, files) => {
-      if (err) reject(err)
-      else resolve({ fields, files })
+  const query = getQuery(event)
+  const url =
+    'https://stzb.cbg.163.com/cgi/api/get_equip_detail?' +
+    new URLSearchParams({
+      client_type: 'h5',
+      serverid: 1,
+      ordersn: query.ordersn
     })
+    
+    const data = await $fetch(url, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36'
+      }
   })
 
-  const dir = path.join(process.cwd(), 'public/rentimg')
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
-
-  const savedFiles = []
-
-  const fileArray = Array.isArray(files.file) ? files.file : [files.file]
-
-  for (const f of fileArray) {
-    const filename = `${Date.now()}_${f.originalFilename}`
-    const filePath = path.join(dir, filename)
-    const data = fs.readFileSync(f.filepath)
-    await writeFile(filePath, data)
-    savedFiles.push(`/rentimg/${filename}`)
+  return {
+      price: data?.equip?.price ?? null,
+      area_name: data?.equip?.area_name ?? null,
+      server_name: data?.equip?.server_name ?? null,
+      status_desc: data?.equip?.status_desc ?? null
   }
-
-  return { paths: savedFiles }
 })

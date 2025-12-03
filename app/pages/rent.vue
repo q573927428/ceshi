@@ -7,7 +7,7 @@
     </div>
 
     <!-- 账号卡片列表 -->
-    <el-row :gutter="20">
+    <el-row :gutter="10">
       <el-col
         v-for="item in accounts"
         :key="item.id"
@@ -197,7 +197,7 @@ const saveAccount = () => {
 // 格式化时间显示
 const formatTime = (timestamp) => {
   const date = new Date(timestamp)
-  return `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}:${date.getSeconds().toString().padStart(2,'0')}`
+  return `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')} ${date.getHours().toString().padStart(2,'0')}`
 }
 </script>
 

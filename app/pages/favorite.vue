@@ -5,7 +5,6 @@
 
       <!-- 筛选排序与列配置 -->
       <div class="filter-sort">
-
         <el-button @click="setSort('price')" plain :type="sortKey === 'price' ? 'primary' : 'default'">
           价格排序 {{ sortKey === 'price' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
         </el-button>
@@ -66,6 +65,7 @@
                 <el-button
                   type="info"
                   circle
+                  plain
                   :loading="item.loading"
                   @click="refreshLink(item.link)"
                   title="刷新"
@@ -115,7 +115,6 @@
               <div v-else-if="item.data">
                 <el-tabs v-model="activeTabs[item.link]" lazy class="tabs-assort">
                   <el-tab-pane label="武将" name="first">
-                    <!-- 仅在当前 tab 激活时渲染大型组件 -->
                     <div v-if="activeTabs[item.link] === 'first'">
                       <CategoryCardsList :unique-cards="item.data.uniqueCards || []" />
                     </div>
@@ -196,7 +195,6 @@
             @current-change="handlePageChange"
             :current-page="currentPage"
             :page-size="pageSize"
-
             :total="filteredLinks.length"
             layout="prev, pager, next"
             background
@@ -217,10 +215,10 @@
     width="400px"
   >
     <el-input
-      v-model="editDialog.remark"
       type="textarea"
+      v-model="editDialog.remark"
+      placeholder="请输入备注（例如账号适合什么阵容、亮点等）"
       :rows="5"
-      placeholder="请输入备注，例如亮点、阵容特点等"
     />
 
     <template #footer>
@@ -228,24 +226,18 @@
       <el-button type="primary" @click="saveRemark">保存</el-button>
     </template>
   </el-dialog>
+
 </template>
 
 <script>
-/**
- * zangbaoLinks 统一存储缓存数据
- * 不再使用 zangbaoCache
- */
-
 import { ref, reactive, computed, watch, onMounted } from 'vue';
+import { openDB } from 'idb';
 import CategoryCardsList from '~/components/CategoryCardsList.vue';
 import SkillCard from '~/components/SkillCard.vue';
 import WeaponList from '~/components/WeaponList.vue';
 import FormationComponent from '~/components/FormationComponent.vue';
-import CardWeaponValue from '~/components/CardWeaponValue.vue';
 import { getCardValue, getWeaponValue } from '~/utils/valueCalculator.js';
 import { Delete, Star, DocumentCopy, Refresh, Edit, Connection } from '@element-plus/icons-vue';
-
-const DEFAULT_CONCURRENCY = 2;
 
 export default {
   components: {
@@ -253,7 +245,6 @@ export default {
     SkillCard,
     WeaponList,
     FormationComponent,
-    CardWeaponValue,
     Delete,
     Star,
     DocumentCopy,
@@ -263,8 +254,9 @@ export default {
   },
 
   setup() {
+    // UI
     const newLink = ref('');
-    const zangbaoLinks = ref([]); // 每项 { link, timestamp, isFavorite, data, loading }
+    const zangbaoLinks = ref([]);
     const activeTabs = reactive({});
     const currentPage = ref(1);
     const pageSize = ref(6);
@@ -273,43 +265,87 @@ export default {
     const sortOrder = ref('desc');
     const columnMode = ref(2);
     const globalLoading = ref(false);
+
+    // IndexedDB
+    let dbPromise = null;
+
     const editDialog = reactive({
       visible: false,
       link: '',
       remark: ''
     });
 
-    // ---------- 本地读取/保存 zangbaoLinks ----------
-    const saveLinksToLocal = () => {
-      try {
-        localStorage.setItem('zangbaoLinks', JSON.stringify(zangbaoLinks.value));
-      } catch (e) {
-        console.warn('保存 links 失败', e);
-      }
+    onMounted(async () => {
+      if (!process.client) return;
+
+      dbPromise = openDB('zangbaoDB', 1, {
+        upgrade(db) {
+          if (!db.objectStoreNames.contains('records')) {
+            db.createObjectStore('records', { keyPath: 'link' });
+          }
+        },
+      });
+
+      await loadLinksFromDB();
+    });
+    
+    // ========================
+    //       IndexedDB 操作
+    // ========================
+
+    const saveRecord = async (record) => {
+      if (!dbPromise) return;
+      const db = await dbPromise;
+
+      // 深拷贝，避免 "could not be cloned" 错误
+      const cloned = JSON.parse(JSON.stringify(record));
+
+      await db.put('records', cloned);
     };
 
-    const loadLinksFromLocal = () => {
-      try {
-        const raw = localStorage.getItem('zangbaoLinks');
-        if (!raw) return;
-        const arr = JSON.parse(raw);
-        zangbaoLinks.value = arr.map(i => ({
-          link: i.link,
-          timestamp: i.timestamp || Date.now(),
-          isFavorite: !!i.isFavorite,
-          data: i.data || null,
-          loading: false,
-          remark: i.remark || "", 
-        }));
-        zangbaoLinks.value.forEach(item => {
-          activeTabs[item.link] = 'first';
-        });
-      } catch (e) {
-        console.warn('读取 links 失败', e);
-      }
+    const getRecord = async (link) => {
+      if (!dbPromise) return null;
+      const db = await dbPromise;
+      return await db.get('records', link);
     };
 
-    // ---------- 工具函数 ----------
+    const deleteRecord = async (link) => {
+      if (!dbPromise) return;
+      const db = await dbPromise;
+      await db.delete('records', link);
+    };
+
+    const loadLinksFromDB = async () => {
+      if (!dbPromise) return;
+
+      const db = await dbPromise;
+      const tx = db.transaction('records', 'readonly');
+      const store = tx.objectStore('records');
+      const all = await store.getAll();
+
+      zangbaoLinks.value = all.map(r => ({
+        link: r.link,
+        timestamp: r.timestamp,
+        isFavorite: r.isFavorite,
+        data: r.data || null,
+        loading: false,
+        remark: r.remark || '',
+      }));
+
+      zangbaoLinks.value.forEach(i => {
+        activeTabs[i.link] = 'first';
+      });
+    };
+
+    // ========================
+    // 抓取数据流程（无 cache）
+    // ========================
+
+    const extractCbgLink = (text) => {
+      const match = text.match(/https:\/\/stzb\.cbg\.163\.com\/cgi\/mweb\/equip\/1\/[0-9a-zA-Z\-]+/i);
+      return match ? match[0] : null;
+    };
+
     const normalizeLink = (link) => {
       try {
         const url = new URL(link);
@@ -319,94 +355,92 @@ export default {
       }
     };
 
-    const extractCbgLink = (text) => {
-      const match = text.match(/https:\/\/stzb\.cbg\.163\.com\/cgi\/mweb\/equip\/1\/[0-9a-zA-Z\-]+/i);
-      return match ? match[0] : null;
-    };
+    // 主流程：直接抓，不存 cache
+    const fetchAccountData = async (link) => {
+      console.log('请求触发 → ', link, new Date().toLocaleTimeString());
+      const cleanLink = link.split('?')[0];
+      const match = cleanLink.match(/\/equip\/1\/([A-Za-z0-9-]+)/);
 
-    // ---------- fetchAccountData 拆分小函数 ----------
-    const fetchEquipDetail = async (extractedId) => {
-      const equip = await $fetch('/api/equip/detail', { params: { ordersn: extractedId } });
-      return equip;
-    };
+      if (!match) throw new Error('无效ID');
+      const extractedId = match[1];
 
-    const fetchFullJson = async (extractedId) => {
-      const url = `https://cbg-other-desc.res.netease.com/stzb/static/equipdesc/${extractedId}.json`;
-      const raw = await fetch(url);
-      const rawText = await raw.text();
-      const parsed = JSON.parse(rawText);
-      const decoded = parsed.equip_desc.replace(/\\u([0-9a-fA-F]{4})/g, (_, grp) =>
-        String.fromCharCode(parseInt(grp, 16))
+      // 1. 获取 equip 详情
+      const equip = await $fetch('/api/equip/detail', {
+        params: { ordersn: extractedId },
+      });
+
+      // 2. 解析 full.json
+      const jsonUrl = `https://cbg-other-desc.res.netease.com/stzb/static/equipdesc/${extractedId}.json`;
+      const raw = await fetch(jsonUrl);
+      const text = await raw.text();
+      const parsed = JSON.parse(text);
+
+      const decoded = parsed.equip_desc.replace(/\\u([0-9a-fA-F]{4})/g, (_, g) =>
+        String.fromCharCode(parseInt(g, 16))
       );
       const full = JSON.parse(decoded);
-      return full;
+
+      // 3. 提取数据
+      const uniqueCards = extractUniqueCards(full);
+      const weapons = extractWeapons(full);
+
+      // 4. 组装 processed
+      return buildProcessedData(extractedId, link, equip, full, weapons, uniqueCards);
     };
 
+    // ========================
+    // 数据提取
+    // ========================
     const extractUniqueCards = (full) => {
-      const quality5 = (full.card || []).filter(c => c.quality === 5);
-      const uniqueCards = [];
-      quality5.forEach(card => {
-        const exists = uniqueCards.find(c => c.hero_id === card.hero_id && c.season === card.season);
-        if (!exists) uniqueCards.push({ ...card });
-        else if (card.advance_num > exists.advance_num) exists.advance_num = card.advance_num;
+      const list = (full.card || []).filter(c => c.quality === 5);
+      const result = [];
+      list.forEach(c => {
+        const ex = result.find(r => r.hero_id === c.hero_id && r.season === c.season);
+        if (!ex) result.push({ ...c });
+        else if (c.advance_num > ex.advance_num) ex.advance_num = c.advance_num;
       });
-      return uniqueCards;
+      return result;
     };
 
     const extractWeapons = (full) => {
       const phase3 = (full.gear || []).filter(w => w.phase === 3);
-      const redWeapons = phase3
-        .filter(w => w.advance === 1)
-        .map(w => {
-          const color = '红';
-          const value = getWeaponValue({ ...w, color });
-          return { ...w, color, calculatedValue: value };
-        });
-      const pinkWeapons = phase3
-        .filter(w => w.level_type === 2 && w.advance !== 1)
-        .map(w => {
-          const color = '粉';
-          const value = getWeaponValue({ ...w, color });
-          return { ...w, color, calculatedValue: value };
-        });
-      const blueWeapons = phase3
-        .filter(w => w.level_type === 0 && w.advance !== 1)
-        .map(w => {
-          const color = '蓝';
-          const value = getWeaponValue({ ...w, color });
-          return { ...w, color, calculatedValue: value };
-        });
-      return { redWeapons, pinkWeapons, blueWeapons };
+
+      const red = phase3.filter(w => w.advance === 1).map(w => ({
+        ...w,
+        color: '红',
+        calculatedValue: getWeaponValue(w),
+      }));
+
+      const pink = phase3.filter(w => w.level_type === 2 && w.advance !== 1).map(w => ({
+        ...w,
+        color: '粉',
+        calculatedValue: getWeaponValue(w),
+      }));
+
+      const blue = phase3.filter(w => w.level_type === 0 && w.advance !== 1).map(w => ({
+        ...w,
+        color: '蓝',
+        calculatedValue: getWeaponValue(w),
+      }));
+
+      return { redWeapons: red, pinkWeapons: pink, blueWeapons: blue };
     };
 
-    const calcCardTotalValue = (uniqueCards) => uniqueCards.reduce((sum, c) => sum + getCardValue(c), 0);
-
     const buildProcessedData = (extractedId, link, equip, full, weapons, uniqueCards) => {
-      const cardTotalValue = calcCardTotalValue(uniqueCards);
-      const allWeapons = [...(weapons.redWeapons || []), ...(weapons.pinkWeapons || []), ...(weapons.blueWeapons || [])];
-      const weaponTotalValue = allWeapons.reduce((sum, w) => sum + (w.calculatedValue || 0), 0);
-
-      const tenures = {
-        yuan_bao: full.tenure?.yuan_bao || 0,
-        bind_yuan_bao: full.tenure?.bind_yuan_bao || 0,
-        honor: full.tenure?.honor || 0,
-        jiang_ling: full.tenure?.jiang_ling || 0,
-        hufu: full.tenure?.hufu || 0,
-        chi_zhu_shan_tie: full.material?.chi_zhu_shan_tie?.value || 0,
-        xiao_ye_zi_tan: full.material?.xiao_ye_zi_tan?.value || 0,
-        gear_feature_hammer: full.material?.gear_feature_hammer?.value || 0,
-      };
+      const cardTotalValue = uniqueCards.reduce((sum, c) => sum + getCardValue(c), 0);
+      const allW = [...weapons.redWeapons, ...weapons.pinkWeapons, ...weapons.blueWeapons];
+      const weaponTotalValue = allW.reduce((s, w) => s + w.calculatedValue, 0);
 
       return {
         extractedId,
         link,
+        equipPrice: equip.price / 100,
         equip: {
-          price: equip.price || 0,
+          price: equip.price,
           status_desc: equip.status_desc,
           area_name: equip.area_name,
           server_name: equip.server_name,
         },
-        equipPrice: equip.price / 100,
         uniqueCards: (uniqueCards || []).map(c => ({
           name: c.name,
           imageUrl: c.imageUrl || '',
@@ -428,119 +462,189 @@ export default {
           skill_type: s.skill_type,
           research_progress: s.research_progress
         })),
-        redWeapons: weapons.redWeapons || [],
-        pinkWeapons: weapons.pinkWeapons || [],
-        blueWeapons: weapons.blueWeapons || [],
+        ...weapons,
         cardTotalValue,
         weaponTotalValue,
-        tenures,
+        tenures: {
+          yuan_bao: full.tenure?.yuan_bao || 0,
+          bind_yuan_bao: full.tenure?.bind_yuan_bao || 0,
+          honor: full.tenure?.honor || 0,
+          jiang_ling: full.tenure?.jiang_ling || 0,
+          hufu: full.tenure?.hufu || 0,
+          chi_zhu_shan_tie: full.material?.chi_zhu_shan_tie?.value || 0,
+          xiao_ye_zi_tan: full.material?.xiao_ye_zi_tan?.value || 0,
+          gear_feature_hammer: full.material?.gear_feature_hammer?.value || 0,
+        },
         dynamic_icon: full.dynamic_icon || [],
       };
     };
 
-    // ---------- 主流程 ----------
-    const fetchAccountData = async (link) => {
-      console.log('请求触发 → ', link, new Date().toLocaleTimeString());
-      const existing = zangbaoLinks.value.find(i => i.link === link);
-      if (existing?.data) return existing.data;
-
-      const cleanLink = link.split('?')[0];
-      const match = cleanLink.match(/\/equip\/1\/([A-Za-z0-9-]+)/);
-      if (!match) throw new Error('无效ID');
-
-      const extractedId = match[1];
-      const equip = await fetchEquipDetail(extractedId).catch(() => { throw new Error('接口请求失败'); });
-      if (!equip) throw new Error('API返回空');
-
-      const full = await fetchFullJson(extractedId);
-      const uniqueCards = extractUniqueCards(full);
-      const weapons = extractWeapons(full);
-      const processed = buildProcessedData(extractedId, link, equip, full, weapons, uniqueCards);
-
-      if (existing) existing.data = processed;
-
-      saveLinksToLocal();
-      return processed;
-    };
-
-    // ---------- 链接操作 ----------
+    // ========================
+    // 添加链接
+    // ========================
     const addLink = async () => {
-      if (!newLink.value?.trim()) {
+      if (!newLink.value.trim()) {
         ElMessage.warning('请输入链接');
         return;
       }
-      const raw = newLink.value.trim();
-      const match = extractCbgLink(raw);
-      if (!match) {
-        ElMessage.warning('链接格式不正确');
-        return;
-      }
-      const normalized = normalizeLink(match);
 
-      const existing = zangbaoLinks.value.find(i => i.link === normalized);
-      if (existing) {
-        existing.timestamp = Date.now();
-        saveLinksToLocal();
+      const real = extractCbgLink(newLink.value.trim());
+      if (!real) return ElMessage.warning('链接格式不正确');
+
+      const link = normalizeLink(real);
+
+      let record = await getRecord(link);
+
+      // 已存在
+      if (record) {
+        record.timestamp = Date.now();
+        await saveRecord(record);
+        await loadLinksFromDB();
+        newLink.value = '';
         ElMessage.success('链接已存在，已更新时间');
-        newLink.value = '';
         return;
       }
 
-      const item = { 
-        link: normalized, 
-        timestamp: Date.now(), 
-        isFavorite: false, 
-        data: null, 
-        loading: true, 
-        remark: '',
+      // 新增
+      const newRecord = {
+        link,
+        timestamp: Date.now(),
+        isFavorite: false,
+        data: null,
+        remark: ''
       };
-      zangbaoLinks.value.push(item);
-      activeTabs[item.link] = 'first';
-      saveLinksToLocal();
 
+      await saveRecord(newRecord);
+
+      // 抓取数据
+      const processed = await fetchAccountData(link);
+      newRecord.data = processed;
+      await saveRecord(newRecord);
+
+      await loadLinksFromDB();
+      newLink.value = '';
+      ElMessage.success('添加成功');
+    };
+
+    // ========================
+    // 删除链接
+    // ========================
+    const removeLink = async (link) => {
+      await deleteRecord(link);
+      await loadLinksFromDB();
+      ElMessage.success('已删除');
+    };
+    
+    //清空链接
+    const clearLinks = async () => {
       try {
-        const processed = await fetchAccountData(normalized);
-        item.data = processed;
-        item.loading = false;
-        saveLinksToLocal();
-        ElMessage.success('链接添加成功并已获取数据');
-      } catch (err) {
-        item.loading = false;
-        item.data = null;
-        ElMessage.error('获取数据失败：' + (err.message || err));
-      } finally {
-        newLink.value = '';
+        // 使用 await 等待用户确认
+        await ElMessageBox.confirm(
+          '确定要清空所有链接？',
+          '提示',
+          {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }
+        );
+
+        if (!dbPromise) return;
+
+        const db = await dbPromise;
+        await db.clear('records');
+
+        await loadLinksFromDB();
+
+        ElMessage.success('已清空');
+      } catch (error) {
+        // 用户点击取消会进入这里
+        ElMessage.info('已取消');
       }
     };
 
-    const removeLink = (link) => {
-      ElMessageBox.confirm('确定要删除该链接吗？', '提示', { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' })
-        .then(() => {
-          const idx = zangbaoLinks.value.findIndex(i => i.link === link);
-          if (idx !== -1) {
-            zangbaoLinks.value.splice(idx, 1);
-            delete activeTabs[link];
-            saveLinksToLocal();
-            ElMessage.success('已删除');
-            if (pagedLinks.value.length === 0 && currentPage.value > 1) currentPage.value--;
-          }
-        }).catch(() => ElMessage.info('已取消'));
+
+    const openLink = (link) => {
+      window.open(link, '_blank');
     };
 
-    const clearLinks = () => {
-      ElMessageBox.confirm('确定要清空所有链接？', '提示', { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' })
-        .then(() => {
-          zangbaoLinks.value = [];
-          for (const k in activeTabs) delete activeTabs[k];
-          try { localStorage.removeItem('zangbaoLinks'); } catch (e) {}
-          ElMessage.success('已清空');
-        }).catch(() => ElMessage.info('已取消'));
+    // ========================
+    // 刷新
+    // ========================
+    const refreshLink = async (link) => {
+      let record = await getRecord(link);
+      if (!record) return;
+
+      const processed = await fetchAccountData(link);
+      record.data = processed;
+      record.timestamp = Date.now();
+
+      await saveRecord(record);
+      await loadLinksFromDB();
+
+      ElMessage.success('刷新成功');
     };
 
-    const toggleFavorite = (item) => {
-      item.isFavorite = !item.isFavorite;
-      saveLinksToLocal();
-      ElMessage.success(item.isFavorite ? '已收藏' : '已取消收藏');
+
+    // ========================
+    // 更新全部
+    // ========================
+    const updateAll = async () => {
+      globalLoading.value = true;
+
+      for (const item of zangbaoLinks.value) {
+        const record = await getRecord(item.link);
+        if (!record) continue;
+
+        try {
+          const processed = await fetchAccountData(item.link);
+          record.data = processed;
+          record.timestamp = Date.now();
+          await saveRecord(record);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      await loadLinksFromDB();
+      globalLoading.value = false;
+
+      ElMessage.success('全部更新完成');
+    };
+
+    // ========================
+    // 收藏
+    // ========================
+    const toggleFavorite = async (item) => {
+      const record = await getRecord(item.link);
+      if (!record) return;
+
+      record.isFavorite = !record.isFavorite;
+      await saveRecord(record);
+      await loadLinksFromDB();
+    };
+    // 打开编辑对话框
+    const editRecord = (item) => {
+      editDialog.link = item.link;
+      editDialog.remark = item.remark || '';
+      editDialog.visible = true;
+    };
+
+    // 保存备注
+    const saveRemark = async () => {
+      if (!dbPromise) return;
+
+      const db = await dbPromise;
+      const record = await db.get('records', editDialog.link);
+
+      if (record) {
+        record.remark = editDialog.remark || '';
+        await db.put('records', JSON.parse(JSON.stringify(record)));
+      }
+
+      await loadLinksFromDB();
+      editDialog.visible = false;
+      ElMessage.success('备注已保存');
     };
 
     const copyUrl = (cbgLink) => {
@@ -548,116 +652,41 @@ export default {
         ElMessage({ message: '复制成功', type: 'success', zIndex: 99999 });
       }).catch(() => { ElMessage({ message: '复制失败', type: 'error' }); });
     };
-
-    // 打开编辑备注窗口
-    const editRecord = (item) => {
-      if (!item || !item.link) {
-        ElMessage.error("记录无效，无法编辑备注");
-        return;
-      }
-      editDialog.link = item.link;
-      editDialog.remark = item.remark || "";
-      editDialog.visible = true;
+    // toggleFilter
+    const toggleFilter = () => {
+      filterFavorites.value = !filterFavorites.value;
+      currentPage.value = 1;
     };
 
-    // 保存备注
-    const saveRemark = () => {
-      const link = editDialog.link;
-      if (!link) {
-        ElMessage.error("保存失败：无效的链接");
-        return;
+    // setSort
+    const setSort = (key) => {
+      if (sortKey.value === key) {
+        sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortKey.value = key;
+        sortOrder.value = 'asc';
       }
-
-      // 找到记录
-      const item = zangbaoLinks.value.find(i => i.link === link);
-      if (!item) {
-        ElMessage.error("保存失败：记录不存在");
-        return;
-      }
-
-      // 写入备注
-      item.remark = editDialog.remark || "";
-
-      // 保存到 localStorage
-      saveLinksToLocal();
-
-      editDialog.visible = false;
-      ElMessage.success("备注已保存");
+      currentPage.value = 1;
     };
 
-    const openLink = (url) => { window.open(url, "_blank"); };
-
-    const refreshLink = async (link) => {
-      const item = zangbaoLinks.value.find(i => i.link === link);
-      if (!item) return;
-      item.loading = true;
-      item.data = null;
-      try {
-        const processed = await fetchAccountData(link);
-        item.data = processed;
-        item.loading = false;
-        saveLinksToLocal();
-        ElMessage.success('刷新成功');
-      } catch (err) {
-        item.loading = false;
-        ElMessage.error('刷新失败：' + (err.message || err));
-      }
-    };
-
-    const updateAll = async (concurrency = DEFAULT_CONCURRENCY) => {
-      if (!zangbaoLinks.value.length) {
-        ElMessage.info('没有链接需要更新');
-        return;
-      }
-      globalLoading.value = true;
-      const queue = [...zangbaoLinks.value];
-      let running = 0;
-      const errors = [];
-
-      const runNext = () => {
-        if (queue.length === 0) return Promise.resolve();
-        if (running >= concurrency) return Promise.resolve();
-        const item = queue.shift();
-        running++;
-        item.loading = true;
-        item.data = null;
-
-        return fetchAccountData(item.link)
-          .then(processed => {
-            item.data = processed;
-            item.timestamp = Date.now();
-            item.loading = false;
-          })
-          .catch(err => { item.loading = false; errors.push({ link: item.link, error: err }); })
-          .finally(() => { running--; })
-          .then(() => runNext());
-      };
-
-      const starters = [];
-      for (let i = 0; i < concurrency; i++) starters.push(runNext());
-      await Promise.all(starters);
-
-      saveLinksToLocal();
-      globalLoading.value = false;
-
-      if (errors.length) ElMessage.warning(`部分链接更新失败（${errors.length}）`);
-      else ElMessage.success('更新所有数据成功');
-    };
-
-    // ---------- 分页、过滤、排序 ----------
+    // ========================
+    // 排序 & 分页
+    // ========================
     const filteredLinks = computed(() => {
       let list = zangbaoLinks.value;
-      if (filterFavorites.value) list = list.filter(item => item.isFavorite);
-      const key = sortKey.value || 'time';
-      const order = sortOrder.value || 'desc';
-      const copy = [...list];
-      copy.sort((a, b) => {
-        let valA = 0, valB = 0;
-        if (key === 'price') { valA = a.data?.equipPrice || 0; valB = b.data?.equipPrice || 0; }
-        else if (key === 'time') { valA = a.timestamp || 0; valB = b.timestamp || 0; }
-        return order === 'asc' ? valA - valB : valB - valA;
+
+      if (filterFavorites.value) {
+        list = list.filter(i => i.isFavorite);
+      }
+
+      const key = sortKey.value;
+      const order = sortOrder.value;
+
+      return [...list].sort((a, b) => {
+        const A = key === 'price' ? (a.data?.equipPrice || 0) : a.timestamp;
+        const B = key === 'price' ? (b.data?.equipPrice || 0) : b.timestamp;
+        return order === 'asc' ? A - B : B - A;
       });
-      return copy;
     });
 
     const pagedLinks = computed(() => {
@@ -665,33 +694,43 @@ export default {
       return filteredLinks.value.slice(start, start + pageSize.value);
     });
 
-    const gridStyle = computed(() => ({ gridTemplateColumns: `repeat(${columnMode.value}, 1fr)` }));
-
-    const handlePageChange = (page) => {
-      currentPage.value = page;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    const setSort = (key) => {
-      if (sortKey.value === key) sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
-      else { sortKey.value = key; sortOrder.value = 'asc'; }
-      currentPage.value = 1;
-    };
-
-    const toggleFilter = () => { filterFavorites.value = !filterFavorites.value; currentPage.value = 1; };
-
-    onMounted(() => { loadLinksFromLocal(); });
+    const gridStyle = computed(() => ({
+      gridTemplateColumns: `repeat(${columnMode.value}, 1fr)`
+    }));
 
     return {
-      newLink, zangbaoLinks, activeTabs, currentPage, pageSize, filterFavorites, sortKey, sortOrder, columnMode, globalLoading,
-      filteredLinks, pagedLinks, gridStyle,editDialog,
-      addLink, removeLink, clearLinks, toggleFavorite, copyUrl, openLink, refreshLink, updateAll,
-      handlePageChange, setSort, toggleFilter, editRecord, saveRemark,
+      newLink,
+      zangbaoLinks,
+      activeTabs,
+      filteredLinks,
+      pagedLinks,
+      gridStyle,
+      editDialog,
+
+      addLink,
+      removeLink,
+      clearLinks,
+      openLink,
+      refreshLink,
+      updateAll,
+      toggleFavorite,
+      toggleFilter,
+      setSort,
+      copyUrl,
+      editRecord,
+      saveRemark,
+
+      currentPage,
+      pageSize,
+      sortKey,
+      sortOrder,
+      filterFavorites,
+      columnMode,
+      globalLoading,
     };
   }
 };
 </script>
-
 
 <style scoped>
 /* 手机端屏幕宽度小于 768px 时隐藏按钮组 */
