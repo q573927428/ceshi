@@ -80,7 +80,8 @@
 
                 <div class="price-info">
                   估算：武将卡池 {{ item.data.cardTotalValue || 0 }} + 武器 {{ item.data.weaponTotalValue || 0 }} =
-                  共计 {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }} 元
+                  共计 {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }} 元 
+                  <span v-if="item.remark">备注：{{ item.remark || "" }}</span>
                 </div>
               </div>
 
@@ -94,6 +95,17 @@
                   title="刷新"
                 >
                   <el-icon><Refresh /></el-icon>
+                </el-button>
+
+                <el-button
+                  type="warning"
+                  circle
+                  plain
+                  :loading="item.loading"
+                  @click="editRecord(item)"
+                  title="编辑"
+                >
+                  <el-icon><Edit /></el-icon>
                 </el-button>
 
                 <el-button type="primary" circle plain @click="openLink(item.link)" title="打开链接">
@@ -221,6 +233,25 @@
       </div>
     </div>
   </div>
+
+  <!-- 编辑备注对话框 -->
+  <el-dialog
+    v-model="editDialog.visible"
+    title="编辑备注"
+    width="400px"
+  >
+    <el-input
+      v-model="editDialog.remark"
+      type="textarea"
+      :rows="5"
+      placeholder="请输入备注，例如亮点、阵容特点等"
+    />
+
+    <template #footer>
+      <el-button @click="editDialog.visible = false">取消</el-button>
+      <el-button type="primary" @click="saveRemark">保存</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script>
@@ -236,7 +267,7 @@ import WeaponList from '~/components/WeaponList.vue';
 import FormationComponent from '~/components/FormationComponent.vue';
 import CardWeaponValue from '~/components/CardWeaponValue.vue';
 import { getCardValue, getWeaponValue } from '~/utils/valueCalculator.js';
-import { Delete, Star, DocumentCopy, Refresh, Connection } from '@element-plus/icons-vue';
+import { Delete, Star, DocumentCopy, Refresh, Edit, Connection } from '@element-plus/icons-vue';
 
 const DEFAULT_CONCURRENCY = 2;
 
@@ -252,6 +283,7 @@ export default {
     DocumentCopy,
     Refresh,
     Connection,
+    Edit
   },
 
   setup() {
@@ -265,6 +297,11 @@ export default {
     const sortOrder = ref('desc');
     const columnMode = ref(2);
     const globalLoading = ref(false);
+    const editDialog = reactive({
+      visible: false,
+      link: '',
+      remark: ''
+    });
 
     // ---------- 本地读取/保存 zangbaoLinks ----------
     const saveLinksToLocal = () => {
@@ -286,6 +323,7 @@ export default {
           isFavorite: !!i.isFavorite,
           data: i.data || null,
           loading: false,
+          remark: i.remark || "", 
         }));
         zangbaoLinks.value.forEach(item => {
           activeTabs[item.link] = 'first';
@@ -405,6 +443,7 @@ export default {
           is_support: c.is_support,
           season: c.season,
           hero_id: c.hero_id,
+          icon_hero_id: c.icon_hero_id,
           opacity: c.opacity ?? 1
         })),
         skill: (full.skill || []).map(s => ({
@@ -471,7 +510,14 @@ export default {
         return;
       }
 
-      const item = { link: normalized, timestamp: Date.now(), isFavorite: false, data: null, loading: true };
+      const item = { 
+        link: normalized, 
+        timestamp: Date.now(), 
+        isFavorite: false, 
+        data: null, 
+        loading: true, 
+        remark: '',
+      };
       zangbaoLinks.value.push(item);
       activeTabs[item.link] = 'first';
       saveLinksToLocal();
@@ -525,6 +571,42 @@ export default {
       navigator.clipboard.writeText(cbgLink).then(() => {
         ElMessage({ message: '复制成功', type: 'success', zIndex: 99999 });
       }).catch(() => { ElMessage({ message: '复制失败', type: 'error' }); });
+    };
+
+    // 打开编辑备注窗口
+    const editRecord = (item) => {
+      if (!item || !item.link) {
+        ElMessage.error("记录无效，无法编辑备注");
+        return;
+      }
+      editDialog.link = item.link;
+      editDialog.remark = item.remark || "";
+      editDialog.visible = true;
+    };
+
+    // 保存备注
+    const saveRemark = () => {
+      const link = editDialog.link;
+      if (!link) {
+        ElMessage.error("保存失败：无效的链接");
+        return;
+      }
+
+      // 找到记录
+      const item = zangbaoLinks.value.find(i => i.link === link);
+      if (!item) {
+        ElMessage.error("保存失败：记录不存在");
+        return;
+      }
+
+      // 写入备注
+      item.remark = editDialog.remark || "";
+
+      // 保存到 localStorage
+      saveLinksToLocal();
+
+      editDialog.visible = false;
+      ElMessage.success("备注已保存");
     };
 
     const openLink = (url) => { window.open(url, "_blank"); };
@@ -626,9 +708,9 @@ export default {
 
     return {
       newLink, zangbaoLinks, activeTabs, currentPage, pageSize, filterFavorites, sortKey, sortOrder, columnMode, globalLoading,
-      filteredLinks, pagedLinks, gridStyle,
+      filteredLinks, pagedLinks, gridStyle,editDialog,
       addLink, removeLink, clearLinks, toggleFavorite, copyUrl, openLink, refreshLink, updateAll,
-      handlePageChange, setSort, toggleFilter,
+      handlePageChange, setSort, toggleFilter, editRecord, saveRemark,
     };
   }
 };

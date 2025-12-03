@@ -65,7 +65,7 @@ function highlightNumbers(text) {
   position: relative;
   display: inline-block;
   margin: 5px;
-  height: 160px;
+  height: 180px;
 }
 
 .wrap {

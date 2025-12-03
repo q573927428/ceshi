@@ -80,7 +80,8 @@
 
                 <div class="price-info">
                   估算：武将卡池 {{ item.data.cardTotalValue || 0 }} + 武器 {{ item.data.weaponTotalValue || 0 }} =
-                  共计 {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }} 元
+                  共计 {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }} 元 
+                  <span v-if="item.remark">备注：{{ item.remark || "" }}</span>
                 </div>
               </div>
 
@@ -89,11 +90,23 @@
                 <el-button
                   type="info"
                   circle
+                  plain
                   :loading="item.loading"
                   @click="refreshLink(item.link)"
                   title="刷新"
                 >
                   <el-icon><Refresh /></el-icon>
+                </el-button>
+
+                <el-button
+                  type="warning"
+                  circle
+                  plain
+                  :loading="item.loading"
+                  @click="editRecord(item)"
+                  title="编辑"
+                >
+                  <el-icon><Edit /></el-icon>
                 </el-button>
 
                 <el-button type="primary" circle plain @click="openLink(item.link)" title="打开链接">
@@ -219,6 +232,26 @@
       </div>
     </div>
   </div>
+
+  <!-- 编辑备注对话框 -->
+  <el-dialog
+    v-model="editDialog.visible"
+    title="编辑备注"
+    width="400px"
+  >
+    <el-input
+      type="textarea"
+      v-model="editDialog.remark"
+      placeholder="请输入备注（例如账号适合什么阵容、亮点等）"
+      :rows="5"
+    />
+
+    <template #footer>
+      <el-button @click="editDialog.visible = false">取消</el-button>
+      <el-button type="primary" @click="saveRemark">保存</el-button>
+    </template>
+  </el-dialog>
+
 </template>
 
 <script>
@@ -229,7 +262,7 @@ import SkillCard from '~/components/SkillCard.vue';
 import WeaponList from '~/components/WeaponList.vue';
 import FormationComponent from '~/components/FormationComponent.vue';
 import { getCardValue, getWeaponValue } from '~/utils/valueCalculator.js';
-import { Delete, Star, DocumentCopy, Refresh, Connection } from '@element-plus/icons-vue';
+import { Delete, Star, DocumentCopy, Refresh, Edit, Connection } from '@element-plus/icons-vue';
 
 export default {
   components: {
@@ -242,6 +275,7 @@ export default {
     DocumentCopy,
     Refresh,
     Connection,
+    Edit
   },
 
   setup() {
@@ -259,6 +293,12 @@ export default {
 
     // IndexedDB
     let dbPromise = null;
+
+    const editDialog = reactive({
+      visible: false,
+      link: '',
+      remark: ''
+    });
 
     onMounted(async () => {
       if (!process.client) return;
@@ -314,6 +354,7 @@ export default {
         isFavorite: r.isFavorite,
         data: r.data || null,
         loading: false,
+        remark: r.remark || '',
       }));
 
       zangbaoLinks.value.forEach(i => {
@@ -437,6 +478,7 @@ export default {
           is_support: c.is_support,
           season: c.season,
           hero_id: c.hero_id,
+          icon_hero_id: c.icon_hero_id,
           opacity: c.opacity ?? 1
         })),
         skill: (full.skill || []).map(s => ({
@@ -494,6 +536,7 @@ export default {
         timestamp: Date.now(),
         isFavorite: false,
         data: null,
+        remark: ''
       };
 
       await saveRecord(newRecord);
@@ -605,6 +648,29 @@ export default {
       await saveRecord(record);
       await loadLinksFromDB();
     };
+    // 打开编辑对话框
+    const editRecord = (item) => {
+      editDialog.link = item.link;
+      editDialog.remark = item.remark || '';
+      editDialog.visible = true;
+    };
+
+    // 保存备注
+    const saveRemark = async () => {
+      if (!dbPromise) return;
+
+      const db = await dbPromise;
+      const record = await db.get('records', editDialog.link);
+
+      if (record) {
+        record.remark = editDialog.remark || '';
+        await db.put('records', JSON.parse(JSON.stringify(record)));
+      }
+
+      await loadLinksFromDB();
+      editDialog.visible = false;
+      ElMessage.success('备注已保存');
+    };
 
     const copyUrl = (cbgLink) => {
       navigator.clipboard.writeText(cbgLink).then(() => {
@@ -664,6 +730,7 @@ export default {
       filteredLinks,
       pagedLinks,
       gridStyle,
+      editDialog,
 
       addLink,
       removeLink,
@@ -675,6 +742,8 @@ export default {
       toggleFilter,
       setSort,
       copyUrl,
+      editRecord,
+      saveRemark,
 
       currentPage,
       pageSize,
