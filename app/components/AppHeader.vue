@@ -13,7 +13,7 @@
       :class="{ active: activeIndex === '/rent' }"
       @click="go('/rent')"
     >
-      <el-icon><Switch /></el-icon> 对比
+      <el-icon><Switch /></el-icon> 出租
     </div>
 
     <div 
@@ -53,8 +53,7 @@
 <script setup>
 import { useRouter, useRoute } from 'vue-router'
 import { ref, watch } from 'vue'
-import { House, Star, Switch, User } from '@element-plus/icons-vue';
-import { ArrowUpBold } from '@element-plus/icons-vue'
+import { House, Star, Switch, User,ArrowUpBold } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
