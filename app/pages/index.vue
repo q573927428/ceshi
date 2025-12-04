@@ -20,7 +20,8 @@
           <el-input
             v-model="newLinkRemark"
             placeholder="请输入备注，例如：1.5.0"
-            maxlength="2000"
+            maxlength="20"
+            show-word-limit
           />
         </div>
 

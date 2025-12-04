@@ -2,51 +2,9 @@
   <div class="zangbao-page">
     <!-- 链接输入 + 操作 -->
     <div class="link-section">
-      <h3>藏宝阁链接:</h3>
-
-      <div class="link-input-container">
-        <div class="link-input">
-          <el-input
-            v-model="newLink"
-            type="textarea"
-            :rows="6"
-            placeholder="请输入藏宝阁链接，例如：https://stzb.cbg.163.com/cgi/mweb/equip/1/..."
-            maxlength="2000"
-            show-word-limit
-            @keyup.enter="addLink"
-          />
-        </div>
-        <div class="link-input" v-if="showRemarkInput">
-          <el-input
-            v-model="newLinkRemark"
-            placeholder="请输入备注，例如：1.5.0"
-            maxlength="2000"
-          />
-        </div>
-
-        <div class="button-section">
-          <el-button type="primary" @click="addLink" :loading = "globalLoading">添加链接</el-button>
-          <el-button type="warning" @click="updateAll" :loading = "globalLoading">更新全部</el-button>
-          <el-button type="info" @click="clearLinks">清空链接</el-button>
-          <el-checkbox v-model="showRemarkInput">加备注</el-checkbox>
-        </div>
-      </div>
-
-      <el-alert
-        v-if="updateProgress"
-        type="info"
-        :closable="false"
-        show-icon
-        style="margin-top:10px;"
-      >
-        {{ updateProgress }}
-      </el-alert>
 
       <!-- 筛选排序与列配置 -->
       <div class="filter-sort">
-        <el-button @click="toggleFilter" plain :type="filterFavorites ? 'primary' : 'warning'">
-          {{ filterFavorites ? '显示全部' : '仅看收藏' }}
-        </el-button>
 
         <el-button @click="setSort('price')" plain :type="sortKey === 'price' ? 'primary' : 'default'">
           价格排序 {{ sortKey === 'price' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
@@ -296,7 +254,7 @@ const zangbaoLinks = ref([]);
 const activeTabs = reactive({});
 const currentPage = ref(1);
 const pageSize = ref(6);
-const filterFavorites = ref(false);
+const filterFavorites = ref(true);
 const sortKey = ref('time');
 const sortOrder = ref('desc');
 const columnMode = ref(2);
