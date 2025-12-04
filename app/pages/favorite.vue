@@ -54,8 +54,8 @@
                 </div>
 
                 <div class="price-info">
-                  <el-tag type="primary">卡池 {{ item.data.cardTotalValue || 0 }}</el-tag> + <el-tag type="success">武器 {{ item.data.weaponTotalValue || 0 }}</el-tag> =
-                   <el-tag type="danger"> {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }}  元 </el-tag> 
+                  <el-tag type="primary" effect="plain">卡池 {{ item.data.cardTotalValue || 0 }} 元</el-tag> + <el-tag type="success" effect="plain">武器 {{ item.data.weaponTotalValue || 0 }} 元</el-tag> =
+                   <el-tag type="danger" effect="plain"> {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }}  元 </el-tag> 
                   <span class="remark-bz" v-if="item.remark">备注：{{ item.remark || "" }}</span>
                 </div>
               </div>

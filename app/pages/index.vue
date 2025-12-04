@@ -16,6 +16,13 @@
             @keyup.enter="addLink"
           />
         </div>
+        <div class="link-input">
+          <el-input
+            v-model="newLinkRemark"
+            placeholder="请输入备注，例如：1.5.0"
+            maxlength="2000"
+          />
+        </div>
 
         <div class="button-section">
           <el-button type="primary" @click="addLink">添加链接</el-button>
@@ -72,60 +79,66 @@
                 </h3>
 
                 <div class="price-info">
-                  ID：{{ item.data.extractedId }}
-                  <el-button type="text" @click="copyUrl(item.link)" title="复制链接">
-                    <el-icon><DocumentCopy /></el-icon>
-                  </el-button>
+                  <span class="timestamp-text">时间：{{ formatTimestamp(item.timestamp) }}</span>
+                  <span class="id-text">
+                    ID：{{ item.data.extractedId }}
+                  </span>
+                  <span class="remark-bz" v-if="item.remark">备注：{{ item.remark || "" }}</span>
                 </div>
 
                 <div class="price-info">
-                  <el-tag type="primary" effect="plain">卡池 {{ item.data.cardTotalValue || 0 }}</el-tag> + <el-tag type="success" effect="plain">武器 {{ item.data.weaponTotalValue || 0 }}</el-tag> =
+                  <el-tag type="primary" effect="plain">卡池 {{ item.data.cardTotalValue || 0 }} 元</el-tag> + <el-tag type="success" effect="plain">武器 {{ item.data.weaponTotalValue || 0 }} 元</el-tag> =
                    <el-tag type="danger" effect="plain"> {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }}  元 </el-tag> 
-                  <span class="remark-bz" v-if="item.remark">备注：{{ item.remark || "" }}</span>
                 </div>
               </div>
 
               <!-- 操作按钮组 -->
               <div class="header-actions">
-                <el-button
-                  type="info"
-                  circle
-                  plain
-                  :loading="item.loading"
-                  @click="refreshLink(item.link)"
-                  title="刷新"
-                >
-                  <el-icon><Refresh /></el-icon>
-                </el-button>
+                <div class="header-actions-top">
+                  <el-button
+                    type="info"
+                    circle
+                    plain
+                    :loading="item.loading"
+                    @click="refreshLink(item.link)"
+                    title="刷新"
+                  >
+                    <el-icon><Refresh /></el-icon>
+                  </el-button>
 
-                <el-button
-                  type="warning"
-                  circle
-                  plain
-                  :loading="item.loading"
-                  @click="editRecord(item)"
-                  title="编辑"
-                >
-                  <el-icon><Edit /></el-icon>
-                </el-button>
+                  <el-button type="primary" circle plain @click="copyUrl(item.link)" title="复制链接">
+                    <el-icon><DocumentCopy /></el-icon>
+                  </el-button>
 
-                <el-button type="primary" circle plain @click="openLink(item.link)" title="打开链接">
-                  <el-icon><Connection /></el-icon>
-                </el-button>
+                  <el-button
+                    type="warning"
+                    circle
+                    plain
+                    :loading="item.loading"
+                    @click="editRecord(item)"
+                    title="编辑"
+                  >
+                    <el-icon><Edit /></el-icon>
+                  </el-button>
 
-                <el-button
-                  type="warning"
-                  circle
-                  :plain="!item.isFavorite"
-                  @click="toggleFavorite(item)"
-                  title="收藏/取消收藏"
-                >
-                  <el-icon><Star /></el-icon>
-                </el-button>
+                  <el-button type="primary" circle plain @click="openLink(item.link)" title="打开链接">
+                    <el-icon><Connection /></el-icon>
+                  </el-button>
 
-                <el-button type="danger" circle plain @click="removeLink(item.link)" title="删除">
-                  <el-icon><Delete /></el-icon>
-                </el-button>
+                  <el-button
+                    type="warning"
+                    circle
+                    :plain="!item.isFavorite"
+                    @click="toggleFavorite(item)"
+                    title="收藏/取消收藏"
+                  >
+                    <el-icon><Star /></el-icon>
+                  </el-button>
+
+                  <el-button type="danger" circle plain @click="removeLink(item.link)" title="删除">
+                    <el-icon><Delete /></el-icon>
+                  </el-button>
+                </div>
               </div>
             </div>
 
@@ -290,6 +303,7 @@ export default {
     const sortOrder = ref('desc');
     const columnMode = ref(2);
     const globalLoading = ref(false);
+    const newLinkRemark = ref('');
 
     // IndexedDB
     let dbPromise = null;
@@ -545,6 +559,7 @@ export default {
         ElMessage.success('链接已存在，已更新时间');
         return;
       }
+      const remark = newLinkRemark.value?.trim() || '';
 
       // 新增
       const newRecord = {
@@ -552,7 +567,7 @@ export default {
         timestamp: Date.now(),
         isFavorite: false,
         data: null,
-        remark: ''
+        remark: remark
       };
 
       await saveRecord(newRecord);
@@ -765,6 +780,17 @@ export default {
         });
       });
     };
+    const formatTimestamp = (ts) => {
+      if (!ts) return '';
+      const date = new Date(ts);
+      return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    };
 
     return {
       newLink,
@@ -788,6 +814,7 @@ export default {
       editRecord,
       saveRemark,
       handlePageChange,
+      formatTimestamp,
 
       currentPage,
       pageSize,
@@ -796,6 +823,7 @@ export default {
       filterFavorites,
       columnMode,
       globalLoading,
+      newLinkRemark,
     };
   }
 };
@@ -893,10 +921,10 @@ export default {
 .price-info {
   font-size: 12px;
   color: #666;
+  padding-top: 8px;
 }
 .header-actions {
-  display: flex;
-  gap: 2px;
+  margin-bottom: 8px;
 }
 .panel-content {
   padding: 0 12px;
@@ -938,8 +966,22 @@ export default {
   margin-top: 8px;
   color: #f56c6c;
 }
+.id-text{
+  display: inline-block;
+  font-size: 12px;
+  margin-right: 8px;
+  padding-bottom: 3px;
+}
 .remark-bz{
-  color: #f56c6c;
-  margin-left: 10px;
+  margin-right: 8px;
+  display: inline-block; 
+  padding-bottom: 8px;
+  color: #000;
+}
+.timestamp-text{
+  margin-right: 8px;
+  display: inline-block; 
+  white-space: nowrap; 
+  padding-bottom: 3px; 
 }
 </style>
