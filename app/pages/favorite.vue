@@ -524,6 +524,7 @@ const addLink = async () => {
         record.data = processed;
         record.timestamp = Date.now();
         await saveRecord(record);
+        ElMessage.success(`第 ${index} 个已存在，更新成功`);
       } else {
         // 新增
         const remark = newLinkRemark.value?.trim() || '';
@@ -534,15 +535,12 @@ const addLink = async () => {
           data: null,
           remark
         };
-
-        await saveRecord(newRecord);
-
         const processed = await fetchAccountData(link);
         newRecord.data = processed;
         await saveRecord(newRecord);
+        ElMessage.success(`第 ${index} 个添加成功`);
       }
 
-      ElMessage.success(`第 ${index} 个添加成功`);
       // ✅ 每成功处理 1 条，就立刻渲染一次
       await loadLinksFromDB();
     } catch (err) {
@@ -560,7 +558,7 @@ const addLink = async () => {
   if (failed.length) {
     ElMessage.warning(`部分添加失败：${failed.length} 个`);
   } else {
-    ElMessage.success('添加成功');
+    ElMessage.success('全部完成');
   }
 };
 
