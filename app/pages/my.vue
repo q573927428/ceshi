@@ -26,11 +26,21 @@
 
         <div class="button-section">
           <el-button type="primary" @click="addLink" :loading = "globalLoading">添加链接</el-button>
-          <!-- <el-button type="warning" @click="updateAll">更新全部</el-button> -->
+          <el-button type="warning" @click="updateAll" :loading = "globalLoading">更新全部</el-button>
           <el-button type="info" @click="clearLinks">清空链接</el-button>
           <el-checkbox v-model="showRemarkInput">加备注</el-checkbox>
         </div>
       </div>
+
+      <el-alert
+        v-if="updateProgress"
+        type="info"
+        :closable="false"
+        show-icon
+        style="margin-top:10px;"
+      >
+        {{ updateProgress }}
+      </el-alert>
 
       <!-- 筛选排序与列配置 -->
       <div class="filter-sort">
@@ -304,6 +314,8 @@ export default {
     const globalLoading = ref(false);
     const newLinkRemark = ref('');
     const showRemarkInput = ref(true);
+    const updateProgress = ref('');
+
 
     // IndexedDB
     let dbPromise = null;
@@ -597,9 +609,9 @@ export default {
       newLink.value = "";
 
       if (failed.length) {
-        ElMessage.warning(`部分链接添加失败：${failed.length} 个`);
+        ElMessage.warning(`部分添加失败：${failed.length} 个`);
       } else {
-        ElMessage.success('全部链接处理成功');
+        ElMessage.success('添加成功');
       }
     };
 
@@ -691,14 +703,25 @@ export default {
     // 更新全部
     // ========================
     const updateAll = async () => {
+      const total = zangbaoLinks.value.length;
+      if (total === 0) {
+        ElMessage.info('没有链接需要更新');
+        return;
+      }
+
       globalLoading.value = true;
 
+      let index = 0;
+
       for (const item of zangbaoLinks.value) {
+        index++;
+        updateProgress.value = `正在更新 ${index} / ${total} ...`;
+
         const record = await getRecord(item.link);
         if (!record) continue;
 
         try {
-          const processed = await fetchAccountData(item.link);
+          const processed = await fetchAccountData(item.link, record);
           record.data = processed;
           record.timestamp = Date.now();
           await saveRecord(record);
@@ -710,8 +733,10 @@ export default {
       await loadLinksFromDB();
       globalLoading.value = false;
 
+      updateProgress.value = '';
       ElMessage.success('全部更新完成');
     };
+
 
     // ========================
     // 收藏
@@ -854,6 +879,7 @@ export default {
       globalLoading,
       newLinkRemark,
       showRemarkInput,
+      updateProgress,
     };
   }
 };
