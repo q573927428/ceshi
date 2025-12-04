@@ -16,11 +16,19 @@
             @keyup.enter="addLink"
           />
         </div>
+        <div class="link-input" v-if="showRemarkInput">
+          <el-input
+            v-model="newLinkRemark"
+            placeholder="请输入备注，例如：1.5.0"
+            maxlength="2000"
+          />
+        </div>
 
         <div class="button-section">
-          <el-button type="primary" @click="addLink">添加链接</el-button>
+          <el-button type="primary" @click="addLink" :loading = "globalLoading">添加链接</el-button>
           <!-- <el-button type="warning" @click="updateAll">更新全部</el-button> -->
           <el-button type="info" @click="clearLinks">清空链接</el-button>
+          <el-checkbox v-model="showRemarkInput">加备注</el-checkbox>
         </div>
       </div>
 
@@ -49,9 +57,6 @@
     </div>
 
     <!-- 全局加载指示 -->
-    <div class="global-loading" v-if="globalLoading">
-      正在批量更新数据...
-    </div>
 
     <!-- 对比区域 -->
     <div class="compare-results">
@@ -62,154 +67,161 @@
             :key="item.link"
             class="compare-panel"
           >
-            <!-- panel header -->
-            <div class="panel-header">
-              <div class="header-info" v-if="item.data?.equip">
-                <h3>
-                  <span>¥{{ item.data.equipPrice }}</span>
-                  {{ item.data.equip.status_desc }} -
-                  {{ item.data.equip.area_name }} {{ item.data.equip.server_name }}
-                </h3>
+            <div v-loading = "item.loading">
+              <!-- panel header -->
+              <div class="panel-header">
+                <div class="header-info" v-if="item.data?.equip">
+                  <h3>
+                    <span>¥{{ item.data.equipPrice }}</span>
+                    {{ item.data.equip.status_desc }} -
+                    {{ item.data.equip.area_name }} {{ item.data.equip.server_name }}
+                  </h3>
 
-                <div class="price-info">
-                  ID：{{ item.data.extractedId }}
-                  <el-button type="text" @click="copyUrl(item.link)" title="复制链接">
-                    <el-icon><DocumentCopy /></el-icon>
-                  </el-button>
+                  <div class="price-info">
+                    <span class="timestamp-text">时间：{{ formatTimestamp(item.timestamp) }}</span>
+                    <span class="id-text">
+                      ID：{{ item.data.extractedId }}
+                    </span>
+                    <span class="remark-bz" v-if="item.remark">备注：{{ item.remark || "" }}</span>
+                  </div>
+
+                  <div class="price-info">
+                    <el-tag type="primary" effect="plain">卡池 {{ item.data.cardTotalValue || 0 }} 元</el-tag> + <el-tag type="success" effect="plain">武器 {{ item.data.weaponTotalValue || 0 }} 元</el-tag> =
+                    <el-tag type="danger" effect="plain"> {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }}  元 </el-tag> 
+                  </div>
                 </div>
 
-                <div class="price-info">
-                  <el-tag type="primary">卡池 {{ item.data.cardTotalValue || 0 }}</el-tag> + <el-tag type="success">武器 {{ item.data.weaponTotalValue || 0 }}</el-tag> =
-                   <el-tag type="danger"> {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }}  元 </el-tag> 
-                  <span class="remark-bz" v-if="item.remark">备注：{{ item.remark || "" }}</span>
+                <!-- 操作按钮组 -->
+                <div class="header-actions">
+                  <div class="header-actions-top">
+                    <el-button
+                      type="info"
+                      circle
+                      plain
+                      :loading="item.loading"
+                      @click="refreshLink(item.link)"
+                      title="刷新"
+                    >
+                      <el-icon><Refresh /></el-icon>
+                    </el-button>
+
+                    <el-button type="primary" circle plain @click="copyUrl(item.link)" title="复制链接">
+                      <el-icon><DocumentCopy /></el-icon>
+                    </el-button>
+
+                    <el-button
+                      type="warning"
+                      circle
+                      plain
+                      @click="editRecord(item)"
+                      title="编辑"
+                    >
+                      <el-icon><Edit /></el-icon>
+                    </el-button>
+
+                    <el-button type="primary" circle plain @click="openLink(item.link)" title="打开链接">
+                      <el-icon><Connection /></el-icon>
+                    </el-button>
+
+                    <el-button
+                      type="warning"
+                      circle
+                      :plain="!item.isFavorite"
+                      @click="toggleFavorite(item)"
+                      title="收藏/取消收藏"
+                    >
+                      <el-icon><Star /></el-icon>
+                    </el-button>
+
+                    <el-button type="danger" circle plain @click="removeLink(item.link)" title="删除">
+                      <el-icon><Delete /></el-icon>
+                    </el-button>
+                  </div>
                 </div>
               </div>
 
-              <!-- 操作按钮组 -->
-              <div class="header-actions">
-                <el-button
-                  type="info"
-                  circle
-                  plain
-                  :loading="item.loading"
-                  @click="refreshLink(item.link)"
-                  title="刷新"
-                >
-                  <el-icon><Refresh /></el-icon>
-                </el-button>
+              <!-- panel 内容 -->
+              <div class="panel-content">
+                <!-- 如果正在加载，显示 skeleton -->
+                <div v-if="item.loading" class="panel-loading">
+                  <el-skeleton rows="4" animated />
+                </div>
 
-                <el-button
-                  type="warning"
-                  circle
-                  plain
-                  :loading="item.loading"
-                  @click="editRecord(item)"
-                  title="编辑"
-                >
-                  <el-icon><Edit /></el-icon>
-                </el-button>
-
-                <el-button type="primary" circle plain @click="openLink(item.link)" title="打开链接">
-                  <el-icon><Connection /></el-icon>
-                </el-button>
-
-                <el-button
-                  type="warning"
-                  circle
-                  :plain="!item.isFavorite"
-                  @click="toggleFavorite(item)"
-                  title="收藏/取消收藏"
-                >
-                  <el-icon><Star /></el-icon>
-                </el-button>
-
-                <el-button type="danger" circle plain @click="removeLink(item.link)" title="删除">
-                  <el-icon><Delete /></el-icon>
-                </el-button>
-              </div>
-            </div>
-
-            <!-- panel 内容 -->
-            <div class="panel-content">
-              <!-- 如果正在加载，显示 skeleton -->
-              <div v-if="item.loading" class="panel-loading">
-                <el-skeleton rows="4" animated />
-              </div>
-
-              <!-- 实际数据 -->
-              <div v-else-if="item.data">
-                <el-tabs v-model="activeTabs[item.link]" lazy class="tabs-assort">
-                  <el-tab-pane label="武将" name="first">
-                    <div v-if="activeTabs[item.link] === 'first'">
-                      <CategoryCardsList :unique-cards="item.data.uniqueCards || []" />
-                    </div>
-                  </el-tab-pane>
-
-                  <el-tab-pane label="技能" name="second">
-                    <div v-if="activeTabs[item.link] === 'second'">
-                      <SkillCard :skill-data="item.data.skill || []" />
-                    </div>
-                  </el-tab-pane>
-
-                  <el-tab-pane label="武器" name="third">
-                    <div v-if="activeTabs[item.link] === 'third'">
-                      <WeaponList
-                        :red-weapons="item.data.redWeapons || []"
-                        :pink-weapons="item.data.pinkWeapons || []"
-                        :blue-weapons="item.data.blueWeapons || []"
-                      />
-                    </div>
-                  </el-tab-pane>
-
-                  <el-tab-pane label="阵容" name="fourth">
-                    <div v-if="activeTabs[item.link] === 'fourth'">
-                      <FormationComponent
-                        v-if="item.data.uniqueCards?.length"
-                        :uniqueCards="item.data.uniqueCards"
-                        :single-column="columnMode === 3 || columnMode ===4 || columnMode ===5"
-                      />
-                    </div>
-                  </el-tab-pane>
-
-                  <el-tab-pane label="其他" name="fifth">
-                    <div v-if="activeTabs[item.link] === 'fifth'">
-                      <div class="other-resources">
-                        <ul>
-                          <li>虎符：{{ item.data.tenures.hufu }}</li>
-                          <li>普通玉符：{{ item.data.tenures.bind_yuan_bao }}</li>
-                          <li>四通玉符：{{ item.data.tenures.yuan_bao }}</li>
-                          <li>将令：{{ item.data.tenures.jiang_ling }}</li>
-                          <li>荣誉：{{ item.data.tenures.honor }}</li>
-                          <li>赤珠山铁：{{ item.data.tenures.chi_zhu_shan_tie }}个</li>
-                          <li>小叶紫檀：{{ item.data.tenures.xiao_ye_zi_tan }}个</li>
-                          <li>天工锤：{{ item.data.tenures.gear_feature_hammer }}个</li>
-                          <li>皮肤：{{ item.data.dynamic_icon.length }}个</li>
-                        </ul>
+                <!-- 实际数据 -->
+                <div v-else-if="item.data">
+                  <el-tabs v-model="activeTabs[item.link]" lazy class="tabs-assort">
+                    <el-tab-pane label="武将" name="first">
+                      <div v-if="activeTabs[item.link] === 'first'">
+                        <CategoryCardsList :unique-cards="item.data.uniqueCards || []" />
                       </div>
+                    </el-tab-pane>
 
-                      <div class="dynamic_icon">
-                        <div class="dynamic-icon-container" v-if="item.data.dynamic_icon">
-                          <div
-                            v-for="card in item.data.dynamic_icon"
-                            :key="card.icon_hero_id"
-                            class="dynamic-icon-item"
-                          >
-                            <img
-                              :src="`https://cbg-stzb.res.netease.com/game_res/cards/cut/card_medium_${card.icon_hero_id}.jpg`"
-                              :alt="card.name"
-                              class="dynamic-icon-image"
-                            />
-                            <div class="card-name">{{ card.name }}</div>
+                    <el-tab-pane label="技能" name="second">
+                      <div v-if="activeTabs[item.link] === 'second'">
+                        <SkillCard :skill-data="item.data.skill || []" />
+                      </div>
+                    </el-tab-pane>
+
+                    <el-tab-pane label="武器" name="third">
+                      <div v-if="activeTabs[item.link] === 'third'">
+                        <WeaponList
+                          :red-weapons="item.data.redWeapons || []"
+                          :pink-weapons="item.data.pinkWeapons || []"
+                          :blue-weapons="item.data.blueWeapons || []"
+                        />
+                      </div>
+                    </el-tab-pane>
+
+                    <el-tab-pane label="阵容" name="fourth">
+                      <div v-if="activeTabs[item.link] === 'fourth'">
+                        <FormationComponent
+                          v-if="item.data.uniqueCards?.length"
+                          :uniqueCards="item.data.uniqueCards"
+                          :single-column="columnMode === 3 || columnMode ===4 || columnMode ===5"
+                        />
+                      </div>
+                    </el-tab-pane>
+
+                    <el-tab-pane label="其他" name="fifth">
+                      <div v-if="activeTabs[item.link] === 'fifth'">
+                        <div class="other-resources">
+                          <ul>
+                            <li>虎符：{{ item.data.tenures.hufu }}</li>
+                            <li>普通玉符：{{ item.data.tenures.bind_yuan_bao }}</li>
+                            <li>四通玉符：{{ item.data.tenures.yuan_bao }}</li>
+                            <li>将令：{{ item.data.tenures.jiang_ling }}</li>
+                            <li>荣誉：{{ item.data.tenures.honor }}</li>
+                            <li>赤珠山铁：{{ item.data.tenures.chi_zhu_shan_tie }}个</li>
+                            <li>小叶紫檀：{{ item.data.tenures.xiao_ye_zi_tan }}个</li>
+                            <li>天工锤：{{ item.data.tenures.gear_feature_hammer }}个</li>
+                            <li>皮肤：{{ item.data.dynamic_icon.length }}个</li>
+                          </ul>
+                        </div>
+
+                        <div class="dynamic_icon">
+                          <div class="dynamic-icon-container" v-if="item.data.dynamic_icon">
+                            <div
+                              v-for="card in item.data.dynamic_icon"
+                              :key="card.icon_hero_id"
+                              class="dynamic-icon-item"
+                            >
+                              <img
+                                :src="`https://cbg-stzb.res.netease.com/game_res/cards/cut/card_medium_${card.icon_hero_id}.jpg`"
+                                :alt="card.name"
+                                class="dynamic-icon-image"
+                              />
+                              <div class="card-name">{{ card.name }}</div>
+                            </div>
                           </div>
                         </div>
+
                       </div>
+                    </el-tab-pane>
+                  </el-tabs>
+                </div>
 
-                    </div>
-                  </el-tab-pane>
-                </el-tabs>
+                <div v-else class="no-data">暂无数据</div>
               </div>
-
-              <div v-else class="no-data">暂无数据</div>
             </div>
           </div>
         </div>
@@ -290,6 +302,8 @@ export default {
     const sortOrder = ref('desc');
     const columnMode = ref(2);
     const globalLoading = ref(false);
+    const newLinkRemark = ref('');
+    const showRemarkInput = ref(true);
 
     // IndexedDB
     let dbPromise = null;
@@ -367,8 +381,10 @@ export default {
     // ========================
 
     const extractCbgLink = (text) => {
-      const match = text.match(/https:\/\/stzb\.cbg\.163\.com\/cgi\/mweb\/equip\/1\/[0-9a-zA-Z\-]+/i);
-      return match ? match[0] : null;
+      const idPattern = /\d{15}-1-[A-Z0-9]{14}/gi;
+      const ids = text.match(idPattern);
+      if (!ids) return [];
+      return ids.map(id => `https://stzb.cbg.163.com/cgi/mweb/equip/1/${id}`);
     };
 
     const normalizeLink = (link) => {
@@ -522,50 +538,69 @@ export default {
     // 添加链接
     // ========================
     const addLink = async () => {
-      if (!newLink.value.trim()) {
+      const input = newLink.value.trim();
+      if (!input) {
         ElMessage.warning('请输入链接');
         return;
       }
 
-      const real = extractCbgLink(newLink.value.trim());
-      if (!real) return ElMessage.warning('链接格式不正确');
-
-      const link = normalizeLink(real);
-
-      let record = await getRecord(link);
-
-      // 已存在
-      if (record) {
-        const processed = await fetchAccountData(link, record);
-        record.data = processed;
-        record.timestamp = Date.now();
-        await saveRecord(record);
-        await loadLinksFromDB();
-        newLink.value = '';
-        ElMessage.success('链接已存在，已更新时间');
+      const links = extractCbgLink(input);
+      if (!links.length) {
+        ElMessage.warning('未识别到合法链接');
         return;
       }
 
-      // 新增
-      const newRecord = {
-        link,
-        timestamp: Date.now(),
-        isFavorite: false,
-        data: null,
-        remark: ''
-      };
+      globalLoading.value = true;
 
-      await saveRecord(newRecord);
+      const failed = [];  // 收集失败项
 
-      // 抓取数据
-      const processed = await fetchAccountData(link);
-      
-      newRecord.data = processed;
-      await saveRecord(newRecord);
+      for (const rawLink of links) {
+        const link = normalizeLink(rawLink);
+
+        try {
+          let record = await getRecord(link);
+
+          if (record) {
+            // 已存在 → 更新
+            const processed = await fetchAccountData(link, record);
+            record.data = processed;
+            record.timestamp = Date.now();
+            await saveRecord(record);
+          } else {
+            // 新增
+            const remark = newLinkRemark.value?.trim() || '';
+            const newRecord = {
+              link,
+              timestamp: Date.now(),
+              isFavorite: false,
+              data: null,
+              remark
+            };
+
+            await saveRecord(newRecord);
+
+            const processed = await fetchAccountData(link);
+            newRecord.data = processed;
+            await saveRecord(newRecord);
+          }
+
+        } catch (err) {
+          console.error("处理失败：", link, err);
+          failed.push(link);
+          // 继续执行下一个链接，而不是中断整个循环
+          continue;
+        }
+      }
 
       await loadLinksFromDB();
-      newLink.value = '';
-      ElMessage.success('添加成功');
+      globalLoading.value = false;
+      newLink.value = "";
+
+      if (failed.length) {
+        ElMessage.warning(`部分链接添加失败：${failed.length} 个`);
+      } else {
+        ElMessage.success('全部链接处理成功');
+      }
     };
 
     // ========================
@@ -629,17 +664,26 @@ export default {
     // 刷新
     // ========================
     const refreshLink = async (link) => {
-      let record = await getRecord(link);
-      if (!record) return;
+      const item = pagedLinks.value.find(i => i.link === link);
+      if (!item) return;
+      item.loading = true;
 
-      const processed = await fetchAccountData(link, record);
-      record.data = processed;
-      // record.timestamp = Date.now();
+      try {
+        let record = await getRecord(link);
+        if (!record) return;
+        const processed = await fetchAccountData(link, record);
+        record.data = processed;
+        // record.timestamp = Date.now();
 
-      await saveRecord(record);
-      await loadLinksFromDB();
+        await saveRecord(record);
+        await loadLinksFromDB();
 
-      ElMessage.success('刷新成功');
+        ElMessage.success('刷新成功')
+      } catch (error) {
+        ElMessage.success('刷新失败')
+      }finally {
+        item.loading = false;
+      }
     };
 
 
@@ -765,6 +809,17 @@ export default {
         });
       });
     };
+    const formatTimestamp = (ts) => {
+      if (!ts) return '';
+      const date = new Date(ts);
+      return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    };
 
     return {
       newLink,
@@ -788,6 +843,7 @@ export default {
       editRecord,
       saveRemark,
       handlePageChange,
+      formatTimestamp,
 
       currentPage,
       pageSize,
@@ -796,6 +852,8 @@ export default {
       filterFavorites,
       columnMode,
       globalLoading,
+      newLinkRemark,
+      showRemarkInput,
     };
   }
 };
@@ -893,10 +951,10 @@ export default {
 .price-info {
   font-size: 12px;
   color: #666;
+  padding-top: 8px;
 }
 .header-actions {
-  display: flex;
-  gap: 2px;
+  margin-bottom: 8px;
 }
 .panel-content {
   padding: 0 12px;
@@ -938,8 +996,22 @@ export default {
   margin-top: 8px;
   color: #f56c6c;
 }
+.id-text{
+  display: inline-block;
+  font-size: 12px;
+  margin-right: 8px;
+  padding-bottom: 3px;
+}
 .remark-bz{
-  color: #f56c6c;
-  margin-left: 10px;
+  margin-right: 8px;
+  display: inline-block; 
+  padding-bottom: 8px;
+  color: #000;
+}
+.timestamp-text{
+  margin-right: 8px;
+  display: inline-block; 
+  white-space: nowrap; 
+  padding-bottom: 3px; 
 }
 </style>
