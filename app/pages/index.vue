@@ -79,8 +79,8 @@
                 </div>
 
                 <div class="price-info">
-                  估算：武将卡池 {{ item.data.cardTotalValue || 0 }} + 武器 {{ item.data.weaponTotalValue || 0 }} =
-                  共计 {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }} 元 
+                  <el-tag type="primary">卡池 {{ item.data.cardTotalValue || 0 }}</el-tag> + <el-tag type="success">武器 {{ item.data.weaponTotalValue || 0 }}</el-tag> =
+                   <el-tag type="danger"> {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }}  元 </el-tag> 
                   <span class="remark-bz" v-if="item.remark">备注：{{ item.remark || "" }}</span>
                 </div>
               </div>
@@ -390,17 +390,22 @@ export default {
       const extractedId = match[1];
 
       // 1. 获取 equip 详情
-      // const equip = await $fetch('/api/equip/detail', {
-      //   params: { ordersn: extractedId },
-      // });
-
-      // 1. 暂不请求 equip（只测试价值计算）
-      let equip = {
-        price: record?.data?.equip?.price || 0,
-        status_desc: record?.data?.equip?.status_desc || '',
-        area_name: record?.data?.equip?.area_name || '',
-        server_name: record?.data?.equip?.server_name || ''
-      };
+      let equip;
+  
+      if (record === null) {
+        // 1. 如果 record 为 null，通过 API 获取 equip 详情
+        equip = await $fetch('/api/equip/detail', {
+          params: { ordersn: extractedId },
+        });
+      } else {
+        // 2. 如果 record 不为 null，使用 record 中的数据
+        equip = {
+          price: record?.data?.equip?.price || 0,
+          status_desc: record?.data?.equip?.status_desc || '',
+          area_name: record?.data?.equip?.area_name || '',
+          server_name: record?.data?.equip?.server_name || ''
+        };
+      }
 
       // 2. 解析 full.json
       const jsonUrl = `https://cbg-other-desc.res.netease.com/stzb/static/equipdesc/${extractedId}.json`;
@@ -531,6 +536,8 @@ export default {
 
       // 已存在
       if (record) {
+        const processed = await fetchAccountData(link, record);
+        record.data = processed;
         record.timestamp = Date.now();
         await saveRecord(record);
         await loadLinksFromDB();
@@ -747,9 +754,16 @@ export default {
     const gridStyle = computed(() => ({
       gridTemplateColumns: `repeat(${columnMode.value}, 1fr)`
     }));
-    // 排在 return 之前
+    // 翻页
     const handlePageChange = (page) => {
       currentPage.value = page;
+      // 翻页后平滑滚动到页面最上面
+      nextTick(() => {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      });
     };
 
     return {
@@ -926,5 +940,6 @@ export default {
 }
 .remark-bz{
   color: #f56c6c;
+  margin-left: 10px;
 }
 </style>

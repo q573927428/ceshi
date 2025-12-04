@@ -54,8 +54,8 @@
                 </div>
 
                 <div class="price-info">
-                  估算：武将卡池 {{ item.data.cardTotalValue || 0 }} + 武器 {{ item.data.weaponTotalValue || 0 }} =
-                  共计 {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }} 元 
+                  <el-tag type="primary">卡池 {{ item.data.cardTotalValue || 0 }}</el-tag> + <el-tag type="success">武器 {{ item.data.weaponTotalValue || 0 }}</el-tag> =
+                   <el-tag type="danger"> {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }}  元 </el-tag> 
                   <span class="remark-bz" v-if="item.remark">备注：{{ item.remark || "" }}</span>
                 </div>
               </div>
@@ -699,9 +699,16 @@ export default {
       gridTemplateColumns: `repeat(${columnMode.value}, 1fr)`
     }));
 
-    // 排在 return 之前
+    // 翻页
     const handlePageChange = (page) => {
       currentPage.value = page;
+      // 翻页后平滑滚动到页面最上面
+      nextTick(() => {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      });
     };
 
     return {
@@ -878,5 +885,6 @@ export default {
 }
 .remark-bz{
   color: #f56c6c;
+  margin-left: 10px;
 }
 </style>
