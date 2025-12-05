@@ -27,15 +27,15 @@
 
         <div class="button-section">
           <el-button type="primary" @click="addLink" :loading = "globalLoading">添加链接</el-button>
-          <el-button type="warning" @click="updateAll" :loading = "globalLoading">更新全部</el-button>
-          <el-button type="info" @click="clearLinks">清空链接</el-button>
-          <el-button type="primary" @click="exportDB">导出数据</el-button>
+          <!-- <el-button type="warning" @click="updateAll" :loading = "globalLoading" plain>更新全部</el-button> -->
+          <el-button type="info" @click="clearLinks" plain>清空链接</el-button>
+          <el-button type="primary" @click="exportDB" plain>导出数据</el-button>
           <el-upload
             :show-file-list="false"
             accept=".json"
             :before-upload="importDB"
           >
-            <el-button type="warning">导入数据</el-button>
+            <el-button type="warning" plain>导入数据</el-button>
           </el-upload>
           <el-checkbox v-model="showRemarkInput">加备注</el-checkbox>
         </div>
@@ -323,7 +323,7 @@ const editDialog = reactive({
   link: '',
   remark: ''
 });
-
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 // ============== 生命周期 ==============
 onMounted(async () => {
   if (!process.client) return;
@@ -408,6 +408,7 @@ const normalizeLink = (link) => {
 
 // 主流程：直接抓，不存 cache
 const fetchAccountData = async (link, record = null) => {
+  await sleep(1000 + Math.random() * 1000); // 随机等待
   console.log('请求触发 → ', link, new Date().toLocaleTimeString());
   const cleanLink = link.split('?')[0];
   const match = cleanLink.match(/\/equip\/1\/([A-Za-z0-9-]+)/);
