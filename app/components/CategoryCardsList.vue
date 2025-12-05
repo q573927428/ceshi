@@ -297,11 +297,7 @@ export default {
           const matchedCard = uniqueCards.find(c => c.hero_id === card.hero_id);
           
           if (matchedCard) {
-            card.awake_state = matchedCard.awake_state;
-            card.policy_awake_state = matchedCard.policy_awake_state;
-            card.hero_achieve = 0;
             card.advance_num = matchedCard.advance_num;
-            card.is_support = matchedCard.is_support;
             card.opacity = 1; // 恢复不透明
           }
         })

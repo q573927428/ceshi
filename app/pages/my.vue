@@ -27,7 +27,7 @@
 
         <div class="button-section">
           <el-button type="primary" @click="addLink" :loading = "globalLoading">添加链接</el-button>
-          <!-- <el-button type="warning" @click="updateAll" :loading = "globalLoading" plain>更新全部</el-button> -->
+          <el-button type="warning" @click="updateAll" :loading = "globalLoading" plain>更新全部</el-button>
           <el-button type="info" @click="clearLinks" plain>清空链接</el-button>
           <el-button type="primary" @click="exportDB" plain>导出数据</el-button>
           <el-upload
@@ -217,25 +217,8 @@
                             <li>赤珠山铁：{{ item.data.tenures.chi_zhu_shan_tie }}个</li>
                             <li>小叶紫檀：{{ item.data.tenures.xiao_ye_zi_tan }}个</li>
                             <li>天工锤：{{ item.data.tenures.gear_feature_hammer }}个</li>
-                            <li>皮肤：{{ item.data.dynamic_icon.length }}个</li>
+                            <li>皮肤：{{ item.data.dynamic_icon }}个</li>
                           </ul>
-                        </div>
-
-                        <div class="dynamic_icon">
-                          <div class="dynamic-icon-container" v-if="item.data.dynamic_icon">
-                            <div
-                              v-for="card in item.data.dynamic_icon"
-                              :key="card.icon_hero_id"
-                              class="dynamic-icon-item"
-                            >
-                              <img
-                                :src="`https://cbg-stzb.res.netease.com/game_res/cards/cut/card_medium_${card.icon_hero_id}.jpg`"
-                                :alt="card.name"
-                                class="dynamic-icon-image"
-                              />
-                              <div class="card-name">{{ card.name }}</div>
-                            </div>
-                          </div>
                         </div>
 
                       </div>
@@ -314,6 +297,16 @@ const globalLoading = ref(false);
 const newLinkRemark = ref('');
 const showRemarkInput = ref(true);
 const updateProgress = ref('');
+
+const allSkillIds = [
+  200244, 200755, 200784, 200201, 200862,
+  200754, 200959, 200964, 201008, 200276,
+  200847, 200938, 200647, 200814, 200844,
+  200789, 200801, 200886, 200237, 200235,
+  200263, 200979, 200271, 200267, 200980,
+  200252, 200788, 200863, 200900, 200274,
+  200261, 200289
+];
 
 // IndexedDB promise
 let dbPromise = null;
@@ -408,7 +401,7 @@ const normalizeLink = (link) => {
 
 // 主流程：直接抓，不存 cache
 const fetchAccountData = async (link, record = null) => {
-  await sleep(1000 + Math.random() * 1000); // 随机等待
+  // await sleep(1000 + Math.random() * 1000); // 随机等待
   console.log('请求触发 → ', link, new Date().toLocaleTimeString());
   const cleanLink = link.split('?')[0];
   const match = cleanLink.match(/\/equip\/1\/([A-Za-z0-9-]+)/);
@@ -476,10 +469,7 @@ const extractWeapons = (full) => {
     advance: w.advance,
     level_type: w.level_type,
     feature: w.feature,
-    phase: w.phase,
-    imageUrl: '',
     gear_id: w.gear_id,
-    feature_id:w.feature_id,
     calculatedValue: getWeaponValue(w),
     color
   });
@@ -517,26 +507,18 @@ const buildProcessedData = (extractedId, link, equip, full, weapons, uniqueCards
       server_name: equip.server_name,
     },
     uniqueCards: (uniqueCards || []).map(c => ({
-      name: c.name,
-      imageUrl: c.imageUrl || '',
-      country: c.country,
-      quality: c.quality,
-      awake_state: c.awake_state,
-      policy_awake_state: c.policy_awake_state,
-      hero_achieve: c.hero_achieve,
-      advance_num: c.advance_num,
-      is_support: c.is_support,
-      season: c.season,
       hero_id: c.hero_id,
       icon_hero_id: c.icon_hero_id,
-      opacity: c.opacity ?? 1
+      advance_num: c.advance_num
     })),
-    skill: (full.skill || []).map(s => ({
-      skill_id: s.skill_id,
-      name: s.name,
-      skill_type: s.skill_type,
-      research_progress: s.research_progress
-    })),
+    skill: (full.skill || [])
+      .filter(s => allSkillIds.includes(s.skill_id))
+      .map(s => ({
+        skill_id: s.skill_id,
+        name: s.name,
+        skill_type: s.skill_type,
+        research_progress: s.research_progress
+      })),
     ...weapons,
     cardTotalValue,
     weaponTotalValue,
@@ -550,7 +532,7 @@ const buildProcessedData = (extractedId, link, equip, full, weapons, uniqueCards
       xiao_ye_zi_tan: full.material?.xiao_ye_zi_tan?.value || 0,
       gear_feature_hammer: full.material?.gear_feature_hammer?.value || 0,
     },
-    dynamic_icon: full.dynamic_icon || [],
+    dynamic_icon: full.dynamic_icon ? full.dynamic_icon.length : 0,
   };
 };
 
