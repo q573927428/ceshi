@@ -97,6 +97,7 @@ export const useAccountActions = () => {
           record.data = processed;
           record.equipPrice = processed.equipPrice;
           record.timestamp = Date.now();
+          record.remark = newLinkRemark.value.trim() || ''
           await saveRecord(record);
           ElMessage.success(`第 ${index} 个已存在，更新成功`);
         } else {
@@ -123,6 +124,7 @@ export const useAccountActions = () => {
 
     globalLoading.value = false;
     newLink.value = "";
+    newLinkRemark.value = "";
 
     if (failed.length) ElMessage.warning(`部分失败：${failed.length} 个`);
     else ElMessage.success("全部完成");
