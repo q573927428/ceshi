@@ -29,6 +29,14 @@
           <el-button type="primary" @click="addLink" :loading = "globalLoading">添加链接</el-button>
           <el-button type="warning" @click="updateAll" :loading = "globalLoading">更新全部</el-button>
           <el-button type="info" @click="clearLinks">清空链接</el-button>
+          <el-button type="primary" @click="exportDB">导出数据</el-button>
+          <el-upload
+            :show-file-list="false"
+            accept=".json"
+            :before-upload="importDB"
+          >
+            <el-button type="warning">导入数据</el-button>
+          </el-upload>
           <el-checkbox v-model="showRemarkInput">加备注</el-checkbox>
         </div>
       </div>
@@ -289,6 +297,7 @@ import SkillCard from '~/components/SkillCard.vue';
 import WeaponList from '~/components/WeaponList.vue';
 import FormationComponent from '~/components/FormationComponent.vue';
 import { getCardValue, getWeaponValue } from '~/utils/valueCalculator.js';
+import { exportIndexedDB, importIndexedDB } from '~/utils/dbTools.js';
 import { Delete, Star, DocumentCopy, Refresh, Edit, Connection } from '@element-plus/icons-vue';
 
 // ============== UI / 状态 ==============
@@ -367,6 +376,7 @@ const loadLinksFromDB = async () => {
     link: r.link,
     timestamp: r.timestamp,
     isFavorite: r.isFavorite,
+    equipPrice: r.equipPrice,
     data: r.data || null,
     loading: false,
     remark: r.remark || '',
@@ -459,26 +469,35 @@ const extractUniqueCards = (full) => {
 const extractWeapons = (full) => {
   const phase3 = (full.gear || []).filter(w => w.phase === 3);
 
-  const red = phase3.filter(w => w.advance === 1).map(w => ({
-    ...w,
-    color: '红',
+  // 统一一个函数生成精简对象
+  const compact = (w, color) => ({
+    name: w.name,
+    advance: w.advance,
+    level_type: w.level_type,
+    feature: w.feature,
+    phase: w.phase,
+    imageUrl: '',
+    gear_id: w.gear_id,
+    feature_id:w.feature_id,
     calculatedValue: getWeaponValue(w),
-  }));
+    color
+  });
 
-  const pink = phase3.filter(w => w.level_type === 2 && w.advance !== 1).map(w => ({
-    ...w,
-    color: '粉',
-    calculatedValue: getWeaponValue(w),
-  }));
+  const redWeapons = phase3
+    .filter(w => w.advance === 1)
+    .map(w => compact(w, '红'));
 
-  const blue = phase3.filter(w => w.level_type === 0 && w.advance !== 1).map(w => ({
-    ...w,
-    color: '蓝',
-    calculatedValue: getWeaponValue(w),
-  }));
+  const pinkWeapons = phase3
+    .filter(w => w.level_type === 2 && w.advance !== 1)
+    .map(w => compact(w, '粉'));
 
-  return { redWeapons: red, pinkWeapons: pink, blueWeapons: blue };
+  const blueWeapons = phase3
+    .filter(w => w.level_type === 0 && w.advance !== 1)
+    .map(w => compact(w, '蓝'));
+
+  return { redWeapons, pinkWeapons, blueWeapons };
 };
+
 
 const buildProcessedData = (extractedId, link, equip, full, weapons, uniqueCards) => {
   const cardTotalValue = uniqueCards.reduce((sum, c) => sum + getCardValue(c), 0);
@@ -566,6 +585,7 @@ const addLink = async () => {
         const processed = await fetchAccountData(link, record);
         record.data = processed;
         record.timestamp = Date.now();
+        record.equipPrice = processed.equipPrice;
         await saveRecord(record);
         ElMessage.success(`第 ${index} 个已存在，更新成功`);
       } else {
@@ -580,6 +600,7 @@ const addLink = async () => {
         };
         const processed = await fetchAccountData(link);
         newRecord.data = processed;
+        newRecord.equipPrice = processed.equipPrice;
         await saveRecord(newRecord);
         ElMessage.success(`第 ${index} 个添加成功`);
       }
@@ -674,6 +695,7 @@ const refreshLink = async (link) => {
     if (!record) return;
     const processed = await fetchAccountData(link, record);
     record.data = processed;
+    record.equipPrice = processed.equipPrice;
     // record.timestamp = Date.now();
 
     await saveRecord(record);
@@ -711,6 +733,7 @@ const updateAll = async () => {
     try {
       const processed = await fetchAccountData(item.link, record);
       record.data = processed;
+      record.equipPrice = processed.equipPrice;
       record.timestamp = Date.now();
       await saveRecord(record);
     } catch (err) {
@@ -798,8 +821,8 @@ const filteredLinks = computed(() => {
   const order = sortOrder.value;
 
   return [...list].sort((a, b) => {
-    const A = key === 'price' ? (a.data?.equipPrice || 0) : a.timestamp;
-    const B = key === 'price' ? (b.data?.equipPrice || 0) : b.timestamp;
+    const A = key === 'price' ? (a.equipPrice || 0) : a.timestamp;
+    const B = key === 'price' ? (b.equipPrice || 0) : b.timestamp;
     return order === 'asc' ? A - B : B - A;
   });
 });
@@ -835,6 +858,40 @@ const formatTimestamp = (ts) => {
     hour: '2-digit',
     minute: '2-digit'
   });
+};
+
+//导入导出IndexedDB数据
+const exportDB = async () => {
+  const ok = await exportIndexedDB('zangbaoDB');
+  if (ok) ElMessage.success('数据已导出');
+  else ElMessage.error('导出失败');
+};
+
+const importDB = async (file) => {
+  try {
+    // 弹窗确认
+    await ElMessageBox.confirm(
+      '导入数据会覆盖当前 IndexedDB 中的所有记录，确定继续吗？',
+      '确认导入',
+      {
+        confirmButtonText: '确定导入',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    );
+    // 执行真正导入
+    await importIndexedDB(file, 'zangbaoDB');
+    ElMessage.success('数据已成功导入');
+  } catch (err) {
+    // 用户取消
+    if (err === 'cancel' || err === 'close') {
+      ElMessage.info('已取消导入');
+      return false;
+    }
+    // 其他错误
+    ElMessage.error('导入失败');
+  }
+  return false; // 阻止 el-upload 自动上传
 };
 </script>
 
