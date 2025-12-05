@@ -1034,17 +1034,6 @@ const importDB = async (file) => {
   margin-right: 8px;
   color: #f02929;
 }
-.price-info {
-  font-size: 12px;
-  color: #666;
-  padding-top: 8px;
-}
-.price-info b{
-  color: #333;
-}
-.header-actions {
-  margin-bottom: 8px;
-}
 .panel-content {
   padding: 0 12px;
 }

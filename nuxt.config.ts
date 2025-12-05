@@ -1,6 +1,9 @@
 export default defineNuxtConfig({
+  app: {
+    inlineStyles: true
+  },
   css: [
-    'element-plus/dist/index.css'
+    '~/assets/css/main.css'
   ],
   vite: {
     vue: {

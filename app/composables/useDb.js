@@ -7,12 +7,26 @@ export const useDb = () => {
   const initDb = async () => {
     if (dbPromise) return dbPromise;
 
-    dbPromise = openDB('zangbaoDB', 1, {
+    dbPromise = openDB('zangbaoDB', 2, {
       upgrade(db) {
+        let store;
         if (!db.objectStoreNames.contains('records')) {
-          db.createObjectStore('records', { keyPath: 'link' });
+          store = db.createObjectStore('records', { keyPath: 'link' });
+        } else {
+          store = db.transaction.objectStore('records');
         }
-      },
+
+        // 索引（简单，可靠）
+        if (!store.indexNames.contains('timestamp')) {
+          store.createIndex('timestamp', 'timestamp');
+        }
+        if (!store.indexNames.contains('equipPrice')) {
+          store.createIndex('equipPrice', 'equipPrice');
+        }
+        if (!store.indexNames.contains('isFavorite')) {
+          store.createIndex('isFavorite', 'isFavorite');
+        }
+      }
     });
 
     return dbPromise;

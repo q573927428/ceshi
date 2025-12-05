@@ -460,7 +460,6 @@ onMounted(async () => {
 });
 </script>
 
-
 <style scoped>
 /* 手机端屏幕宽度小于 768px 时隐藏按钮组 */
 @media (max-width: 767px) {
@@ -469,10 +468,10 @@ onMounted(async () => {
   }
   .panel-header {
     flex-direction: column;
-    align-items: stretch; /* 子元素宽度撑满父容器 */
+    align-items: stretch;
   }
   .panel-header > div {
-    width: 100%;
+    width: 10;
   }
   .compare-container{
     grid-template-columns: repeat(1, 1fr) !important;
@@ -489,138 +488,110 @@ onMounted(async () => {
     display: inline-flex;
   }
 }
+
 .column-selector{
   margin-left: 15px;
 }
-.zangbao-page {
-  padding: 16px;
-  margin-bottom: 80px;
-}
-.link-section {
-  margin-bottom: 16px;
-}
-.link-input-container {
-  display: flex;
-  flex-direction: column;  /* 上下排列 */
-  
-  gap: 12px;
-}
+
 .link-input {
   flex: 1;
 }
+
 .button-section {
   display: flex;
-  gap: 10px; /* 按钮之间的间距 */
-  flex-wrap: wrap; /* 屏幕窄时按钮换行 */
-  justify-content: center; /* 水平居中按钮组 */
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
+
 .filter-sort {
   margin-top: 12px;
   display: flex;
   gap: 1px;
   flex-wrap: wrap;
 }
+
 .compare-results {
   margin-top: 16px;
 }
-.compare-container {
-  display: grid;
-  gap: 16px;
-}
-.compare-panel {
-  border: 1px solid #e6e6e6;
-  border-radius: 8px;
-  background: #fff;
-}
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 12px;
-  background: #f5f5f5;
-  flex-wrap: wrap; 
-}
-.header-info h3 {
-  margin: 0 0 6px 0;
-  font-size: 16px;
-}
+
 .header-info h3 span{
   font-size: 20px;
   margin-right: 8px;
   color: #f02929;
 }
+
 .price-info {
   font-size: 12px;
   color: #666;
   padding-top: 8px;
 }
+
 .price-info b{
   color: #333;
 }
+
 .header-actions {
   margin-bottom: 8px;
 }
-.panel-content {
-  padding: 0 12px;
-}
+
 .pagination-container {
   margin: 50px;
   display: flex;
-  flex-wrap: wrap; /* 屏幕窄时按钮换行 */
-  justify-content: center; /* 水平居中按钮组 */
+  flex-wrap: wrap;
+  justify-content: center;
 }
-.no-data {
-  text-align: center;
-  padding: 40px 0;
-  color: #999;
-}
+
 .panel-loading {
   padding: 8px 0;
 }
+
 .dynamic-icon-container {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
+
 .dynamic-icon-item {
   width: 64px;
   text-align: center;
 }
+
 .dynamic-icon-image {
   width: 64px;
   height: 92px;
   object-fit: cover;
   border-radius: 4px;
 }
+
 .card-name {
   font-size: 12px;
   margin-top: 4px;
 }
+
 .global-loading {
   margin-top: 8px;
   color: #f56c6c;
 }
+
 .id-text{
   display: inline-block;
   font-size: 12px;
   margin-right: 8px;
   padding-bottom: 3px;
 }
+
 .remark-bz{
   margin-right: 8px;
   display: inline-block; 
   padding-bottom: 8px;
   color: #000;
 }
+
 .timestamp-text{
   margin-right: 8px;
   display: inline-block; 
   white-space: nowrap; 
   padding-bottom: 3px; 
-}
-.price-filter{
-  align-items: center;
-  margin-top: 10px;
 }
 </style>
