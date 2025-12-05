@@ -1,4 +1,5 @@
 // composables/useFetchData.js
+import { Loading } from '@element-plus/icons-vue';
 import { getCardValue, getWeaponValue } from '~/utils/valueCalculator.js';
 
 const allSkillIds = [

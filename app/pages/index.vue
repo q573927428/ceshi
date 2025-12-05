@@ -183,7 +183,7 @@
               <div class="panel-content">
                 <!-- 如果正在加载，显示 skeleton -->
                 <div v-if="item.loading" class="panel-loading">
-                  <el-skeleton rows="4" animated />
+                  <el-skeleton :rows="4" animated />
                 </div>
 
                 <!-- 实际数据 -->

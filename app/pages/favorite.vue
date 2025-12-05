@@ -2,61 +2,9 @@
   <div class="zangbao-page">
     <!-- 链接输入 + 操作 -->
     <div class="link-section">
-      <h3>藏宝阁链接:</h3>
-
-      <div class="link-input-container">
-        <div class="link-input">
-          <el-input
-            v-model="newLink"
-            type="textarea"
-            :rows="6"
-            placeholder="请输入藏宝阁链接，例如：https://stzb.cbg.163.com/cgi/mweb/equip/1/..."
-            maxlength="2000"
-            show-word-limit
-            @keyup.enter="addLink"
-          />
-        </div>
-        <div class="link-input" v-if="showRemarkInput">
-          <el-input
-            v-model="newLinkRemark"
-            placeholder="请输入备注，例如：1.5.0"
-            maxlength="20"
-            show-word-limit
-          />
-        </div>
-
-        <div class="button-section">
-          <el-button type="primary" @click="addLink" :loading = "globalLoading">添加链接</el-button>
-          <el-button type="warning" @click="updateAll" :loading = "globalLoading" plain>更新全部</el-button>
-          <el-button type="info" @click="clearLinks" plain>清空链接</el-button>
-          <el-button type="primary" @click="exportDB" plain>导出数据</el-button>
-          <el-upload
-            :show-file-list="false"
-            accept=".json"
-            :before-upload="importDB"
-          >
-            <el-button type="warning" plain>导入数据</el-button>
-          </el-upload>
-          <el-checkbox v-model="showRemarkInput">加备注</el-checkbox>
-        </div>
-      </div>
-
-      <el-alert
-        v-if="updateProgress"
-        type="info"
-        :closable="false"
-        show-icon
-        style="margin-top:10px;"
-      >
-        {{ updateProgress }}
-      </el-alert>
 
       <!-- 筛选排序与列配置 -->
       <div class="filter-sort">
-        <el-button @click="toggleFilter" plain :type="filterFavorites ? 'primary' : 'warning'">
-          {{ filterFavorites ? '显示全部' : '仅看收藏' }}
-        </el-button>
-
         <el-button @click="setSort('price')" plain :type="sortKey === 'price' ? 'primary' : 'default'">
           价格排序 {{ sortKey === 'price' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
         </el-button>
@@ -183,7 +131,7 @@
               <div class="panel-content">
                 <!-- 如果正在加载，显示 skeleton -->
                 <div v-if="item.loading" class="panel-loading">
-                  <el-skeleton rows="4" animated />
+                  <el-skeleton :rows="4" animated />
                 </div>
 
                 <!-- 实际数据 -->
@@ -288,615 +236,105 @@
 
 </template>
 
+
+
+
 <script setup>
 import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue';
-import { openDB } from 'idb';
 import CategoryCardsList from '~/components/CategoryCardsList.vue';
 import SkillCard from '~/components/SkillCard.vue';
 import WeaponList from '~/components/WeaponList.vue';
 import FormationComponent from '~/components/FormationComponent.vue';
-import { getCardValue, getWeaponValue } from '~/utils/valueCalculator.js';
-import { exportIndexedDB, importIndexedDB } from '~/utils/dbTools.js';
+
 import { Delete, Star, DocumentCopy, Refresh, Edit, Connection } from '@element-plus/icons-vue';
 
-// ============== UI / 状态 ==============
-const newLink = ref('');
-const zangbaoLinks = ref([]);
-const activeTabs = reactive({});
-const currentPage = ref(1);
-const pageSize = ref(6);
-const filterFavorites = ref(false);
-const sortKey = ref('time');
-const sortOrder = ref('desc');
-const columnMode = ref(2);
-const globalLoading = ref(false);
-const newLinkRemark = ref('');
-const showRemarkInput = ref(true);
-const updateProgress = ref('');
+import { exportIndexedDB, importIndexedDB } from '~/utils/dbTools.js';
 
-// 用户输入的临时值（未确认）
-const minPriceInput = ref('');
-const maxPriceInput = ref('');
+// 使用拆分后的 composables（如果你尚未创建，请按前一条回复建立）
+import { useAccountActions } from '~/composables/useAccountActions.js';
+import { useDb } from '~/composables/useDb.js';
 
-// 真正用于筛选的值（点击“筛选”后才更新）
-const minPriceFilter = ref('');
-const maxPriceFilter = ref('');
+// ============== 从 composable 获取状态与方法 ==============
+const {
+  // 状态
+  zangbaoLinks,
+  newLink,
+  newLinkRemark,
+  showRemarkInput,
+  globalLoading,
+  activeTabs,
+  filterFavorites,
+  sortKey,
+  sortOrder,
+  columnMode,
+  currentPage,
+  pageSize,
+  minPriceInput,
+  maxPriceInput,
+  updateProgress,
+  pagedLinks,
+  filteredLinks,
 
-const allSkillIds = [
-  200244, 200755, 200784, 200201, 200862,
-  200754, 200959, 200964, 201008, 200276,
-  200847, 200938, 200647, 200814, 200844,
-  200789, 200801, 200886, 200237, 200235,
-  200263, 200979, 200271, 200267, 200980,
-  200252, 200788, 200863, 200900, 200274,
-  200261, 200289
-];
+  // 方法
+  loadLinksFromDB,
+  addLink,
+  removeLink,
+  clearLinks,
+  refreshLink,
+  updateAll,
+  toggleFavorite,
+  toggleFilter,
+  setSort,
+  applyPriceFilter,
+  clearPriceFilter
+} = useAccountActions();
 
-// IndexedDB promise
-let dbPromise = null;
+// ============== db 直接操作（用于编辑备注等） ==============
+const { getRecord, saveRecord } = useDb();
 
+// ============== 编辑备注对话框 ==============
 const editDialog = reactive({
   visible: false,
   link: '',
   remark: ''
 });
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-// ============== 生命周期 ==============
-onMounted(async () => {
-  if (!process.client) return;
 
-  dbPromise = openDB('zangbaoDB', 1, {
-    upgrade(db) {
-      if (!db.objectStoreNames.contains('records')) {
-        db.createObjectStore('records', { keyPath: 'link' });
-      }
-    },
-  });
-
-  await loadLinksFromDB();
-});
-
-// ========================
-//       IndexedDB 操作
-// ========================
-const saveRecord = async (record) => {
-  if (!dbPromise) return;
-  const db = await dbPromise;
-
-  // 深拷贝，避免 "could not be cloned" 错误
-  const cloned = JSON.parse(JSON.stringify(record));
-
-  await db.put('records', cloned);
-};
-
-const getRecord = async (link) => {
-  if (!dbPromise) return null;
-  const db = await dbPromise;
-  return await db.get('records', link);
-};
-
-const deleteRecord = async (link) => {
-  if (!dbPromise) return;
-  const db = await dbPromise;
-  await db.delete('records', link);
-};
-
-const loadLinksFromDB = async () => {
-  if (!dbPromise) return;
-
-  const db = await dbPromise;
-  const tx = db.transaction('records', 'readonly');
-  const store = tx.objectStore('records');
-  const all = await store.getAll();
-
-  zangbaoLinks.value = all.map(r => ({
-    link: r.link,
-    timestamp: r.timestamp,
-    isFavorite: r.isFavorite,
-    equipPrice: r.equipPrice,
-    data: r.data || null,
-    loading: false,
-    remark: r.remark || '',
-  }));
-
-  zangbaoLinks.value.forEach(i => {
-    activeTabs[i.link] = 'first';
-  });
-};
-
-// ========================
-// 抓取数据流程（无 cache）
-// ========================
-const extractCbgLink = (text) => {
-  const idPattern = /\d{15}-1-[A-Z0-9]{14}/gi;
-  const ids = text.match(idPattern);
-  if (!ids) return [];
-  return ids.map(id => `https://stzb.cbg.163.com/cgi/mweb/equip/1/${id}`);
-};
-
-const normalizeLink = (link) => {
-  try {
-    const url = new URL(link);
-    return url.origin + url.pathname;
-  } catch {
-    return link;
-  }
-};
-
-// 主流程：直接抓，不存 cache
-const fetchAccountData = async (link, record = null) => {
-  // await sleep(1000 + Math.random() * 1000); // 随机等待
-  console.log('请求触发 → ', link, new Date().toLocaleTimeString());
-  const cleanLink = link.split('?')[0];
-  const match = cleanLink.match(/\/equip\/1\/([A-Za-z0-9-]+)/);
-
-  if (!match) throw new Error('无效ID');
-  const extractedId = match[1];
-
-  // 1. 获取 equip 详情
-  let equip;
-
-  if (record === null) {
-    // 通过 Nuxt 的 $fetch 调用后端 api
-    equip = await $fetch('/api/equip/detail', {
-      params: { ordersn: extractedId },
-    });
-  } else {
-    // 如果 record 不为 null，使用 record 中的数据（兼容性）
-    equip = {
-      price: record?.data?.equip?.price || 0,
-      status_desc: record?.data?.equip?.status_desc || '',
-      area_name: record?.data?.equip?.area_name || '',
-      server_name: record?.data?.equip?.server_name || ''
-    };
-  }
-
-  // 2. 解析 full.json
-  const jsonUrl = `https://cbg-other-desc.res.netease.com/stzb/static/equipdesc/${extractedId}.json`;
-  const raw = await fetch(jsonUrl);
-  const text = await raw.text();
-  const parsed = JSON.parse(text);
-
-  const decoded = parsed.equip_desc.replace(/\\u([0-9a-fA-F]{4})/g, (_, g) =>
-    String.fromCharCode(parseInt(g, 16))
-  );
-  const full = JSON.parse(decoded);
-
-  // 3. 提取数据
-  const uniqueCards = extractUniqueCards(full);
-  const weapons = extractWeapons(full);
-
-  // 4. 组装 processed
-  return buildProcessedData(extractedId, link, equip, full, weapons, uniqueCards);
-};
-
-// ========================
-// 数据提取
-// ========================
-const extractUniqueCards = (full) => {
-  const list = (full.card || []).filter(c => c.quality === 5);
-  const result = [];
-  list.forEach(c => {
-    const ex = result.find(r => r.hero_id === c.hero_id && r.season === c.season);
-    if (!ex) result.push({ ...c });
-    else if (c.advance_num > ex.advance_num) ex.advance_num = c.advance_num;
-  });
-  return result;
-};
-
-const extractWeapons = (full) => {
-  const phase3 = (full.gear || []).filter(w => w.phase === 3);
-
-  // 统一一个函数生成精简对象
-  const compact = (w, color) => ({
-    name: w.name,
-    advance: w.advance,
-    level_type: w.level_type,
-    feature: w.feature,
-    gear_id: w.gear_id,
-    calculatedValue: getWeaponValue(w),
-    color
-  });
-
-  const redWeapons = phase3
-    .filter(w => w.advance === 1)
-    .map(w => compact(w, '红'));
-
-  const pinkWeapons = phase3
-    .filter(w => w.level_type === 2 && w.advance !== 1)
-    .map(w => compact(w, '粉'));
-
-  const blueWeapons = phase3
-    .filter(w => w.level_type === 0 && w.advance !== 1)
-    .map(w => compact(w, '蓝'));
-
-  return { redWeapons, pinkWeapons, blueWeapons };
-};
-
-
-const buildProcessedData = (extractedId, link, equip, full, weapons, uniqueCards) => {
-  const cardTotalValue = uniqueCards.reduce((sum, c) => sum + getCardValue(c), 0);
-  const allW = [...weapons.redWeapons, ...weapons.pinkWeapons, ...weapons.blueWeapons];
-  allW.forEach(w => w.calculatedValue = getWeaponValue(w));
-  const weaponTotalValue = allW.reduce((s, w) => s + w.calculatedValue, 0);
-
-  return {
-    extractedId,
-    link,
-    equipPrice: equip.price / 100,
-    equip: {
-      price: equip.price,
-      status_desc: equip.status_desc,
-      area_name: equip.area_name,
-      server_name: equip.server_name,
-    },
-    uniqueCards: (uniqueCards || []).map(c => ({
-      hero_id: c.hero_id,
-      icon_hero_id: c.icon_hero_id,
-      advance_num: c.advance_num
-    })),
-    skill: (full.skill || [])
-      .filter(s => allSkillIds.includes(s.skill_id))
-      .map(s => ({
-        skill_id: s.skill_id,
-        name: s.name,
-        skill_type: s.skill_type,
-        research_progress: s.research_progress
-      })),
-    ...weapons,
-    cardTotalValue,
-    weaponTotalValue,
-    tenures: {
-      yuan_bao: full.tenure?.yuan_bao || 0,
-      bind_yuan_bao: full.tenure?.bind_yuan_bao || 0,
-      honor: full.tenure?.honor || 0,
-      jiang_ling: full.tenure?.jiang_ling || 0,
-      hufu: full.tenure?.hufu || 0,
-      chi_zhu_shan_tie: full.material?.chi_zhu_shan_tie?.value || 0,
-      xiao_ye_zi_tan: full.material?.xiao_ye_zi_tan?.value || 0,
-      gear_feature_hammer: full.material?.gear_feature_hammer?.value || 0,
-    },
-    dynamic_icon: full.dynamic_icon ? full.dynamic_icon.length : 0,
-  };
-};
-
-// ========================
-// 添加链接
-// ========================
-const addLink = async () => {
-  const input = newLink.value.trim();
-  if (!input) {
-    ElMessage.warning('请输入链接');
-    return;
-  }
-
-  const links = extractCbgLink(input);
-  if (!links.length) {
-    ElMessage.warning('未识别到合法链接');
-    return;
-  }
-
-  globalLoading.value = true;
-
-  const failed = [];
-  let index = 0;
-  for (const rawLink of links) {
-    index++;
-    const link = normalizeLink(rawLink);
-
-    try {
-      let record = await getRecord(link);
-
-      if (record) {
-        // 已存在 → 更新
-        const processed = await fetchAccountData(link, record);
-        record.data = processed;
-        record.timestamp = Date.now();
-        record.equipPrice = processed.equipPrice;
-        await saveRecord(record);
-        ElMessage.success(`第 ${index} 个已存在，更新成功`);
-      } else {
-        // 新增
-        const remark = newLinkRemark.value?.trim() || '';
-        const newRecord = {
-          link,
-          timestamp: Date.now(),
-          isFavorite: false,
-          data: null,
-          remark
-        };
-        const processed = await fetchAccountData(link);
-        newRecord.data = processed;
-        newRecord.equipPrice = processed.equipPrice;
-        await saveRecord(newRecord);
-        ElMessage.success(`第 ${index} 个添加成功`);
-      }
-
-      // ✅ 每成功处理 1 条，就立刻渲染一次
-      await loadLinksFromDB();
-    } catch (err) {
-      console.error("处理失败：", link, err);
-      ElMessage.error(`第 ${index} 个失败`);
-      failed.push(link);
-      // 不中断，继续处理后面的
-      continue;
-    }
-  }
-
-  globalLoading.value = false;
-  newLink.value = "";
-
-  if (failed.length) {
-    ElMessage.warning(`部分添加失败：${failed.length} 个`);
-  } else {
-    ElMessage.success('全部完成');
-  }
-};
-
-// ========================
-// 删除链接
-// ========================
-const removeLink = async (link) => {
-  try {
-    await ElMessageBox.confirm(
-      '确定要删除该链接？',
-      '提示',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    );
-
-    await deleteRecord(link);
-    await loadLinksFromDB();
-    ElMessage.success('删除成功');
-  } catch (error) {
-    // 用户点击取消会进入这里
-    ElMessage.info('已取消');
-  }
-};
-
-// 清空链接
-const clearLinks = async () => {
-  try {
-    // 使用 await 等待用户确认
-    await ElMessageBox.confirm(
-      '确定要清空所有链接？',
-      '提示',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    );
-
-    if (!dbPromise) return;
-
-    const db = await dbPromise;
-    await db.clear('records');
-
-    await loadLinksFromDB();
-
-    ElMessage.success('已清空');
-  } catch (error) {
-    // 用户点击取消会进入这里
-    ElMessage.info('已取消');
-  }
-};
-
-const openLink = (link) => {
-  window.open(link, '_blank');
-};
-
-// ========================
-// 刷新
-// ========================
-const refreshLink = async (link) => {
-  const item = pagedLinks.value.find(i => i.link === link);
-  if (!item) return;
-  item.loading = true;
-
-  try {
-    let record = await getRecord(link);
-    if (!record) return;
-    const processed = await fetchAccountData(link, record);
-    record.data = processed;
-    record.equipPrice = processed.equipPrice;
-    // record.timestamp = Date.now();
-
-    await saveRecord(record);
-    await loadLinksFromDB();
-
-    ElMessage.success('刷新成功')
-  } catch (error) {
-    ElMessage.success('刷新失败')
-  } finally {
-    item.loading = false;
-  }
-};
-
-// ========================
-// 更新全部
-// ========================
-const updateAll = async () => {
-  const total = zangbaoLinks.value.length;
-  if (total === 0) {
-    ElMessage.info('没有链接需要更新');
-    return;
-  }
-
-  globalLoading.value = true;
-
-  let index = 0;
-
-  for (const item of zangbaoLinks.value) {
-    index++;
-    updateProgress.value = `正在更新 ${index} / ${total} ...`;
-
-    const record = await getRecord(item.link);
-    if (!record) continue;
-
-    try {
-      const processed = await fetchAccountData(item.link, record);
-      record.data = processed;
-      record.equipPrice = processed.equipPrice;
-      record.timestamp = Date.now();
-      await saveRecord(record);
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  await loadLinksFromDB();
-  globalLoading.value = false;
-
-  updateProgress.value = '';
-  ElMessage.success('全部更新完成');
-};
-
-// ========================
-// 收藏
-// ========================
-const toggleFavorite = async (item) => {
-  const record = await getRecord(item.link);
-  if (!record) return;
-
-  record.isFavorite = !record.isFavorite;
-  await saveRecord(record);
-  await loadLinksFromDB();
-};
-
-// 打开编辑对话框
 const editRecord = (item) => {
   editDialog.link = item.link;
   editDialog.remark = item.remark || '';
   editDialog.visible = true;
 };
 
-// 保存备注
 const saveRemark = async () => {
-  if (!dbPromise) return;
-
-  const db = await dbPromise;
-  const record = await db.get('records', editDialog.link);
-
-  if (record) {
-    record.remark = editDialog.remark || '';
-    await db.put('records', JSON.parse(JSON.stringify(record)));
+  try {
+    const record = await getRecord(editDialog.link);
+    if (record) {
+      record.remark = editDialog.remark || '';
+      await saveRecord(record);
+      await loadLinksFromDB();
+      editDialog.visible = false;
+      ElMessage.success('备注已保存');
+    } else {
+      ElMessage.error('未找到记录');
+    }
+  } catch (err) {
+    console.error(err);
+    ElMessage.error('保存失败');
   }
-
-  await loadLinksFromDB();
-  editDialog.visible = false;
-  ElMessage.success('备注已保存');
 };
 
+// ============== 复制 / 打开链接 ==============
 const copyUrl = (cbgLink) => {
   navigator.clipboard.writeText(cbgLink).then(() => {
     ElMessage({ message: '复制成功', type: 'success', zIndex: 99999 });
   }).catch(() => { ElMessage({ message: '复制失败', type: 'error' }); });
 };
 
-// toggleFilter
-const toggleFilter = () => {
-  filterFavorites.value = !filterFavorites.value;
-  currentPage.value = 1;
+const openLink = (link) => {
+  window.open(link, '_blank');
 };
 
-// setSort
-const setSort = (key) => {
-  if (sortKey.value === key) {
-    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
-  } else {
-    sortKey.value = key;
-    sortOrder.value = 'asc';
-  }
-  currentPage.value = 1;
-};
-
-// 应用价格筛选
-const applyPriceFilter = () => {
-  // 清理空白和非数字输入
-  const min = minPriceInput.value.trim();
-  const max = maxPriceInput.value.trim();
-
-  // 验证：如果填了，必须是合法数字
-  if (min !== '' && isNaN(Number(min))) {
-    ElMessage.warning('最低价请输入有效数字');
-    return;
-  }
-  if (max !== '' && isNaN(Number(max))) {
-    ElMessage.warning('最高价请输入有效数字');
-    return;
-  }
-
-  // 更新筛选值
-  minPriceFilter.value = min;
-  maxPriceFilter.value = max;
-  currentPage.value = 1; // 回到第一页
-};
-
-// 清空价格筛选
-const clearPriceFilter = () => {
-  minPriceInput.value = '';
-  maxPriceInput.value = '';
-  minPriceFilter.value = '';
-  maxPriceFilter.value = '';
-  currentPage.value = 1;
-};
-
-// ========================
-// 排序 & 分页 计算属性
-// ========================
-const filteredLinks = computed(() => {
-  let list = zangbaoLinks.value;
-  // 1. 收藏筛选
-  if (filterFavorites.value) {
-    list = list.filter(i => i.isFavorite);
-  }
-
-  // 2. 价格区间筛选（使用已确认的 filter 值）
-  const min = minPriceFilter.value === '' ? -Infinity : parseFloat(minPriceFilter.value);
-  const max = maxPriceFilter.value === '' ? Infinity : parseFloat(maxPriceFilter.value);
-
-  if (!isNaN(min) && !isNaN(max)) {
-    list = list.filter(i => {
-      const price = i.equipPrice || 0;
-      return price >= min && price <= max;
-    });
-  }
-  // 3. 排序
-  const key = sortKey.value;
-  const order = sortOrder.value;
-
-  return [...list].sort((a, b) => {
-    const A = key === 'price' ? (a.equipPrice || 0) : a.timestamp;
-    const B = key === 'price' ? (b.equipPrice || 0) : b.timestamp;
-    return order === 'asc' ? A - B : B - A;
-  });
-});
-
-const pagedLinks = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value;
-  return filteredLinks.value.slice(start, start + pageSize.value);
-});
-
-const gridStyle = computed(() => ({
-  gridTemplateColumns: `repeat(${columnMode.value}, 1fr)`
-}));
-
-// 翻页
-const handlePageChange = (page) => {
-  currentPage.value = page;
-  // 翻页后平滑滚动到页面最上面
-  nextTick(() => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  });
-};
-
+// ============== 格式化时间 ==============
 const formatTimestamp = (ts) => {
   if (!ts) return '';
   const date = new Date(ts);
@@ -909,16 +347,36 @@ const formatTimestamp = (ts) => {
   });
 };
 
-//导入导出IndexedDB数据
+// ============== 分页事件 ==============
+const handlePageChange = (page) => {
+  currentPage.value = page;
+  nextTick(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  });
+};
+
+// ============== gridStyle 计算 ==============
+const gridStyle = computed(() => ({
+  gridTemplateColumns: `repeat(${columnMode.value}, 1fr)`
+}));
+
+// ============== 导出 / 导入 IndexedDB ==============
 const exportDB = async () => {
-  const ok = await exportIndexedDB('zangbaoDB');
-  if (ok) ElMessage.success('数据已导出');
-  else ElMessage.error('导出失败');
+  try {
+    const ok = await exportIndexedDB('zangbaoDB');
+    if (ok) ElMessage.success('数据已导出');
+    else ElMessage.error('导出失败');
+  } catch (err) {
+    console.error(err);
+    ElMessage.error('导出失败');
+  }
 };
 
 const importDB = async (file) => {
   try {
-    // 弹窗确认
     await ElMessageBox.confirm(
       '导入数据会覆盖当前 IndexedDB 中的所有记录，确定继续吗？',
       '确认导入',
@@ -928,22 +386,29 @@ const importDB = async (file) => {
         type: 'warning'
       }
     );
-    // 执行真正导入
     await importIndexedDB(file, 'zangbaoDB');
     ElMessage.success('数据已成功导入');
+    // 导入后立即刷新
+    await loadLinksFromDB();
   } catch (err) {
-    // 用户取消
+    // 用户取消或其他错误
     if (err === 'cancel' || err === 'close') {
       ElMessage.info('已取消导入');
       return false;
     }
-    // 其他错误
+    console.error(err);
     ElMessage.error('导入失败');
   }
   return false; // 阻止 el-upload 自动上传
 };
-</script>
 
+// ============== 页面生命周期 ==============
+onMounted(async () => {
+  // 默认开启 “只看收藏”
+  filterFavorites.value = true;
+  await loadLinksFromDB();
+});
+</script>
 
 <style scoped>
 /* 手机端屏幕宽度小于 768px 时隐藏按钮组 */
@@ -953,10 +418,10 @@ const importDB = async (file) => {
   }
   .panel-header {
     flex-direction: column;
-    align-items: stretch; /* 子元素宽度撑满父容器 */
+    align-items: stretch;
   }
   .panel-header > div {
-    width: 100%;
+    width: 10;
   }
   .compare-container{
     grid-template-columns: repeat(1, 1fr) !important;
@@ -973,138 +438,110 @@ const importDB = async (file) => {
     display: inline-flex;
   }
 }
+
 .column-selector{
   margin-left: 15px;
 }
-.zangbao-page {
-  padding: 16px;
-  margin-bottom: 80px;
-}
-.link-section {
-  margin-bottom: 16px;
-}
-.link-input-container {
-  display: flex;
-  flex-direction: column;  /* 上下排列 */
-  
-  gap: 12px;
-}
+
 .link-input {
   flex: 1;
 }
+
 .button-section {
   display: flex;
-  gap: 10px; /* 按钮之间的间距 */
-  flex-wrap: wrap; /* 屏幕窄时按钮换行 */
-  justify-content: center; /* 水平居中按钮组 */
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
+
 .filter-sort {
   margin-top: 12px;
   display: flex;
   gap: 1px;
   flex-wrap: wrap;
 }
+
 .compare-results {
   margin-top: 16px;
 }
-.compare-container {
-  display: grid;
-  gap: 16px;
-}
-.compare-panel {
-  border: 1px solid #e6e6e6;
-  border-radius: 8px;
-  background: #fff;
-}
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 12px;
-  background: #f5f5f5;
-  flex-wrap: wrap; 
-}
-.header-info h3 {
-  margin: 0 0 6px 0;
-  font-size: 16px;
-}
+
 .header-info h3 span{
   font-size: 20px;
   margin-right: 8px;
   color: #f02929;
 }
+
 .price-info {
   font-size: 12px;
   color: #666;
   padding-top: 8px;
 }
+
 .price-info b{
   color: #333;
 }
+
 .header-actions {
   margin-bottom: 8px;
 }
-.panel-content {
-  padding: 0 12px;
-}
+
 .pagination-container {
   margin: 50px;
   display: flex;
-  flex-wrap: wrap; /* 屏幕窄时按钮换行 */
-  justify-content: center; /* 水平居中按钮组 */
+  flex-wrap: wrap;
+  justify-content: center;
 }
-.no-data {
-  text-align: center;
-  padding: 40px 0;
-  color: #999;
-}
+
 .panel-loading {
   padding: 8px 0;
 }
+
 .dynamic-icon-container {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
+
 .dynamic-icon-item {
   width: 64px;
   text-align: center;
 }
+
 .dynamic-icon-image {
   width: 64px;
   height: 92px;
   object-fit: cover;
   border-radius: 4px;
 }
+
 .card-name {
   font-size: 12px;
   margin-top: 4px;
 }
+
 .global-loading {
   margin-top: 8px;
   color: #f56c6c;
 }
+
 .id-text{
   display: inline-block;
   font-size: 12px;
   margin-right: 8px;
   padding-bottom: 3px;
 }
+
 .remark-bz{
   margin-right: 8px;
   display: inline-block; 
   padding-bottom: 8px;
   color: #000;
 }
+
 .timestamp-text{
   margin-right: 8px;
   display: inline-block; 
   white-space: nowrap; 
   padding-bottom: 3px; 
-}
-.price-filter{
-  align-items: center;
-  margin-top: 10px;
 }
 </style>
