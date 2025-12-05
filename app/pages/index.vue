@@ -11,7 +11,7 @@
             type="textarea"
             :rows="6"
             placeholder="请输入藏宝阁链接，例如：https://stzb.cbg.163.com/cgi/mweb/equip/1/..."
-            maxlength="2000"
+            maxlength="5000"
             show-word-limit
             @keyup.enter="addLink"
           />

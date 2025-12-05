@@ -167,7 +167,7 @@ export const useAccountActions = () => {
       const record = await getRecord(link);
       if (!record) return;
 
-      const processed = await fetchAccountData(link, null);
+      const processed = await fetchAccountData(link, record);
       record.data = processed;
       record.equipPrice = processed.equipPrice;
       await saveRecord(record);
