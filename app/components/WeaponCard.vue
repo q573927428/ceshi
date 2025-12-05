@@ -64,8 +64,8 @@ function highlightNumbers(text) {
 .weapon-item {
   position: relative;
   display: inline-block;
-  margin: 5px;
-  height: 180px;
+  margin: 2px;
+  height: 200px;
 }
 
 .wrap {
@@ -194,7 +194,7 @@ function highlightNumbers(text) {
 }
 @media (max-width: 576px) {
   .weapon-item {
-    height: 160px;
+    height: 200px;
   }
   .wrap {
     width: 90px;
