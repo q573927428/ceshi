@@ -1,4 +1,4 @@
-<template>
+<template>   
   <div class="zangbao-page">
     <!-- 链接输入 + 操作 -->
     <div class="link-section">
