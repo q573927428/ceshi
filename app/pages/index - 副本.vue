@@ -2,7 +2,7 @@
   <div class="zangbao-page">
     <!-- 链接输入 + 操作 -->
     <div class="link-section">
-      <h3>藏宝阁链接:</h3>
+      <h3>藏宝阁链接(可多个链接):</h3>
 
       <div class="link-input-container">
         <div class="link-input">
@@ -304,7 +304,7 @@ const newLink = ref('');
 const zangbaoLinks = ref([]);
 const activeTabs = reactive({});
 const currentPage = ref(1);
-const pageSize = ref(6);
+const pageSize = ref(10);
 const filterFavorites = ref(false);
 const sortKey = ref('time');
 const sortOrder = ref('desc');
