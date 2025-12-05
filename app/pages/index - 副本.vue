@@ -72,7 +72,23 @@
           <el-button :type="columnMode === 4 ? 'primary' : 'default'" @click="columnMode = 4">4 列</el-button>
           <el-button :type="columnMode === 5 ? 'primary' : 'default'" @click="columnMode = 5">5 列</el-button>
         </el-button-group>
+      </div>
 
+      <!-- 价格区间筛选 -->
+      <div class="price-filter">
+        <el-input
+          v-model="minPriceInput"
+          placeholder="最低价"
+          style="width: 80px; margin-right: 3px;"
+        />
+        <span style="margin-right: 3px;">~</span>
+        <el-input
+          v-model="maxPriceInput"
+          placeholder="最高价"
+          style="width: 80px; margin-right: 8px;"
+        />
+        <el-button type="primary" @click="applyPriceFilter">筛选</el-button>
+        <el-button type="info" @click="clearPriceFilter">重置</el-button>
         <el-button plain text>
           总共 {{ filteredLinks.length }} 条数据
         </el-button>
@@ -297,6 +313,14 @@ const globalLoading = ref(false);
 const newLinkRemark = ref('');
 const showRemarkInput = ref(true);
 const updateProgress = ref('');
+
+// 用户输入的临时值（未确认）
+const minPriceInput = ref('');
+const maxPriceInput = ref('');
+
+// 真正用于筛选的值（点击“筛选”后才更新）
+const minPriceFilter = ref('');
+const maxPriceFilter = ref('');
 
 const allSkillIds = [
   200244, 200755, 200784, 200201, 200862,
@@ -790,16 +814,58 @@ const setSort = (key) => {
   currentPage.value = 1;
 };
 
+// 应用价格筛选
+const applyPriceFilter = () => {
+  // 清理空白和非数字输入
+  const min = minPriceInput.value.trim();
+  const max = maxPriceInput.value.trim();
+
+  // 验证：如果填了，必须是合法数字
+  if (min !== '' && isNaN(Number(min))) {
+    ElMessage.warning('最低价请输入有效数字');
+    return;
+  }
+  if (max !== '' && isNaN(Number(max))) {
+    ElMessage.warning('最高价请输入有效数字');
+    return;
+  }
+
+  // 更新筛选值
+  minPriceFilter.value = min;
+  maxPriceFilter.value = max;
+  currentPage.value = 1; // 回到第一页
+};
+
+// 清空价格筛选
+const clearPriceFilter = () => {
+  minPriceInput.value = '';
+  maxPriceInput.value = '';
+  minPriceFilter.value = '';
+  maxPriceFilter.value = '';
+  currentPage.value = 1;
+};
+
 // ========================
 // 排序 & 分页 计算属性
 // ========================
 const filteredLinks = computed(() => {
   let list = zangbaoLinks.value;
-
+  // 1. 收藏筛选
   if (filterFavorites.value) {
     list = list.filter(i => i.isFavorite);
   }
 
+  // 2. 价格区间筛选（使用已确认的 filter 值）
+  const min = minPriceFilter.value === '' ? -Infinity : parseFloat(minPriceFilter.value);
+  const max = maxPriceFilter.value === '' ? Infinity : parseFloat(maxPriceFilter.value);
+
+  if (!isNaN(min) && !isNaN(max)) {
+    list = list.filter(i => {
+      const price = i.equipPrice || 0;
+      return price >= min && price <= max;
+    });
+  }
+  // 3. 排序
   const key = sortKey.value;
   const order = sortOrder.value;
 
@@ -1036,5 +1102,9 @@ const importDB = async (file) => {
   display: inline-block; 
   white-space: nowrap; 
   padding-bottom: 3px; 
+}
+.price-filter{
+  align-items: center;
+  margin-top: 10px;
 }
 </style>
