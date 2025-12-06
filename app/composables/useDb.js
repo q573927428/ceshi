@@ -20,6 +20,9 @@ export const useDb = () => {
         if (!store.indexNames.contains('timestamp')) {
           store.createIndex('timestamp', 'timestamp');
         }
+        if (!store.indexNames.contains('statusDesc')) {
+          store.createIndex('statusDesc', 'statusDesc');
+        }
         if (!store.indexNames.contains('equipPrice')) {
           store.createIndex('equipPrice', 'equipPrice');
         }

@@ -24,6 +24,7 @@ export const useAccountActions = () => {
   const globalLoading = ref(false);
   const activeTabs = reactive({});
 
+  const statusFilter = ref(''); 
   const filterFavorites = ref(false);
   const sortKey = ref('time');
   const sortOrder = ref('desc');
@@ -35,6 +36,8 @@ export const useAccountActions = () => {
   const maxPriceInput = ref('');
   const minPriceFilter = ref('');
   const maxPriceFilter = ref('');
+
+  const priceFilterType = ref('equipPrice');  
 
   const updateProgress = ref('');
 
@@ -65,7 +68,9 @@ export const useAccountActions = () => {
       equipPrice: r.equipPrice,
       data: r.data || null,
       loading: false,
-      remark: r.remark || ''
+      remark: r.remark || '',
+      statusDesc: r.statusDesc,
+      estimatedPrice: r.estimatedPrice,
     }));
 
     zangbaoLinks.value.forEach(i => {
@@ -91,7 +96,6 @@ export const useAccountActions = () => {
 
       try {
         let record = await getRecord(link);
-
         if (record) {
           const processed = await fetchAccountData(link, record);
           record.data = processed;
@@ -167,9 +171,8 @@ export const useAccountActions = () => {
       const record = await getRecord(link);
       if (!record) return;
 
-      const processed = await fetchAccountData(link, record);
+      const processed = await fetchAccountData(link, null);
       record.data = processed;
-      record.equipPrice = processed.equipPrice;
       await saveRecord(record);
 
       await loadLinksFromDB();
@@ -200,8 +203,7 @@ export const useAccountActions = () => {
       try {
         const processed = await fetchAccountData(item.link, record);
         record.data = processed;
-        record.equipPrice = processed.equipPrice;
-        record.timestamp = Date.now();
+        // record.timestamp = Date.now();
         await saveRecord(record);
       } catch (err) { }
     }
@@ -222,6 +224,11 @@ export const useAccountActions = () => {
 
     await loadLinksFromDB();
   };
+
+  const setStatusFilter = (value) => {
+    statusFilter.value = value
+    currentPage.value = 1
+  }
 
   const setSort = (key) => {
     if (sortKey.value === key) {
@@ -269,16 +276,35 @@ export const useAccountActions = () => {
     const max = maxPriceFilter.value === '' ? Infinity : parseFloat(maxPriceFilter.value);
 
     list = list.filter(i => {
-      const price = i.equipPrice || 0;
+      const field = priceFilterType.value === 'equipPrice'
+        ? i.equipPrice
+        : i.estimatedPrice;
+
+      const price = field || 0;
       return price >= min && price <= max;
     });
+
+    if (statusFilter.value) {
+      list = list.filter(i => i.statusDesc === statusFilter.value);
+    }
 
     const key = sortKey.value;
     const order = sortOrder.value;
 
     return [...list].sort((a, b) => {
-      const A = key === 'price' ? (a.equipPrice || 0) : a.timestamp;
-      const B = key === 'price' ? (b.equipPrice || 0) : b.timestamp;
+      let A, B;
+    
+      if (key === 'price') {
+        A = a.equipPrice || 0;
+        B = b.equipPrice || 0;
+      } else if (key === 'estimatedPrice') {
+        A = a.estimatedPrice || 0;
+        B = b.estimatedPrice || 0;
+      } else {
+        A = a.timestamp;
+        B = b.timestamp;
+      }
+    
       return order === 'asc' ? A - B : B - A;
     });
   });
@@ -307,6 +333,8 @@ export const useAccountActions = () => {
     updateProgress,
     pagedLinks,
     filteredLinks,
+    statusFilter,
+    priceFilterType,
 
     // 方法
     loadLinksFromDB,
@@ -319,6 +347,7 @@ export const useAccountActions = () => {
     toggleFilter,
     setSort,
     applyPriceFilter,
-    clearPriceFilter
+    clearPriceFilter,
+    setStatusFilter
   };
 };

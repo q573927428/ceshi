@@ -67,6 +67,7 @@ export const useFetchData = () => {
       extractedId,
       link,
       equipPrice: equip.price / 100,
+      statusDesc: equip.status_desc,
       equip: {
         price: equip.price,
         status_desc: equip.status_desc,
@@ -89,6 +90,7 @@ export const useFetchData = () => {
       ...weapons,
       cardTotalValue,
       weaponTotalValue,
+      estimatedPrice: cardTotalValue + weaponTotalValue,
       tenures: {
         yuan_bao: full.tenure?.yuan_bao || 0,
         bind_yuan_bao: full.tenure?.bind_yuan_bao || 0,
@@ -105,7 +107,7 @@ export const useFetchData = () => {
 
   // 主流程
   const fetchAccountData = async (link, record = null) => {
-    await sleep(1000 + Math.random() * 1000); // 随机等待
+    // await sleep(1000 + Math.random() * 1000); // 随机等待
     const clean = link.split('?')[0];
     const match = clean.match(/\/equip\/1\/([A-Za-z0-9-]+)/);
     if (!match) throw new Error("无效ID");
