@@ -1,4 +1,4 @@
-<template>
+<template>  
   <client-only>
     <div class="numbered-textarea">
       <!-- 行号区域 -->

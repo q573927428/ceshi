@@ -1,4 +1,4 @@
-<template>
+<template> 
   <div class="weapons-container">
     <div class="weapon-group" v-if="redWeapons.length > 0">
       <h3>红武</h3>

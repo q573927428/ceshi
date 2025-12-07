@@ -1,4 +1,4 @@
-<template>
+<template> 
   <div class="skill-card-container">
     <div v-for="category in categories" :key="category.name" class="category-section">
       <h2 class="category-title">{{ category.name }} ({{ category.skills.length }})</h2>

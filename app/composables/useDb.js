@@ -2,7 +2,6 @@
 import { openDB } from 'idb';
 
 let dbPromise = null;
-
 export const useDb = () => {
   const initDb = async () => {
     if (dbPromise) return dbPromise;

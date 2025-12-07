@@ -1,4 +1,4 @@
-<template>
+<template> 
   <div class="zangbao-page">
     <!-- 链接输入 + 操作 -->
     <div class="link-section">
@@ -23,17 +23,6 @@
             show-word-limit
           />
         </div>
-
-        <!-- <div class="link-input" v-if="showRemarkInput">
-          <p>价格(一个链接对应一个价格):</p>
-          <LineNumberTextarea
-            class="remark-input"
-            v-model="newLinkPrice"
-            placeholder="请输入备注 例如：试师5200出"
-            :maxlength="25000"
-            show-word-limit
-          />
-        </div> -->
 
         <div class="button-section">
           <el-button type="primary" @click="addLink" :loading = "globalLoading">添加链接</el-button>
@@ -121,11 +110,7 @@
         <el-button @click="toggleFilter" plain :type="filterFavorites ? 'primary' : 'warning'" style="margin-bottom: 10px;">
           {{ filterFavorites ? '显示全部' : '仅看收藏' }}
         </el-button>
-        <span class="filter-interval"> | </span>
-
-        <el-button @click="deleteFilteredResults" type="danger" style="margin-bottom: 10px;" v-if="filteredLinks.length < zangbaoLinks.length">
-          删除筛选结果 {{ filteredLinks.length }} 条
-        </el-button>
+        
         <el-button plain text style="margin-bottom: 10px;">
           总共 {{ filteredLinks.length }} 条数据
         </el-button>
@@ -395,7 +380,6 @@ const {
   filteredLinks,
   statusFilter,
   priceFilterType,
-  newLinkPrice,
 
   // 方法
   loadLinksFromDB,
@@ -409,8 +393,7 @@ const {
   setSort,
   applyPriceFilter,
   clearPriceFilter,
-  setStatusFilter,
-  deleteFilteredResults
+  setStatusFilter
 } = useAccountActions();
 
 // ============== db 直接操作（用于编辑备注等） ==============

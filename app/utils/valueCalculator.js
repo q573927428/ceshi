@@ -1,6 +1,6 @@
 // utils/valueCalculator.js
 
-// 1️⃣ 拆分稀有度数组
+// 1️⃣ 拆分稀有度数组 
 export const specialCardsData = [
     100028, 100372, 100479
   ]; // 特殊卡
