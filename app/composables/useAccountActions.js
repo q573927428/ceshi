@@ -149,7 +149,9 @@ const pickRemarkForIndex = (links, remarks, index) => {
 
             record.estimatedPrice = processed.estimatedPrice;
             record.timestamp = Date.now();
-            record.remark = remarkToUse;
+            if (remarkToUse.trim() !== '') {
+              record.remark = remarkToUse.trim();
+            }
             record.statusDesc = processed.statusDesc;
             await saveRecord(record);
             ElMessage.success(`第 ${index} 个已存在，更新成功`);
