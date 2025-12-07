@@ -41,6 +41,8 @@ export const useAccountActions = () => {
 
   const updateProgress = ref('');
 
+  const newLinkPrice = ref('');
+
   // 解析备注行（去空行）
 const parseRemarkLines = (text) => {
   if (!text) return [];
@@ -120,7 +122,8 @@ const pickRemarkForIndex = (links, remarks, index) => {
   
     // 先解析备注行（可为空数组）
     const remarks = parseRemarkLines(newLinkRemark.value);
-  
+    const prices = parseRemarkLines(newLinkPrice.value);
+    
     globalLoading.value = true;
     const failed = [];
     let index = 0;
@@ -139,7 +142,12 @@ const pickRemarkForIndex = (links, remarks, index) => {
             // 更新已有记录
             const processed = await fetchAccountData(link, record);
             record.data = processed;
-            record.equipPrice = processed.equipPrice;
+            // 如果手动输入价格，则使用填写的
+            const priceToUse = prices.length >= index 
+              ? Number(prices[index - 1]) 
+              : processed.equipPrice;
+            record.equipPrice = priceToUse;
+
             record.estimatedPrice = processed.estimatedPrice;
             record.timestamp = Date.now();
             record.remark = remarkToUse;
@@ -157,7 +165,12 @@ const pickRemarkForIndex = (links, remarks, index) => {
             };
             const processed = await fetchAccountData(link);
             newRecord.data = processed;
-            newRecord.equipPrice = processed.equipPrice;
+            // 如果手动输入价格，则使用填写的
+            const priceToUse = prices.length >= index 
+              ? Number(prices[index - 1]) 
+              : processed.equipPrice;
+            newRecord.equipPrice = priceToUse;
+
             newRecord.estimatedPrice = processed.estimatedPrice;
             newRecord.statusDesc = processed.statusDesc;
             await saveRecord(newRecord);
@@ -178,6 +191,7 @@ const pickRemarkForIndex = (links, remarks, index) => {
       globalLoading.value = false;
       newLink.value = '';
       newLinkRemark.value = '';
+      newLinkPrice.value = '';
     }
   
     if (failed.length) ElMessage.warning(`部分失败：${failed.length} 个`);
@@ -210,7 +224,54 @@ const pickRemarkForIndex = (links, remarks, index) => {
       ElMessage.success("已清空");
     } catch { }
   };
+  //删除当前筛选的所有结果
+  const deleteFilteredResults = async () => {
+    const list = filteredLinks.value || [];
 
+    if (!list.length) {
+      ElMessage.info('当前没有筛选结果可删除');
+      return;
+    }
+
+    try {
+      await ElMessageBox.confirm(
+        `确定删除当前筛选到的 ${list.length} 条记录？此操作不可恢复。`,
+        '删除确认',
+        { type: 'warning' }
+      );
+    } catch (err) {
+      // 用户取消
+      return;
+    }
+
+    globalLoading.value = true;
+    updateProgress.value = `正在删除 0/${list.length}`;
+    const failed = [];
+
+    let idx = 0;
+    for (const item of list) {
+      idx++;
+      updateProgress.value = `正在删除 ${idx}/${list.length}`;
+      try {
+        await deleteRecord(item.link);
+      } catch (err) {
+        console.error('删除失败：', item.link, err);
+        failed.push(item.link);
+      }
+    }
+
+    // 刷新数据
+    await loadLinksFromDB();
+    globalLoading.value = false;
+    updateProgress.value = '';
+    currentPage.value = 1;
+
+    if (failed.length) {
+      ElMessage.warning(`删除完成，但 ${failed.length} 条失败`);
+    } else {
+      ElMessage.success('删除完成');
+    }
+  };
   // 刷新
   const refreshLink = async (link) => {
     const item = zangbaoLinks.value.find(i => i.link === link);
@@ -395,6 +456,7 @@ const pickRemarkForIndex = (links, remarks, index) => {
     filteredLinks,
     statusFilter,
     priceFilterType,
+    newLinkPrice,
 
     // 方法
     loadLinksFromDB,
@@ -408,6 +470,7 @@ const pickRemarkForIndex = (links, remarks, index) => {
     setSort,
     applyPriceFilter,
     clearPriceFilter,
-    setStatusFilter
+    setStatusFilter,
+    deleteFilteredResults
   };
 };
