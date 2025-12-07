@@ -41,6 +41,32 @@ export const useAccountActions = () => {
 
   const updateProgress = ref('');
 
+  // 解析备注行（去空行）
+const parseRemarkLines = (text) => {
+  if (!text) return [];
+  return text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+};
+
+// 限制备注100字符
+const limitRemark = (text) => {
+  if (!text) return '';
+  const s = text.trim();
+  return s.length > 38 ? s.slice(0, 38) : s;
+};
+
+// 按 index 选择最终 remark（links: 数组, remarks: 数组, index: 1-based）
+const pickRemarkForIndex = (links, remarks, index) => {
+  if (links.length === 1) {
+    // 单链接：多行合并
+    return remarks.length > 0 ? limitRemark(remarks.join(' ')) : '';
+  }
+  // 多链接：
+  if (remarks.length === 0) return '';
+  if (remarks.length === 1) return limitRemark(remarks[0]);
+  // 多备注且多链接：按行匹配（不足返回空）
+  return remarks.length >= index ? limitRemark(remarks[index - 1]) : '';
+};
+
   // 解析多个藏宝阁ID
   const extractCbgLink = (text) => {
     const idPattern = /\d{15}-1-[A-Z0-9]{14}/gi;
@@ -81,62 +107,83 @@ export const useAccountActions = () => {
   // 添加
   const addLink = async () => {
     const input = newLink.value.trim();
-    if (!input) return ElMessage.warning('请输入链接');
-
+    if (!input) {
+      ElMessage.warning('请输入链接');
+      return;
+    }
+  
     const links = extractCbgLink(input);
-    if (!links.length) return ElMessage.warning('未识别到合法链接');
-
+    if (!links || links.length === 0) {
+      ElMessage.warning('未识别到合法链接');
+      return;
+    }
+  
+    // 先解析备注行（可为空数组）
+    const remarks = parseRemarkLines(newLinkRemark.value);
+  
     globalLoading.value = true;
     const failed = [];
     let index = 0;
-
-    for (const raw of links) {
-      index++;
-      const link = normalizeLink(raw);
-
-      try {
-        let record = await getRecord(link);
-        if (record) {
-          const processed = await fetchAccountData(link, record);
-          record.data = processed;
-          record.equipPrice = processed.equipPrice;
-          record.estimatedPrice = processed.estimatedPrice;
-          record.timestamp = Date.now();
-          record.remark = newLinkRemark.value.trim() || ''
-          record.statusDesc = processed.statusDesc;
-          await saveRecord(record);
-          ElMessage.success(`第 ${index} 个已存在，更新成功`);
-        } else {
-          const newRecord = {
-            link,
-            timestamp: Date.now(),
-            isFavorite: false,
-            data: null,
-            remark: newLinkRemark.value.trim() || ''
-          };
-          const processed = await fetchAccountData(link);
-          newRecord.data = processed;
-          newRecord.equipPrice = processed.equipPrice;
-          newRecord.estimatedPrice = processed.estimatedPrice;
-          newRecord.statusDesc = processed.statusDesc;
-          await saveRecord(newRecord);
-          ElMessage.success(`第 ${index} 个添加成功`);
+  
+    try {
+      for (const raw of links) {
+        index++; // index 从 1 开始传入 pickRemarkForIndex
+        const link = normalizeLink(raw);
+  
+        // 在循环内按当前 index 选取 remark
+        const remarkToUse = pickRemarkForIndex(links, remarks, index);
+  
+        try {
+          let record = await getRecord(link);
+          if (record) {
+            // 更新已有记录
+            const processed = await fetchAccountData(link, record);
+            record.data = processed;
+            record.equipPrice = processed.equipPrice;
+            record.estimatedPrice = processed.estimatedPrice;
+            record.timestamp = Date.now();
+            record.remark = remarkToUse;
+            record.statusDesc = processed.statusDesc;
+            await saveRecord(record);
+            ElMessage.success(`第 ${index} 个已存在，更新成功`);
+          } else {
+            // 新建记录
+            const newRecord = {
+              link,
+              timestamp: Date.now(),
+              isFavorite: false,
+              data: null,
+              remark: remarkToUse
+            };
+            const processed = await fetchAccountData(link);
+            newRecord.data = processed;
+            newRecord.equipPrice = processed.equipPrice;
+            newRecord.estimatedPrice = processed.estimatedPrice;
+            newRecord.statusDesc = processed.statusDesc;
+            await saveRecord(newRecord);
+            ElMessage.success(`第 ${index} 个添加成功`);
+          }
+  
+          // 每处理一条刷新列表（保留你现有行为）
+          await loadLinksFromDB();
+  
+        } catch (err) {
+          console.error('处理链接失败：', link, err);
+          failed.push(link);
+          ElMessage.error(`第 ${index} 个失败`);
         }
-
-        await loadLinksFromDB();
-      } catch (err) {
-        failed.push(link);
-        ElMessage.error(`第 ${index} 个失败`);
       }
+    } finally {
+      // 无论成功或抛错都确保清理状态
+      globalLoading.value = false;
+      newLink.value = '';
+      newLinkRemark.value = '';
     }
-
-    globalLoading.value = false;
-    newLink.value = "";
-    newLinkRemark.value = "";
-
+  
     if (failed.length) ElMessage.warning(`部分失败：${failed.length} 个`);
-    else ElMessage.success("全部完成");
+    else ElMessage.success('全部完成');
   };
+  
 
   // 删除
   const removeLink = async (link) => {

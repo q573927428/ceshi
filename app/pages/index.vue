@@ -10,18 +10,21 @@
             v-model="newLink"
             type="textarea"
             :rows="6"
-            placeholder="请输入藏宝阁链接，例如：https://stzb.cbg.163.com/cgi/mweb/equip/1/..."
+            placeholder="请输入藏宝阁链接（支持多个链接），例如：\nhttps://stzb.cbg.163.com/cgi/mweb/equip/1/202511291402116-1-RSH4NKN\nhttps://stzb.cbg.163.com/cgi/mweb/equip/1/202511300702116-1-4JZTJJWW"
             maxlength="2000"
             show-word-limit
-            @keyup.enter="addLink"
+            class="remark-textarea"
           />
         </div>
         <div class="link-input" v-if="showRemarkInput">
           <el-input
+            type="textarea"
+            :rows="3"
             v-model="newLinkRemark"
-            placeholder="请输入备注，例如：1.5.0"
-            maxlength="30"
+            placeholder="请输入备注（支持多个备注与上面连接一一对应）。例如：\n试师5200出，满红王异，鸟刀，有百战 枭雄\n2万小刀 三皇425  满红大乔张飞"
+            maxlength="2000"
             show-word-limit
+            class="remark-textarea"
           />
         </div>
 
@@ -325,6 +328,8 @@
       v-model="editDialog.remark"
       placeholder="请输入备注（例如账号适合什么阵容、亮点等）"
       :rows="5"
+      maxlength="100"
+      show-word-limit
     />
 
     <template #footer>
@@ -427,7 +432,7 @@ const saveRemark = async () => {
 
 // ============== 复制 / 打开链接 ==============
 const copyUrl = (cbgLink, remark) => {
-  const textToCopy = `${cbgLink}\n${remark}`;
+  const textToCopy = `${cbgLink}\n${remark || ''}`;
   navigator.clipboard.writeText(textToCopy).then(() => {
     ElMessage({ message: '复制成功', type: 'success', zIndex: 99999 });
   }).catch(() => {
@@ -728,5 +733,9 @@ onMounted(async () => {
   display: inline-block; 
   white-space: nowrap; 
   padding-bottom: 3px; 
+}
+.remark-textarea ::placeholder {
+  white-space: pre-wrap;
+  line-height: 1.5;
 }
 </style>
