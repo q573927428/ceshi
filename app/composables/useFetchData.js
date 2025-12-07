@@ -107,7 +107,7 @@ export const useFetchData = () => {
 
   // 主流程
   const fetchAccountData = async (link, record = null) => {
-    // await sleep(1000 + Math.random() * 1000); // 随机等待
+    await sleep(3000 + Math.random() * 7000); // 随机等待
     const clean = link.split('?')[0];
     const match = clean.match(/\/equip\/1\/([A-Za-z0-9-]+)/);
     if (!match) throw new Error("无效ID");

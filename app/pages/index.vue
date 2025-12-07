@@ -6,25 +6,22 @@
 
       <div class="link-input-container">
         <div class="link-input">
-          <el-input
+          <LineNumberTextarea
             v-model="newLink"
-            type="textarea"
+            placeholder="请输入链接..."
             :rows="6"
-            placeholder="请输入藏宝阁链接（支持多个链接），例如：\nhttps://stzb.cbg.163.com/cgi/mweb/equip/1/202511291402116-1-RSH4NKN\nhttps://stzb.cbg.163.com/cgi/mweb/equip/1/202511300702116-1-4JZTJJWW"
-            maxlength="2000"
+            :maxlength="25000"
             show-word-limit
-            class="remark-textarea"
           />
-        </div>
-        <div class="link-input" v-if="showRemarkInput">
-          <el-input
-            type="textarea"
-            :rows="3"
+          <div class="remark-container" v-if="showRemarkInput">备注(一个链接对应一个备注):</div>
+          <LineNumberTextarea
+            class="remark-input"
+            v-if="showRemarkInput"
             v-model="newLinkRemark"
-            placeholder="请输入备注（支持多个备注与上面连接一一对应）。例如：\n试师5200出，满红王异，鸟刀，有百战 枭雄\n2万小刀 三皇425  满红大乔张飞"
-            maxlength="2000"
+            placeholder="请输入备注 例如：试师5200出"
+            :rows="3"
+            :maxlength="25000"
             show-word-limit
-            class="remark-textarea"
           />
         </div>
 
@@ -552,16 +549,17 @@ onMounted(async () => {
   margin-left: 15px;
 }
 
-.link-input {
-  flex: 1;
+.remark-container{
+  margin-top: 20px;
+  margin-bottom: 8px;
 }
-
 .button-section {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
   justify-content: center;
-  margin-bottom: 20px;
+  margin: 20px 0;
+  width: 100%;
 }
 
 .filter-sort {
