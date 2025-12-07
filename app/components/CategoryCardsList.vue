@@ -317,6 +317,8 @@ export default {
   background: #f5f5f5;
   padding: 15px ;
   border-radius: 25px;
+  display: inline-block;
+  margin-right: 8px;
 }
 
 .category-title {

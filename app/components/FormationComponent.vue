@@ -247,58 +247,61 @@ export default {
 </script>
 
 <style scoped>
-.formation-container {
-  padding-top: 15px;
-}
-
-.formation-cards {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-}
-
-.formation-cards .single-column {
-  grid-template-columns: 1fr 1fr;
-}
-
-@media (min-width: 1388px) {
-  .formation-cards:not(.single-column) {
-    grid-template-columns: 1fr 1fr;
+  .formation-container {
+    padding-top: 15px;
   }
-}
-
-.team-group {
-  margin: 5px auto;
-  padding: 10px 15px;
-  border-radius: 8px;
-  background-color: #f7ecec;
-  transition: background-color 0.3s;
-}
-
-.team-group-medium-advance {
-  background-color: #f9c5c5;
-}
-
-.team-group-max-advance {
-  background-color: #e77676;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.team-cards {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.team-title {
-  font-size: 18px;
-  font-weight: bold;
-}
-
-.team-total-advance {
-  color: #d32f2f;
-  font-size: 22px;
-  font-weight: bold;
-}
-
-</style>
+  
+  /* 使用 flex 布局实现流式、内容宽度自适应 */
+  .formation-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    padding: 0 3px; /* 可选：防止最外侧 gap 被截断 */
+  }
+  
+  /* 每个队伍组：宽度由内容撑开 */
+  .team-group {
+    padding: 10px 10px;
+    border-radius: 8px;
+    background-color: #f7ecec;
+    transition: background-color 0.3s;
+    min-width: 0; /* 防止 flex 子项因内容过长不换行 */
+  }
+  
+  .team-group-medium-advance {
+    background-color: #f9c5c5;
+  }
+  
+  .team-group-max-advance {
+    background-color: #e77676;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* 卡片容器：横向排列，允许换行（虽然通常3个不会换） */
+  .team-cards {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  
+  .team-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 6px; /* 可选：增加与卡片的间距 */
+  }
+  
+  .team-total-advance {
+    color: #d32f2f;
+    font-size: 22px;
+    font-weight: bold;
+  }
+  
+  /* 如果你希望整个区域在页面居中（可选） */
+  /* .formation-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+  } */
+  </style>

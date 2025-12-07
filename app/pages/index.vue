@@ -55,13 +55,13 @@
       <div class="filter-sort">
         <span style="margin-top: 3px;">排序：</span>
         <el-button @click="setSort('time')" plain :type="sortKey === 'time' ? 'danger' : 'primary'">
-          时间排序 {{ sortKey === 'time' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+          时间 {{ sortKey === 'time' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
         </el-button>
         <el-button @click="setSort('estimatedPrice')" plain :type="sortKey === 'estimatedPrice' ? 'danger' : 'primary'">
-          预估价值排序 {{ sortKey === 'estimatedPrice' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+          预估价值 {{ sortKey === 'estimatedPrice' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
         </el-button>
         <el-button @click="setSort('price')" plain :type="sortKey === 'price' ? 'danger' : 'primary'">
-          藏宝阁价格排序 {{ sortKey === 'price' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+          藏宝阁价格 {{ sortKey === 'price' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
         </el-button>
 
         <el-button-group class="column-selector">
@@ -150,7 +150,8 @@
 
                     <span class="equip-status">
                       {{ item.data.equip.status_desc }} -
-                      {{ item.data.equip.area_name }} {{ item.data.equip.server_name }}
+                      {{ item.data.equip.area_name }} 
+                      <!-- {{ item.data.equip.server_name }} -->
                     </span>
                   </h3>
                   
@@ -159,13 +160,13 @@
                     <span class="id-text">
                       <b>ID：</b>{{ item.data.extractedId }}
                     </span>
-                    <span class="remark-bz" v-if="item.remark"><b>备注：</b>{{ item.remark || "" }}</span>
                   </div>
 
                   <div class="price-info">
-                    <el-tag type="primary" effect="plain">卡池 {{ item.data.cardTotalValue || 0 }} 元</el-tag> + <el-tag type="success" effect="plain">武器 {{ item.data.weaponTotalValue || 0 }} 元</el-tag> =
-                    <el-tag type="danger" effect="plain"> {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }}  元 </el-tag> 
+                    <span class="remark-bz"><b>备注：</b>{{ item.remark || "无" }}</span>
                   </div>
+
+                  
                 </div>
 
                 <!-- 操作按钮组 -->
@@ -182,7 +183,7 @@
                       <el-icon><Refresh /></el-icon>
                     </el-button>
 
-                    <el-button type="primary" circle plain @click="copyUrl(item.link)" title="复制链接">
+                    <el-button type="primary" circle plain @click="copyUrl(item.link,item.remark)" title="复制链接">
                       <el-icon><DocumentCopy /></el-icon>
                     </el-button>
 
@@ -210,9 +211,17 @@
                       <el-icon><Star /></el-icon>
                     </el-button>
 
+                    <el-button type="primary" circle plain @click="copyUrl(item.link,item.remark)" title="分享链接">
+                      <el-icon><Share /></el-icon>
+                    </el-button>
+
                     <el-button type="danger" circle plain @click="removeLink(item.link)" title="删除">
                       <el-icon><Delete /></el-icon>
                     </el-button>
+                  </div>
+                  <div class="price-info">
+                    <el-tag type="primary" size="large" effect="plain" round>卡池 {{ item.data.cardTotalValue || 0 }} 元</el-tag> + <el-tag type="success" effect="plain" size="large" round>武器 {{ item.data.weaponTotalValue || 0 }} 元</el-tag> =
+                    <el-tag type="danger" size="large" effect="plain" round> {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }}  元 </el-tag> 
                   </div>
                 </div>
               </div>
@@ -336,7 +345,7 @@ import SkillCard from '~/components/SkillCard.vue';
 import WeaponList from '~/components/WeaponList.vue';
 import FormationComponent from '~/components/FormationComponent.vue';
 
-import { Delete, Star, DocumentCopy, Refresh, Edit, Connection } from '@element-plus/icons-vue';
+import { Delete, Star, DocumentCopy, Refresh, Edit, Connection, Share } from '@element-plus/icons-vue';
 
 import { exportIndexedDB, importIndexedDB } from '~/utils/dbTools.js';
 
@@ -417,10 +426,13 @@ const saveRemark = async () => {
 };
 
 // ============== 复制 / 打开链接 ==============
-const copyUrl = (cbgLink) => {
-  navigator.clipboard.writeText(cbgLink).then(() => {
+const copyUrl = (cbgLink, remark) => {
+  const textToCopy = `${cbgLink}\n${remark}`;
+  navigator.clipboard.writeText(textToCopy).then(() => {
     ElMessage({ message: '复制成功', type: 'success', zIndex: 99999 });
-  }).catch(() => { ElMessage({ message: '复制失败', type: 'error' }); });
+  }).catch(() => {
+    ElMessage({ message: '复制失败', type: 'error' });
+  });
 };
 
 const openLink = (link) => {
@@ -511,9 +523,6 @@ onMounted(async () => {
     flex-direction: column;
     align-items: stretch;
   }
-  .panel-header > div {
-    width: 10;
-  }
   .compare-container{
     grid-template-columns: repeat(1, 1fr) !important;
   }
@@ -595,12 +604,17 @@ onMounted(async () => {
 }
 /* 动态类：背景红色 */
 .panel-header.bg-red {
-  background-color: #ffe5e5 !important;
+  /* background-color: #ffe5e5 !important; */
+  border-top: 1px solid #f02929;
+}
+.header-actions-top{
+  margin-bottom: 10px;
 }
 
 .equip-header {
   font-size: 14px;
   line-height: 1.4;
+  margin: 2px;
 }
 
 .price-main {
@@ -636,7 +650,7 @@ onMounted(async () => {
 }
 
 .equip-status {
-  margin-left: 6px;
+  display: inline-block;
   font-size: 14px;
   color: #409eff;
 }

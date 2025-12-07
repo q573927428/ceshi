@@ -100,8 +100,10 @@ export const useAccountActions = () => {
           const processed = await fetchAccountData(link, record);
           record.data = processed;
           record.equipPrice = processed.equipPrice;
+          record.estimatedPrice = processed.estimatedPrice;
           record.timestamp = Date.now();
           record.remark = newLinkRemark.value.trim() || ''
+          record.statusDesc = processed.statusDesc;
           await saveRecord(record);
           ElMessage.success(`第 ${index} 个已存在，更新成功`);
         } else {
@@ -115,6 +117,8 @@ export const useAccountActions = () => {
           const processed = await fetchAccountData(link);
           newRecord.data = processed;
           newRecord.equipPrice = processed.equipPrice;
+          newRecord.estimatedPrice = processed.estimatedPrice;
+          newRecord.statusDesc = processed.statusDesc;
           await saveRecord(newRecord);
           ElMessage.success(`第 ${index} 个添加成功`);
         }
