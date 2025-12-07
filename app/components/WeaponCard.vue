@@ -1,4 +1,4 @@
-<template>
+<template> 
   <div class="weapon-item item">
     <div class="wrap">
       <div class="img-container">

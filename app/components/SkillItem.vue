@@ -1,4 +1,4 @@
-<template>
+<template> 
   <div class="skill-item" :style="{ opacity: opacity }">
     <div class="card-frame">
       <!-- 技能边框，根据品质不同而变化 -->

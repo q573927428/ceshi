@@ -14,8 +14,6 @@ const allSkillIds = [
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-
-
 export const useFetchData = () => {
 
   const extractUniqueCards = (full) => {

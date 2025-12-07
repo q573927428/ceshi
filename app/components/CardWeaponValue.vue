@@ -1,4 +1,4 @@
-<template>
+<template> 
     <div class="value-calculator">
       <h4>武将卡总价值：{{ cardTotalValue }}</h4>
   

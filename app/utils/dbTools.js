@@ -2,7 +2,7 @@ import { openDB } from 'idb';
 
 /**
  * 一键导出整个 IndexedDB
- * 自动遍历所有 object store
+ * 自动遍历所有 object store 
  */
 export async function exportIndexedDB(dbName = 'zangbao-db') {
   try {

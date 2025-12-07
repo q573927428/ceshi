@@ -1,4 +1,4 @@
-<template>
+<template> 
   <div class="category-cards">
     <div v-for="category in categories" :key="category.name" class="category-section">
       <h2 class="category-title">{{ category.name }} ({{ category.cards.length }})</h2>

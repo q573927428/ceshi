@@ -1,4 +1,4 @@
-<template>
+<template> 
   <div class="formation-container">
     <!-- 使用Element Plus的Collapse折叠面板 -->
     <el-collapse v-model="activeNames" accordion>

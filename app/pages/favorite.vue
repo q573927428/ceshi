@@ -1,16 +1,70 @@
-<template>
+<template> 
   <div class="zangbao-page">
     <!-- 链接输入 + 操作 -->
     <div class="link-section">
+      <h3>藏宝阁链接(可多个链接):</h3>
+
+      <div class="link-input-container">
+        <div class="link-input">
+          <LineNumberTextarea
+            v-model="newLink"
+            placeholder="请输入链接..."
+            :maxlength="25000"
+            show-word-limit
+          />
+        </div>
+        <div class="link-input" v-if="showRemarkInput">
+          <p>备注(一个链接对应一个备注):</p>
+          <LineNumberTextarea
+            class="remark-input"
+            v-model="newLinkRemark"
+            placeholder="请输入备注 例如：试师5200出"
+            :maxlength="25000"
+            show-word-limit
+          />
+        </div>
+
+        <div class="button-section">
+          <el-button type="primary" @click="addLink" :loading = "globalLoading">添加链接</el-button>
+          <el-button type="warning" @click="updateAll" :loading = "globalLoading" plain>更新全部</el-button>
+          <el-button type="info" @click="clearLinks" plain>清空链接</el-button>
+          <el-button type="primary" @click="exportDB" plain>导出数据</el-button>
+          <el-upload
+            :show-file-list="false"
+            accept=".json"
+            :before-upload="importDB"
+          >
+            <el-button type="warning" plain>导入数据</el-button>
+          </el-upload>
+          <el-checkbox v-model="showRemarkInput">加备注</el-checkbox>
+        </div>
+      </div>
+
+      <el-alert
+        v-if="updateProgress"
+        type="info"
+        :closable="false"
+        show-icon
+        style="margin-top:10px;"
+      >
+        {{ updateProgress }}
+      </el-alert>
 
       <!-- 筛选排序与列配置 -->
       <div class="filter-sort">
-        <el-button @click="setSort('price')" plain :type="sortKey === 'price' ? 'primary' : 'default'">
-          价格排序 {{ sortKey === 'price' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+        <span style="margin-top: 3px;">排序：</span>
+        <el-button @click="setSort('time')" plain :type="sortKey === 'time' ? 'danger' : 'primary'">
+          时间 {{ sortKey === 'time' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+        </el-button>
+        <el-button @click="setSort('estimatedPrice')" plain :type="sortKey === 'estimatedPrice' ? 'danger' : 'primary'">
+          预估价值 {{ sortKey === 'estimatedPrice' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+        </el-button>
+        <el-button @click="setSort('price')" plain :type="sortKey === 'price' ? 'danger' : 'primary'">
+          藏宝阁价格 {{ sortKey === 'price' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
         </el-button>
 
-        <el-button @click="setSort('time')" plain :type="sortKey === 'time' ? 'primary' : 'default'">
-          时间排序 {{ sortKey === 'time' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+        <el-button @click="setSort('ratio')" plain :type="sortKey === 'ratio' ? 'danger' : 'primary'">
+          溢价比率 {{ sortKey === 'ratio' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
         </el-button>
 
         <el-button-group class="column-selector">
@@ -24,20 +78,40 @@
 
       <!-- 价格区间筛选 -->
       <div class="price-filter">
+        <span style="margin-bottom: 12px;">筛选：</span>
+        <el-select v-model="priceFilterType" placeholder="选择筛选字段" class="select-filter">
+          <el-option label="藏宝阁价格" value="equipPrice" ></el-option>
+          <el-option label="预估价值" value="estimatedPrice"></el-option>
+        </el-select>
         <el-input
           v-model="minPriceInput"
           placeholder="最低价"
-          style="width: 80px; margin-right: 3px;"
+          class="price-input"
         />
-        <span style="margin-right: 3px;">~</span>
+        <span style="margin-right: 3px; margin-bottom: 10px;">~</span>
         <el-input
           v-model="maxPriceInput"
           placeholder="最高价"
-          style="width: 80px; margin-right: 8px;"
+          class="price-input"
         />
-        <el-button type="primary" @click="applyPriceFilter">筛选</el-button>
-        <el-button type="info" @click="clearPriceFilter">重置</el-button>
-        <el-button plain text>
+        <el-button type="primary" @click="applyPriceFilter" style="margin-bottom: 10px;">筛选</el-button>
+        <el-button type="info" @click="clearPriceFilter" style="margin-right: 5px;margin-bottom: 10px;">重置</el-button>
+        <span class="filter-interval"> | </span>
+
+        <el-select v-model="statusFilter" placeholder="状态筛选" @change="setStatusFilter" class="select-filter">
+          <el-option label="全部" value=""></el-option>
+          <el-option label="上架中" value="上架中"></el-option>
+          <el-option label="未上架" value="未上架"></el-option>
+          <el-option label="买家取走" value="买家取走"></el-option>
+          <el-option label="卖家取回" value="卖家取回"></el-option>
+        </el-select>
+        <span class="filter-interval"> | </span>
+
+        <el-button @click="toggleFilter" plain :type="filterFavorites ? 'primary' : 'warning'" style="margin-bottom: 10px;">
+          {{ filterFavorites ? '显示全部' : '仅看收藏' }}
+        </el-button>
+        
+        <el-button plain text style="margin-bottom: 10px;">
           总共 {{ filteredLinks.length }} 条数据
         </el-button>
       </div>
@@ -56,26 +130,46 @@
           >
             <div v-loading = "item.loading">
               <!-- panel header -->
-              <div class="panel-header">
+              <div class="panel-header" :class="{ 'bg-red': item.equipPrice > 0 && item.estimatedPrice / item.equipPrice > 1 }">
                 <div class="header-info" v-if="item.data?.equip">
-                  <h3>
-                    <span>¥{{ item.data.equipPrice }}</span>
-                    {{ item.data.equip.status_desc }} -
-                    {{ item.data.equip.area_name }} {{ item.data.equip.server_name }}
-                  </h3>
+                  <h3 class="equip-header">
+                    <span class="price-main">¥{{ item.equipPrice }}</span>
 
+                    <span class="price-estimated">
+                      (估 ¥{{ item.estimatedPrice }}
+                      <span class="separator">|</span>
+                      <span
+                        class="price-percent"
+                        :class="{ up: item.estimatedPrice / item.equipPrice >= 1, down: item.estimatedPrice / item.equipPrice < 1 }"
+                      >
+                      溢价率 {{
+                          item.equipPrice > 0
+                            ? ((item.estimatedPrice / item.equipPrice) * 100).toFixed(1) + '%'
+                            : '0%'
+                        }}
+                      </span>
+                      )
+                    </span>
+
+                    <span class="equip-status">
+                      {{ item.data.equip.status_desc }} -
+                      {{ item.data.equip.area_name }} 
+                      <!-- {{ item.data.equip.server_name }} -->
+                    </span>
+                  </h3>
+                  
                   <div class="price-info">
                     <span class="timestamp-text"><b>时间：</b>{{ formatTimestamp(item.timestamp) }}</span>
                     <span class="id-text">
                       <b>ID：</b>{{ item.data.extractedId }}
                     </span>
-                    <span class="remark-bz" v-if="item.remark"><b>备注：</b>{{ item.remark || "" }}</span>
                   </div>
 
                   <div class="price-info">
-                    <el-tag type="primary" effect="plain">卡池 {{ item.data.cardTotalValue || 0 }} 元</el-tag> + <el-tag type="success" effect="plain">武器 {{ item.data.weaponTotalValue || 0 }} 元</el-tag> =
-                    <el-tag type="danger" effect="plain"> {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }}  元 </el-tag> 
+                    <span class="remark-bz"><b>备注：</b>{{ item.remark || "无" }}</span>
                   </div>
+
+                  
                 </div>
 
                 <!-- 操作按钮组 -->
@@ -92,7 +186,7 @@
                       <el-icon><Refresh /></el-icon>
                     </el-button>
 
-                    <el-button type="primary" circle plain @click="copyUrl(item.link)" title="复制链接">
+                    <el-button type="primary" circle plain @click="copyUrl(item.link,item.remark)" title="复制链接">
                       <el-icon><DocumentCopy /></el-icon>
                     </el-button>
 
@@ -120,9 +214,17 @@
                       <el-icon><Star /></el-icon>
                     </el-button>
 
+                    <el-button type="primary" circle plain @click="copyUrl(item.link,item.remark)" title="分享链接">
+                      <el-icon><Share /></el-icon>
+                    </el-button>
+
                     <el-button type="danger" circle plain @click="removeLink(item.link)" title="删除">
                       <el-icon><Delete /></el-icon>
                     </el-button>
+                  </div>
+                  <div class="price-info">
+                    <el-tag type="primary" size="large" effect="plain" round>卡池 {{ item.data.cardTotalValue || 0 }} 元</el-tag> + <el-tag type="success" effect="plain" size="large" round>武器 {{ item.data.weaponTotalValue || 0 }} 元</el-tag> =
+                    <el-tag type="danger" size="large" effect="plain" round> {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }}  元 </el-tag> 
                   </div>
                 </div>
               </div>
@@ -226,6 +328,8 @@
       v-model="editDialog.remark"
       placeholder="请输入备注（例如账号适合什么阵容、亮点等）"
       :rows="5"
+      maxlength="100"
+      show-word-limit
     />
 
     <template #footer>
@@ -246,7 +350,7 @@ import SkillCard from '~/components/SkillCard.vue';
 import WeaponList from '~/components/WeaponList.vue';
 import FormationComponent from '~/components/FormationComponent.vue';
 
-import { Delete, Star, DocumentCopy, Refresh, Edit, Connection } from '@element-plus/icons-vue';
+import { Delete, Star, DocumentCopy, Refresh, Edit, Connection, Share } from '@element-plus/icons-vue';
 
 import { exportIndexedDB, importIndexedDB } from '~/utils/dbTools.js';
 
@@ -274,6 +378,8 @@ const {
   updateProgress,
   pagedLinks,
   filteredLinks,
+  statusFilter,
+  priceFilterType,
 
   // 方法
   loadLinksFromDB,
@@ -286,7 +392,8 @@ const {
   toggleFilter,
   setSort,
   applyPriceFilter,
-  clearPriceFilter
+  clearPriceFilter,
+  setStatusFilter
 } = useAccountActions();
 
 // ============== db 直接操作（用于编辑备注等） ==============
@@ -324,10 +431,13 @@ const saveRemark = async () => {
 };
 
 // ============== 复制 / 打开链接 ==============
-const copyUrl = (cbgLink) => {
-  navigator.clipboard.writeText(cbgLink).then(() => {
+const copyUrl = (cbgLink, remark) => {
+  const textToCopy = `${cbgLink}\n${remark || ''}`;
+  navigator.clipboard.writeText(textToCopy).then(() => {
     ElMessage({ message: '复制成功', type: 'success', zIndex: 99999 });
-  }).catch(() => { ElMessage({ message: '复制失败', type: 'error' }); });
+  }).catch(() => {
+    ElMessage({ message: '复制失败', type: 'error' });
+  });
 };
 
 const openLink = (link) => {
@@ -404,8 +514,6 @@ const importDB = async (file) => {
 
 // ============== 页面生命周期 ==============
 onMounted(async () => {
-  // 默认开启 “只看收藏”
-  filterFavorites.value = true;
   await loadLinksFromDB();
 });
 </script>
@@ -419,9 +527,6 @@ onMounted(async () => {
   .panel-header {
     flex-direction: column;
     align-items: stretch;
-  }
-  .panel-header > div {
-    width: 10;
   }
   .compare-container{
     grid-template-columns: repeat(1, 1fr) !important;
@@ -443,15 +548,17 @@ onMounted(async () => {
   margin-left: 15px;
 }
 
-.link-input {
-  flex: 1;
+.remark-container{
+  margin-top: 20px;
+  margin-bottom: 8px;
 }
-
 .button-section {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
   justify-content: center;
+  margin: 20px 0;
+  width: 100%;
 }
 
 .filter-sort {
@@ -459,17 +566,101 @@ onMounted(async () => {
   display: flex;
   gap: 1px;
   flex-wrap: wrap;
+  background: #f5f5f5;
+  padding: 10px;
+  border-radius: 10px;
 }
-
+.price-filter{
+  align-items: center;
+  margin-top: 12px;
+  display: flex;
+  gap: 1px;
+  flex-wrap: wrap;
+  background: #f5f5f5;
+  padding: 10px;
+  border-radius: 10px;
+}
+.filter-interval{
+  margin: 0 10px;
+  color: #ccc; 
+  margin-bottom: 10px;
+}
+.select-filter{
+  width: 120px; 
+  margin-right: 5px; 
+  margin-bottom: 10px;
+}
+.price-input{
+  width: 80px; 
+  margin-right: 3px; 
+  margin-bottom: 10px;
+}
 .compare-results {
   margin-top: 16px;
 }
 
-.header-info h3 span{
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px;
+  background: #f5f5f5;
+  flex-wrap: wrap;
+}
+/* 动态类：背景红色 */
+.panel-header.bg-red {
+  /* background-color: #ffe5e5 !important; */
+  border-top: 1px solid #f02929;
+}
+.header-actions-top{
+  margin-bottom: 10px;
+}
+
+.equip-header {
+  font-size: 14px;
+  line-height: 1.4;
+  margin: 2px;
+}
+
+.price-main {
   font-size: 20px;
+  font-weight: 600;
   margin-right: 8px;
   color: #f02929;
 }
+
+.price-estimated {
+  font-size: 14px;
+  color: #666;
+}
+
+.separator {
+  margin: 0 8px; 
+  color: #ccc;  
+  font-size: 8px;
+}
+
+.price-percent {
+  font-weight: 600;
+}
+
+/* 估价 > 实价：上涨逻辑 */
+.price-percent.up {
+  color: #d9534f; /* 红色 */
+}
+
+/* 估价 < 实价：便宜逻辑 */
+.price-percent.down {
+  color: #3cb371; /* 绿色 */
+}
+
+.equip-status {
+  display: inline-block;
+  font-size: 14px;
+  color: #409eff;
+}
+
 
 .price-info {
   font-size: 12px;
@@ -543,5 +734,9 @@ onMounted(async () => {
   display: inline-block; 
   white-space: nowrap; 
   padding-bottom: 3px; 
+}
+.remark-textarea ::placeholder {
+  white-space: pre-wrap;
+  line-height: 1.5;
 }
 </style>

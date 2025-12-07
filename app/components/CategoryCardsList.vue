@@ -1,4 +1,4 @@
-<template>
+<template>  
   <div class="category-cards">
     <!-- 特殊类卡片 -->
     <div v-for="category in nonCollapsibleCategories" :key="category.name" class="category-section">
