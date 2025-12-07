@@ -67,6 +67,10 @@
           藏宝阁价格 {{ sortKey === 'price' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
         </el-button>
 
+        <el-button @click="setSort('ratio')" plain :type="sortKey === 'ratio' ? 'danger' : 'primary'">
+          溢价比率 {{ sortKey === 'ratio' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+        </el-button>
+
         <el-button-group class="column-selector">
           <el-button :type="columnMode === 1 ? 'primary' : 'default'" @click="columnMode = 1">1 列</el-button>
           <el-button :type="columnMode === 2 ? 'primary' : 'default'" @click="columnMode = 2">2 列</el-button>
@@ -142,7 +146,7 @@
                         class="price-percent"
                         :class="{ up: item.estimatedPrice / item.equipPrice >= 1, down: item.estimatedPrice / item.equipPrice < 1 }"
                       >
-                        {{
+                      溢价率 {{
                           item.equipPrice > 0
                             ? ((item.estimatedPrice / item.equipPrice) * 100).toFixed(1) + '%'
                             : '0%'
