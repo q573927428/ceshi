@@ -19,7 +19,7 @@ export const useAccountActions = () => {
   const zangbaoLinks = ref([]);
   const newLink = ref('');
   const newLinkRemark = ref('');
-  const showRemarkInput = ref(true);
+  const showRemarkInput = ref(false);
   const globalLoading = ref(false);
   const activeTabs = reactive({});
 
@@ -284,7 +284,7 @@ const pickRemarkForIndex = (links, remarks, index) => {
       const record = await getRecord(link);
       if (!record) return;
 
-      const processed = await fetchAccountData(link, null);
+      const processed = await fetchAccountData(link, record);
       record.data = processed;
       await saveRecord(record);
 

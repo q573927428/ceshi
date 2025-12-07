@@ -8,7 +8,7 @@
         <div class="link-input">
           <LineNumberTextarea
             v-model="newLink"
-            placeholder="请输入链接..."
+            placeholder="请输入链接 例如：https://stzb.cbg.163.com/cgi/mweb/equip/1/202510161602116-1-2TILQRITMB3D5H"
             :maxlength="25000"
             show-word-limit
           />
@@ -18,7 +18,7 @@
           <LineNumberTextarea
             class="remark-input"
             v-model="newLinkRemark"
-            placeholder="请输入备注 例如：试师5200出"
+            placeholder="请输入备注 例如：试师5200出，四皇，同心队，程昱魏智"
             :maxlength="25000"
             show-word-limit
           />
@@ -29,7 +29,7 @@
           <LineNumberTextarea
             class="remark-input"
             v-model="newLinkPrice"
-            placeholder="请输入备注 例如：试师5200出"
+            placeholder="请输入价格 例如：23000"
             :maxlength="25000"
             show-word-limit
           />
@@ -94,19 +94,21 @@
           <el-option label="藏宝阁价格" value="equipPrice" ></el-option>
           <el-option label="预估价值" value="estimatedPrice"></el-option>
         </el-select>
-        <el-input
-          v-model="minPriceInput"
-          placeholder="最低价"
-          class="price-input"
-        />
-        <span style="margin-right: 3px; margin-bottom: 10px;">~</span>
-        <el-input
-          v-model="maxPriceInput"
-          placeholder="最高价"
-          class="price-input"
-        />
-        <el-button type="primary" @click="applyPriceFilter" style="margin-bottom: 10px;">筛选</el-button>
-        <el-button type="info" @click="clearPriceFilter" style="margin-right: 5px;margin-bottom: 10px;">重置</el-button>
+        <span class="price-filter-input">
+          <el-input
+            v-model="minPriceInput"
+            placeholder="最低价"
+            class="price-input"
+          />
+          <span style="margin-right: 3px; margin-bottom: 10px;">~</span>
+          <el-input
+            v-model="maxPriceInput"
+            placeholder="最高价"
+            class="price-input"
+          />
+          <el-button type="primary" @click="applyPriceFilter" style="margin-bottom: 10px;">筛选</el-button>
+          <el-button type="info" @click="clearPriceFilter" style="margin-right: 5px;margin-bottom: 10px;">重置</el-button>
+        </span>
         <span class="filter-interval"> | </span>
 
         <el-select v-model="statusFilter" placeholder="状态筛选" @change="setStatusFilter" class="select-filter">
@@ -596,6 +598,9 @@ onMounted(async () => {
   background: #f5f5f5;
   padding: 10px;
   border-radius: 10px;
+}
+.price-filter-input{
+  display:inline-block
 }
 .filter-interval{
   margin: 0 10px;
