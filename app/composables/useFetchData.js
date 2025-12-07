@@ -105,7 +105,7 @@ export const useFetchData = () => {
 
   // 主流程
   const fetchAccountData = async (link, record = null) => {
-    await sleep(3000 + Math.random() * 7000); // 随机等待
+    // await sleep(5000 + Math.random() * 5000); // 随机等待
     const clean = link.split('?')[0];
     const match = clean.match(/\/equip\/1\/([A-Za-z0-9-]+)/);
     if (!match) throw new Error("无效ID");
@@ -113,7 +113,7 @@ export const useFetchData = () => {
     const extractedId = match[1];
 
     let equip;
-
+    record = '6666'
     if (record === null) {
       equip = await $fetch('/api/equip/detail', { params: { ordersn: extractedId } });
     } else {

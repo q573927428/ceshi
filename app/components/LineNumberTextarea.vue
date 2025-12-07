@@ -1,4 +1,5 @@
-<template> 
+<template>  
+  <client-only>
     <div class="numbered-textarea">
       <!-- 行号区域 -->
       <div class="line-numbers">
@@ -14,13 +15,17 @@
       >
       </textarea>
     </div>
+  </client-only>
 </template>
   
 <script setup>
   import { computed } from 'vue'
   
   const props = defineProps({
-    modelValue: String,
+    modelValue: {
+      type: String,
+      default: '' // 👈 关键修复
+    },
     rows: { type: Number, default: 6 },
     placeholder: String
   })
