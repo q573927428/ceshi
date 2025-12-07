@@ -29,7 +29,7 @@
           <LineNumberTextarea
             class="remark-input"
             v-model="newLinkPrice"
-            placeholder="请输入备注 例如：试师5200出"
+            placeholder="请输入价格 例如：23000"
             :maxlength="25000"
             show-word-limit
           />
