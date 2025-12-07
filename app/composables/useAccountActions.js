@@ -351,6 +351,15 @@ const pickRemarkForIndex = (links, remarks, index) => {
       } else if (key === 'estimatedPrice') {
         A = a.estimatedPrice || 0;
         B = b.estimatedPrice || 0;
+      } else if (key === 'ratio') {
+        // ☆ 新增：预估价值 / 价格 的比例排序
+        const aPrice = a.equipPrice || 1;
+        const bPrice = b.equipPrice || 1;
+        const aEst = a.estimatedPrice || 0;
+        const bEst = b.estimatedPrice || 0;
+    
+        A = aEst / aPrice;
+        B = bEst / bPrice;
       } else {
         A = a.timestamp;
         B = b.timestamp;
