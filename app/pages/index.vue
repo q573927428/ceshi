@@ -9,17 +9,16 @@
           <LineNumberTextarea
             v-model="newLink"
             placeholder="请输入链接..."
-            :rows="6"
             :maxlength="25000"
             show-word-limit
           />
-          <div class="remark-container" v-if="showRemarkInput">备注(一个链接对应一个备注):</div>
+        </div>
+        <div class="link-input" v-if="showRemarkInput">
+          <p>备注(一个链接对应一个备注):</p>
           <LineNumberTextarea
             class="remark-input"
-            v-if="showRemarkInput"
             v-model="newLinkRemark"
             placeholder="请输入备注 例如：试师5200出"
-            :rows="3"
             :maxlength="25000"
             show-word-limit
           />

@@ -11,11 +11,12 @@
         v-model="model"
         :rows="rows"
         :placeholder="placeholder"
-      ></textarea>
+      >
+      </textarea>
     </div>
-  </template>
+</template>
   
-  <script setup>
+<script setup>
   import { computed } from 'vue'
   
   const props = defineProps({
@@ -35,9 +36,9 @@
     if (!model.value) return 1
     return model.value.split('\n').length
   })
-  </script>
+</script>
   
-  <style scoped>
+<style scoped>
   .numbered-textarea {
     display: flex;
     width: 100%;
