@@ -216,6 +216,7 @@ export default {
         { id: 33, name: '张昭', country: 4, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100648, icon_hero_id: 100648 },
         { id: 34, name: '姜维', country: 3, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100074, icon_hero_id: 100074 },
         { id: 57, name: '姜维', country: 3, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'SP', hero_id: 102012, icon_hero_id: 100074 },
+        { id: 57, name: '姜维', country: 3, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100806, icon_hero_id: 100806 },
         { id: 36, name: '陆抗', country: 4, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100574, icon_hero_id: 100574 },
         { id: 38, name: '鲁肃', country: 4, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100741, icon_hero_id: 100741 },
         { id: 39, name: '周泰', country: 4, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100589, icon_hero_id: 100589 },
