@@ -2,39 +2,39 @@
   <div class="zangbao-page">
     <!-- 链接输入 + 操作 -->
     <div class="link-section">
-      <h3>藏宝阁链接(可多个链接):</h3>
-
       <div class="link-input-container">
-        <div class="link-input">
-          <LineNumberTextarea
-            v-model="newLink"
-            placeholder="请输入链接 例如：https://stzb.cbg.163.com/cgi/mweb/equip/1/202510161602116-1-2TILQRITMB3D5H"
-            :maxlength="25000"
-            show-word-limit
-          />
-        </div>
-        <div class="link-input" v-if="showRemarkInput">
-          <p>备注(一个链接对应一个备注):</p>
-          <LineNumberTextarea
-            class="remark-input"
-            v-model="newLinkRemark"
-            placeholder="请输入备注 例如：试师5200出，四皇，同心队，程昱魏智"
-            :maxlength="25000"
-            show-word-limit
-          />
-        </div>
+        <div class="link-input-grid">
+          <div class="link-input">
+            <p>藏宝阁链接(可多个链接):</p>
+            <LineNumberTextarea
+              v-model="newLink"
+              placeholder="请输入链接 例如：https://stzb.cbg.163.com/***"
+              :maxlength="25000"
+              show-word-limit
+            />
+          </div>
+          <div class="link-input" v-if="showRemarkInput">
+            <p>备注(一个链接对应一个备注):</p>
+            <LineNumberTextarea
+              class="remark-input"
+              v-model="newLinkRemark"
+              placeholder="请输入备注 例如：试师5200出，四皇，同心队"
+              :maxlength="25000"
+              show-word-limit
+            />
+          </div>
 
-        <!-- <div class="link-input" v-if="showRemarkInput">
-          <p>价格(一个链接对应一个价格):</p>
-          <LineNumberTextarea
-            class="remark-input"
-            v-model="newLinkPrice"
-            placeholder="请输入价格 例如：23000"
-            :maxlength="25000"
-            show-word-limit
-          />
-        </div> -->
-
+          <div class="link-input" v-if="showPriceInput">
+            <p>价格(一个链接对应一个价格):</p>
+            <LineNumberTextarea
+              class="remark-input"
+              v-model="newLinkPrice"
+              placeholder="请输入价格 例如：23000"
+              :maxlength="25000"
+              show-word-limit
+            />
+          </div>
+        </div>
         <div class="button-section">
           <el-button type="primary" @click="addLink" :loading = "globalLoading">添加链接</el-button>
           <el-button type="warning" @click="updateAll" :loading = "globalLoading" plain>更新全部</el-button>
@@ -47,7 +47,8 @@
           >
             <el-button type="warning" plain>导入数据</el-button>
           </el-upload>
-          <el-checkbox v-model="showRemarkInput">加备注</el-checkbox>
+          <el-checkbox v-model="showRemarkInput">写备注</el-checkbox>
+          <el-checkbox v-model="showPriceInput">写价格</el-checkbox>
         </div>
       </div>
 
@@ -382,6 +383,7 @@ const {
   newLink,
   newLinkRemark,
   showRemarkInput,
+  showPriceInput,
   globalLoading,
   activeTabs,
   filterFavorites,

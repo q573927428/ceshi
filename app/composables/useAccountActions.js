@@ -20,6 +20,7 @@ export const useAccountActions = () => {
   const newLink = ref('');
   const newLinkRemark = ref('');
   const showRemarkInput = ref(false);
+  const showPriceInput = ref(false);
   const globalLoading = ref(false);
   const activeTabs = reactive({});
 
@@ -146,7 +147,6 @@ const pickRemarkForIndex = (links, remarks, index) => {
               ? Number(prices[index - 1]) 
               : processed.equipPrice;
             record.equipPrice = priceToUse;
-
             record.estimatedPrice = processed.estimatedPrice;
             record.timestamp = Date.now();
             if (remarkToUse.trim() !== '') {
@@ -171,7 +171,6 @@ const pickRemarkForIndex = (links, remarks, index) => {
               ? Number(prices[index - 1]) 
               : processed.equipPrice;
             newRecord.equipPrice = priceToUse;
-
             newRecord.estimatedPrice = processed.estimatedPrice;
             newRecord.statusDesc = processed.statusDesc;
             await saveRecord(newRecord);
@@ -286,6 +285,9 @@ const pickRemarkForIndex = (links, remarks, index) => {
 
       const processed = await fetchAccountData(link, record);
       record.data = processed;
+      record.equipPrice = processed.equipPrice;
+      record.estimatedPrice = processed.estimatedPrice;
+      record.statusDesc = processed.statusDesc;
       await saveRecord(record);
 
       await loadLinksFromDB();
@@ -316,6 +318,9 @@ const pickRemarkForIndex = (links, remarks, index) => {
       try {
         const processed = await fetchAccountData(item.link, record);
         record.data = processed;
+        record.equipPrice = processed.equipPrice; // 更新价格
+        record.estimatedPrice = processed.estimatedPrice; // 更新估算价格
+        record.statusDesc = processed.statusDesc; // 更新状态
         // record.timestamp = Date.now();
         await saveRecord(record);
       } catch (err) { }
@@ -442,6 +447,7 @@ const pickRemarkForIndex = (links, remarks, index) => {
     newLink,
     newLinkRemark,
     showRemarkInput,
+    showPriceInput,
     globalLoading,
     activeTabs,
     filterFavorites,

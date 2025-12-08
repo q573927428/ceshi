@@ -26,7 +26,7 @@
       type: String,
       default: '' // 👈 关键修复
     },
-    rows: { type: Number, default: 6 },
+    rows: { type: Number, default: 3 },
     placeholder: String
   })
   
