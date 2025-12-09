@@ -279,7 +279,7 @@
   <!-- 编辑备注对话框 -->
   <el-dialog
     v-model="editDialog.visible"
-    title="编辑备注"
+    title="编辑备注/价格"
     width="400px"
   >
     <el-input
@@ -290,6 +290,15 @@
       maxlength="100"
       show-word-limit
     />
+    <p></p>
+    <el-input
+      v-model="editDialog.price"
+      placeholder="价格"
+    >
+      <template #append>
+        元
+      </template>
+    </el-input>
 
     <template #footer>
       <el-button @click="editDialog.visible = false">取消</el-button>
@@ -324,6 +333,7 @@ const {
   newLink,
   newLinkRemark,
   showRemarkInput,
+  showPriceInput,
   globalLoading,
   activeTabs,
   filterFavorites,
@@ -364,13 +374,15 @@ const { getRecord, saveRecord } = useDb();
 const editDialog = reactive({
   visible: false,
   link: '',
-  remark: ''
+  remark: '',
+  price: null
 });
 
 const editRecord = (item) => {
   editDialog.link = item.link;
   editDialog.remark = item.remark || '';
   editDialog.visible = true;
+  editDialog.price = item.equipPrice || null;
 };
 
 const saveRemark = async () => {
@@ -378,6 +390,12 @@ const saveRemark = async () => {
     const record = await getRecord(editDialog.link);
     if (record) {
       record.remark = editDialog.remark || '';
+
+      // 用户填写了价格时才更新
+      if (editDialog.price !== null && editDialog.price !== '') {
+        record.equipPrice = Number(editDialog.price);
+      }
+
       await saveRecord(record);
       await loadLinksFromDB();
       editDialog.visible = false;
@@ -394,12 +412,44 @@ const saveRemark = async () => {
 // ============== 复制 / 打开链接 ==============
 const copyUrl = (cbgLink, remark) => {
   const textToCopy = `${cbgLink}\n${remark || ''}`;
-  navigator.clipboard.writeText(textToCopy).then(() => {
-    ElMessage({ message: '复制成功', type: 'success', zIndex: 99999 });
-  }).catch(() => {
-    ElMessage({ message: '复制失败', type: 'error' });
-  });
+
+  // 优先使用现代API
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(textToCopy)
+      .then(() => {
+        ElMessage({ message: '复制成功', type: 'success', zIndex: 99999 });
+      })
+      .catch(() => {
+        fallbackCopy(textToCopy);
+      });
+  } else {
+    // 非 https 环境自动使用 fallback
+    fallbackCopy(textToCopy);
+  }
 };
+
+// 兼容处理（textarea 方案）
+const fallbackCopy = (text) => {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  textarea.style.top = '-9999px';
+  document.body.appendChild(textarea);
+
+  textarea.select();
+  textarea.setSelectionRange(0, textarea.value.length);
+
+  const ok = document.execCommand('copy');
+  document.body.removeChild(textarea);
+
+  if (ok) {
+    ElMessage({ message: '复制成功', type: 'success', zIndex: 99999 });
+  } else {
+    ElMessage({ message: '复制失败', type: 'error' });
+  }
+};
+
 
 const openLink = (link) => {
   window.open(link, '_blank');
