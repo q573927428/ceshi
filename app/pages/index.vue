@@ -338,7 +338,7 @@
   <!-- 编辑备注对话框 -->
   <el-dialog
     v-model="editDialog.visible"
-    title="编辑备注"
+    title="编辑备注/价格"
     width="400px"
   >
     <el-input
@@ -349,6 +349,15 @@
       maxlength="100"
       show-word-limit
     />
+    <p></p>
+    <el-input
+      v-model="editDialog.price"
+      placeholder="价格"
+    >
+      <template #append>
+        元
+      </template>
+    </el-input>
 
     <template #footer>
       <el-button @click="editDialog.visible = false">取消</el-button>
@@ -424,13 +433,15 @@ const { getRecord, saveRecord } = useDb();
 const editDialog = reactive({
   visible: false,
   link: '',
-  remark: ''
+  remark: '',
+  price: null
 });
 
 const editRecord = (item) => {
   editDialog.link = item.link;
   editDialog.remark = item.remark || '';
   editDialog.visible = true;
+  editDialog.price = item.equipPrice || null;
 };
 
 const saveRemark = async () => {
@@ -438,6 +449,12 @@ const saveRemark = async () => {
     const record = await getRecord(editDialog.link);
     if (record) {
       record.remark = editDialog.remark || '';
+
+      // 用户填写了价格时才更新
+      if (editDialog.price !== null && editDialog.price !== '') {
+        record.equipPrice = Number(editDialog.price);
+      }
+
       await saveRecord(record);
       await loadLinksFromDB();
       editDialog.visible = false;
