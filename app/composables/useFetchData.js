@@ -73,9 +73,10 @@ export const useFetchData = () => {
         server_name: equip.server_name,
       },
       uniqueCards: uniqueCards.map(c => ({
+        name: c.name,
         hero_id: c.hero_id,
         icon_hero_id: c.icon_hero_id,
-        advance_num: c.advance_num
+        advance_num: c.advance_num,
       })),
       skill: (full.skill || [])
         .filter(s => allSkillIds.includes(s.skill_id))

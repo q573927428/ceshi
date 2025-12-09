@@ -10,26 +10,10 @@
 
     <div 
       class="nav-item"
-      :class="{ active: activeIndex === '/rent' }"
-      @click="go('/rent')"
-    >
-      <el-icon><Switch /></el-icon> 出租
-    </div>
-
-    <div 
-      class="nav-item"
       :class="{ active: activeIndex === '/favorite' }"
       @click="go('/favorite')"
     >
       <el-icon><Star /></el-icon> 收藏
-    </div>
-
-    <div 
-      class="nav-item"
-      :class="{ active: activeIndex === '/my' }"
-      @click="go('/my')"
-    >
-      <el-icon><User /></el-icon> 我的
     </div>
   </nav>
   <el-backtop :bottom="100">
