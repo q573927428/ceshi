@@ -454,12 +454,44 @@ const saveRemark = async () => {
 // ============== 复制 / 打开链接 ==============
 const copyUrl = (cbgLink, remark) => {
   const textToCopy = `${cbgLink}\n${remark || ''}`;
-  navigator.clipboard.writeText(textToCopy).then(() => {
-    ElMessage({ message: '复制成功', type: 'success', zIndex: 99999 });
-  }).catch(() => {
-    ElMessage({ message: '复制失败', type: 'error' });
-  });
+
+  // 优先使用现代API
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(textToCopy)
+      .then(() => {
+        ElMessage({ message: '复制成功', type: 'success', zIndex: 99999 });
+      })
+      .catch(() => {
+        fallbackCopy(textToCopy);
+      });
+  } else {
+    // 非 https 环境自动使用 fallback
+    fallbackCopy(textToCopy);
+  }
 };
+
+// 兼容处理（textarea 方案）
+const fallbackCopy = (text) => {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  textarea.style.top = '-9999px';
+  document.body.appendChild(textarea);
+
+  textarea.select();
+  textarea.setSelectionRange(0, textarea.value.length);
+
+  const ok = document.execCommand('copy');
+  document.body.removeChild(textarea);
+
+  if (ok) {
+    ElMessage({ message: '复制成功', type: 'success', zIndex: 99999 });
+  } else {
+    ElMessage({ message: '复制失败', type: 'error' });
+  }
+};
+
 
 const openLink = (link) => {
   window.open(link, '_blank');
