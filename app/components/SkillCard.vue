@@ -123,6 +123,7 @@ export default {
         { skill_id: 200788, name: "枭雄", season: 2, skill_type: 3, research_progress: 100, quality: "A" },
         { skill_id: 200863, name: "击势", season: 0, skill_type: 3, research_progress: 100, quality: "S" },
         { skill_id: 200900, name: "垒实迎击", season: 4, skill_type: 3, research_progress: 100, quality: "S" },
+        { skill_id: 200280, name: "令无空悬", season: 4, skill_type: 3, research_progress: 100, quality: "A" },
         { skill_id: 200274, name: "以诱待来", season: 0, skill_type: 3, research_progress: 100, quality: "A" },
         { skill_id: 200261, name: "胜敌益强", season: 0, skill_type: 3, research_progress: 100, quality: "A" },
         { skill_id: 200289, name: "先声夺人", season: 0, skill_type: 3, research_progress: 100, quality: "A" }

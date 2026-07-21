@@ -60,7 +60,8 @@ export const useFetchData = () => {
     const allW = [...weapons.redWeapons, ...weapons.pinkWeapons, ...weapons.blueWeapons];
     allW.forEach(w => w.calculatedValue = getWeaponValue(w));
     const weaponTotalValue = allW.reduce((s, w) => s + w.calculatedValue, 0);
-
+    console.log('所有技能', full.skill);
+    
     return {
       extractedId,
       link,
