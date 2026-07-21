@@ -186,14 +186,8 @@ export const useFetchData = () => {
     }
   }
 
-  // 主流程
-  const fetchAccountData = async (link: string, record: RecordData | null = null): Promise<ProcessedData> => {
-    const clean = link.split('?')[0] || ''
-    const match = clean.match(/\/equip\/1\/([A-Za-z0-9-]+)/)
-    if (!match || !match[1]) throw new Error('无效ID')
-
-    const extractedId: string = match[1]
-
+  // 主流程 - extractedId 即数据库中的 link（账号ID）
+  const fetchAccountData = async (extractedId: string, record: RecordData | null = null): Promise<ProcessedData> => {
     let equip: EquipData
 
     if (record === null) {
@@ -222,7 +216,7 @@ export const useFetchData = () => {
     const uniqueCards = extractUniqueCards(full)
     const weapons = extractWeapons(full)
 
-    return buildProcessedData(extractedId, link, equip, full, weapons, uniqueCards)
+    return buildProcessedData(extractedId, extractedId, equip, full, weapons, uniqueCards)
   }
 
   return {

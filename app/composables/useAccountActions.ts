@@ -5,6 +5,9 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useDb } from './useDb'
 import { useFetchData } from './useFetchData'
 
+// 完整藏宝阁URL前缀
+const CBG_PREFIX = 'https://stzb.cbg.163.com/cgi/mweb/equip/1/'
+
 interface LinkItem {
   link: string
   timestamp: number
@@ -72,21 +75,15 @@ export const useAccountActions = () => {
     return remarks.length >= index ? limitRemark(remarks[index - 1] || '') : ''
   }
 
-  // 解析多个藏宝阁ID
+  // 解析多个藏宝阁账号ID（只提取ID部分，不拼接完整URL）
   const extractCbgLink = (text: string): string[] => {
     const idPattern = /\d{15}-1-[A-Z0-9]{14}/gi
     const ids = text.match(idPattern) as string[] | null
-    if (!ids) return []
-    return ids.map((id) => `https://stzb.cbg.163.com/cgi/mweb/equip/1/${id}`)
+    return ids || []
   }
 
-  const normalizeLink = (link: string): string => {
-    try {
-      const url = new URL(link)
-      return url.origin + url.pathname
-    } catch {
-      return link
-    }
+  const normalizeLink = (id: string): string => {
+    return id
   }
 
   // 加载所有纪录

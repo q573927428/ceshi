@@ -36,7 +36,7 @@ await db.execute(`
   CREATE TABLE IF NOT EXISTS records (
     id             INT AUTO_INCREMENT PRIMARY KEY,
     user_id        INT DEFAULT NULL,
-    link           VARCHAR(512) NOT NULL,
+    link           VARCHAR(100) NOT NULL,
     timestamp      BIGINT NOT NULL,
     is_favorite    TINYINT(1) DEFAULT 0,
     equip_price    DECIMAL(10,2) DEFAULT NULL,
@@ -47,7 +47,7 @@ await db.execute(`
     raw_json       JSON DEFAULT NULL,
     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY uk_user_link (user_id, link),
+    UNIQUE KEY uk_link (link),
     INDEX idx_timestamp (timestamp),
     INDEX idx_user_id (user_id),
     INDEX idx_status_desc (status_desc),

@@ -42,6 +42,16 @@ export interface RecordOutput {
 }
 
 export function toCamelCase(row: RecordRow): RecordOutput {
+  let parsedData = row.data
+  // MySQL JSON 类型返回时可能是字符串，需要反序列化
+  if (typeof parsedData === 'string') {
+    try {
+      parsedData = JSON.parse(parsedData)
+    } catch {
+      parsedData = null
+    }
+  }
+
   return {
     id: row.id,
     user_id: row.user_id,
@@ -52,7 +62,7 @@ export function toCamelCase(row: RecordRow): RecordOutput {
     estimatedPrice: row.estimated_price,
     statusDesc: row.status_desc,
     remark: row.remark,
-    data: row.data,
+    data: parsedData,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }

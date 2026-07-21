@@ -5,10 +5,10 @@
       <div class="link-input-container">
         <div class="link-input-grid">
           <div class="link-input">
-            <p>藏宝阁链接(可多个链接):</p>
+            <p>藏宝阁账号ID(可多个ID):</p>
             <LineNumberTextarea
               v-model="newLink"
-              placeholder="请输入链接 例如：https://stzb.cbg.163.com/***"
+              placeholder="请输入藏宝阁账号ID，例如：202606222002116-1-SAEKBCCBWWJOUI"
               :maxlength="25000"
               show-word-limit
             />
@@ -191,8 +191,8 @@
                 </div>
 
                 <!-- 操作按钮组 -->
-                <div class="header-actions">
-                  <div class="header-actions-top">
+                  <div class="header-actions" v-if="item.data">
+                    <div class="header-actions-top">
                     <el-button
                       type="info"
                       circle
@@ -469,8 +469,13 @@ const saveRemark = async () => {
 };
 
 // ============== 复制 / 打开链接 ==============
-const copyUrl = (cbgLink, remark) => {
-  const textToCopy = `${cbgLink}\n${remark || ''}`;
+const CBG_PREFIX = 'https://stzb.cbg.163.com/cgi/mweb/equip/1/';
+
+const buildFullUrl = (id) => `${CBG_PREFIX}${id}`;
+
+const copyUrl = (cbgId, remark) => {
+  const fullUrl = buildFullUrl(cbgId);
+  const textToCopy = `${fullUrl}\n${remark || ''}`;
 
   // 优先使用现代API
   if (navigator.clipboard && window.isSecureContext) {
@@ -510,9 +515,9 @@ const fallbackCopy = (text) => {
 };
 
 
-const openLink = (link) => {
-  window.open(link, '_blank');
-};
+const openLink = (id) => {
+  window.open(buildFullUrl(id), '_blank');
+}
 
 // ============== 格式化时间 ==============
 const formatTimestamp = (ts) => {
