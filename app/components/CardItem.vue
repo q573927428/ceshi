@@ -105,7 +105,7 @@ export default {
 <style scoped>
 .wujiang-item {
   list-style: none;
-  width: 82px;
+  width: 86px;
   margin: 2px auto;
   opacity: v-bind(opacity);
 }
@@ -207,9 +207,9 @@ export default {
 .season-wrap {
   position: absolute;
   bottom: 20px;
-  right: 0;
-  width: 16px;
-  height: 16px;
+  right: 2px;
+  width: 22px;
+  height: 22px;
   line-height: 28px;
   text-align: center;
   color: #fff;
@@ -221,31 +221,31 @@ export default {
 .season-N {
   background: url('/images/n.png') no-repeat;
   background-position: 0 0;
-  background-size: 16px 16px;
+  background-size: 22px 22px;
 }
 
 .season-S2 {
   background: url('/images/s2.png') no-repeat;
   background-position: 0 0;
-  background-size: 16px 16px;
+  background-size: 22px 22px;
 }
 
 .season-S3 {
   background: url('/images/s3.png') no-repeat;
   background-position: 0 0;
-  background-size: 16px 16px;
+  background-size: 22px 22px;
 }
 
 .season-XP {
   background: url('/images/xp.png') no-repeat;
   background-position: 0 0;
-  background-size: 16px 16px;
+  background-size: 22px 22px;
 }
 
 .season-SP {
   background: url('/images/sp.png') no-repeat;
   background-position: 0 0;
-  background-size: 16px 16px;
+  background-size: 22px 22px;
 }
 
 .hero-achieve {
