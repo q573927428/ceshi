@@ -2,6 +2,7 @@
   <div class="category-cards">
     <!-- 特殊类卡片 -->
     <div v-for="category in nonCollapsibleCategories" :key="category.name" class="category-section">
+      <div class="category-title">{{ category.name }}</div>
       <div class="cards-container">
         <CardItem
           v-for="card in category.cards"
@@ -36,6 +37,7 @@
 
       <div v-show="!isCollapsed">
         <div v-for="category in collapsibleCategories" :key="category.name" class="category-section">
+          <div class="category-title">{{ category.name }}</div>
           <div class="cards-container">
             <CardItem
               v-for="card in category.cards"
@@ -326,7 +328,7 @@ export default {
 .category-title {
   font-size: 20px;
   font-weight: bold;
-  margin-bottom: 5px;
+  margin-top: 5px;
   color: #333;
 }
 

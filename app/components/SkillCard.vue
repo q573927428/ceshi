@@ -167,7 +167,7 @@ export default {
 .category-title {
   font-size: 20px;
   font-weight: bold;
-  margin-bottom: 5px;
+  margin-top: 5px;
   color: #333;
 }
 

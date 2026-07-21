@@ -282,8 +282,8 @@ const pickRemarkForIndex = (links, remarks, index) => {
     try {
       const record = await getRecord(link);
       if (!record) return;
-
-      const processed = await fetchAccountData(link, record);
+      //fetchAccountData(link, 第二个参数) 传 null 强制从藏宝阁 API 拉取最新价格  出入record则不更新价格
+      const processed = await fetchAccountData(link, null); 
       record.data = processed;
       record.equipPrice = processed.equipPrice;
       record.estimatedPrice = processed.estimatedPrice;
