@@ -1,4 +1,5 @@
 export default defineNuxtConfig({
+  compatibilityDate: '2026-07-21',
   css: [
     '~/assets/css/main.css'
   ],
@@ -13,5 +14,5 @@ export default defineNuxtConfig({
 
   modules: [
     "@element-plus/nuxt"
-  ]
+  ],
 })
