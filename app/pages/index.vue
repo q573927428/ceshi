@@ -379,11 +379,11 @@ import FormationComponent from '~/components/FormationComponent.vue';
 
 import { Delete, Star, DocumentCopy, Refresh, Edit, Connection, Share } from '@element-plus/icons-vue';
 
-import { exportIndexedDB, importIndexedDB } from '~/utils/dbTools.js';
+import { exportIndexedDB, importIndexedDB } from '~/utils/dbTools';
 
 // 使用拆分后的 composables（如果你尚未创建，请按前一条回复建立）
-import { useAccountActions } from '~/composables/useAccountActions.js';
-import { useDb } from '~/composables/useDb.js';
+import { useAccountActions } from '~/composables/useAccountActions';
+import { useDb } from '~/composables/useDb';
 
 // ============== 从 composable 获取状态与方法 ==============
 const {
