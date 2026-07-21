@@ -21,7 +21,7 @@ interface LinkItem {
 }
 
 export const useAccountActions = () => {
-  const { saveRecord, getRecord, deleteRecord, loadAllRecords, clearAllRecords } = useDb()
+  const { saveRecord, getRecord, deleteRecord, loadAllRecords, clearAllRecords, batchFetchRecords } = useDb()
   const { fetchAccountData } = useFetchData()
 
   // 所有状态
@@ -86,7 +86,42 @@ export const useAccountActions = () => {
     return id
   }
 
-  // 加载所有纪录
+  // 确保当前页的数据（补充 data 字段）
+  const ensureCurrentPageData = async () => {
+    const currentPageItems = pagedLinks.value
+    // 找出当前页中 data 为空（未加载）的项
+    const missingDataItems = currentPageItems.filter((item) => !item.data)
+    if (!missingDataItems.length) return
+
+    const links = missingDataItems.map((item) => item.link)
+
+    // 设置 loading 状态
+    for (const item of missingDataItems) {
+      item.loading = true
+    }
+
+    try {
+      const batchRecords = await batchFetchRecords(links)
+      if (!batchRecords || !batchRecords.length) return
+
+      // 用批量获取的 data 更新 zangbaoLinks 中对应项
+      for (const record of batchRecords) {
+        const target = zangbaoLinks.value.find((i) => i.link === record.link)
+        if (target) {
+          target.data = record.data || null
+          target.loading = false
+        }
+      }
+    } catch (err) {
+      console.error('批量加载 data 失败：', err)
+      // 重置 loading
+      for (const item of missingDataItems) {
+        item.loading = false
+      }
+    }
+  }
+
+  // 加载所有纪录（元数据模式 - 不含 data 大字段）
   const loadLinksFromDB = async () => {
     const all = await loadAllRecords()
     zangbaoLinks.value = all.map((r: any) => ({
@@ -94,7 +129,7 @@ export const useAccountActions = () => {
       timestamp: r.timestamp,
       isFavorite: r.isFavorite,
       equipPrice: r.equipPrice,
-      data: r.data || null,
+      data: r.data || null,  // 元数据没有 data，设为 null
       loading: false,
       remark: r.remark || '',
       statusDesc: r.statusDesc,
@@ -104,6 +139,9 @@ export const useAccountActions = () => {
     zangbaoLinks.value.forEach((i) => {
       activeTabs[i.link] = activeTabs[i.link] || 'first'
     })
+
+    // 阶段2：加载当前页的完整 data
+    await ensureCurrentPageData()
   }
 
   // 添加
@@ -444,6 +482,7 @@ export const useAccountActions = () => {
     newLinkPrice,
 
     loadLinksFromDB,
+    ensureCurrentPageData,
     addLink,
     removeLink,
     clearLinks,

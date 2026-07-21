@@ -423,7 +423,8 @@ const {
   applyPriceFilter,
   clearPriceFilter,
   setStatusFilter,
-  deleteFilteredResults
+  deleteFilteredResults,
+  ensureCurrentPageData
 } = useAccountActions();
 
 // ============== db 直接操作（用于编辑备注等） ==============
@@ -533,8 +534,10 @@ const formatTimestamp = (ts) => {
 };
 
 // ============== 分页事件 ==============
-const handlePageChange = (page) => {
+const handlePageChange = async (page) => {
   currentPage.value = page;
+  // 翻页后异步加载新页的完整 data
+  await ensureCurrentPageData();
   nextTick(() => {
     window.scrollTo({
       top: 0,

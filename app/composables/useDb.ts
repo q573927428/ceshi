@@ -51,7 +51,44 @@ export const useDb = () => {
   const loadAllRecords = async (): Promise<any[]> => {
     try {
       // @ts-ignore - Nuxt $fetch has complex route types
+      // 默认只加载元数据（不含 data 字段）
       return await $fetch('/api/records')
+    } catch {
+      return []
+    }
+  }
+
+  const loadPageRecords = async (page: number, pageSize: number): Promise<{ records: any[]; total: number; page: number; pageSize: number }> => {
+    try {
+      // @ts-ignore - Nuxt $fetch has complex route types
+      return await $fetch('/api/records', {
+        params: { page, pageSize, withData: 'true' },
+      })
+    } catch {
+      return { records: [], total: 0, page, pageSize }
+    }
+  }
+
+  const batchFetchRecords = async (links: string[]): Promise<any[]> => {
+    if (!links.length) return []
+    try {
+      // @ts-ignore - Nuxt $fetch has complex route types
+      return await $fetch('/api/records/batch', {
+        method: 'POST',
+        body: { links },
+      })
+    } catch {
+      return []
+    }
+  }
+
+  const loadAllRecordsWithData = async (): Promise<any[]> => {
+    // 兼容旧逻辑 - 返回全部记录的完整数据（含 data）
+    try {
+      // @ts-ignore - Nuxt $fetch has complex route types
+      return await $fetch('/api/records', {
+        params: { page: 1, pageSize: 100000, withData: 'true' },
+      }).then(res => (res as any).records || [])
     } catch {
       return []
     }
@@ -69,6 +106,9 @@ export const useDb = () => {
     getRecord,
     deleteRecord,
     loadAllRecords,
+    loadPageRecords,
+    batchFetchRecords,
+    loadAllRecordsWithData,
     clearAllRecords,
   }
 }
