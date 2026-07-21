@@ -21,6 +21,8 @@
     "vue-router": "^4.6.3"
   },
   "devDependencies": {
-    "@element-plus/nuxt": "^1.1.4"
-  }
+    "@element-plus/nuxt": "^1.1.4",
+    "typescript": "^6.0.3"
+  },
+  "packageManager": "pnpm@11.15.1"
 }

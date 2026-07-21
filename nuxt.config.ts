@@ -1,7 +1,4 @@
 export default defineNuxtConfig({
-  app: {
-    inlineStyles: true
-  },
   css: [
     '~/assets/css/main.css'
   ],
