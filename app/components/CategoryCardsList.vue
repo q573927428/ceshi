@@ -328,7 +328,8 @@ export default {
 .category-title {
   font-size: 20px;
   font-weight: bold;
-  margin-top: 5px;
+  margin-top: 1px;
+  margin-bottom: 5px;
   color: #333;
 }
 
