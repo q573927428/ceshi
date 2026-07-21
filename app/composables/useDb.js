@@ -1,70 +1,57 @@
 // composables/useDb.js
-import { openDB } from 'idb';
+// 从 IndexedDB 迁移到 MySQL 后端 API
 
-let dbPromise = null;
 export const useDb = () => {
-  const initDb = async () => {
-    if (dbPromise) return dbPromise;
-
-    dbPromise = openDB('zangbaoDB', 2, {
-      upgrade(db) {
-        let store;
-        if (!db.objectStoreNames.contains('records')) {
-          store = db.createObjectStore('records', { keyPath: 'link' });
-        } else {
-          store = db.transaction.objectStore('records');
-        }
-
-        // 索引（简单，可靠）
-        if (!store.indexNames.contains('timestamp')) {
-          store.createIndex('timestamp', 'timestamp');
-        }
-        if (!store.indexNames.contains('statusDesc')) {
-          store.createIndex('statusDesc', 'statusDesc');
-        }
-        if (!store.indexNames.contains('equipPrice')) {
-          store.createIndex('equipPrice', 'equipPrice');
-        }
-        if (!store.indexNames.contains('isFavorite')) {
-          store.createIndex('isFavorite', 'isFavorite');
-        }
-      }
-    });
-
-    return dbPromise;
-  };
-
   const saveRecord = async (record) => {
-    const db = await initDb();
-    await db.put('records', JSON.parse(JSON.stringify(record)));
-  };
+    const body = {
+      link: record.link,
+      timestamp: record.timestamp,
+      isFavorite: !!record.isFavorite,
+      equipPrice: record.equipPrice ?? null,
+      estimatedPrice: record.estimatedPrice ?? null,
+      statusDesc: record.statusDesc || '',
+      remark: record.remark || null,
+      data: record.data || null,
+    }
+    await $fetch('/api/records', {
+      method: 'POST',
+      body,
+    })
+  }
 
   const getRecord = async (link) => {
-    const db = await initDb();
-    return await db.get('records', link);
-  };
+    try {
+      return await $fetch(`/api/records/${encodeURIComponent(link)}`)
+    } catch {
+      return null
+    }
+  }
 
   const deleteRecord = async (link) => {
-    const db = await initDb();
-    await db.delete('records', link);
-  };
+    await $fetch(`/api/records/${encodeURIComponent(link)}`, {
+      method: 'DELETE',
+    })
+  }
 
   const loadAllRecords = async () => {
-    const db = await initDb();
-    return await db.getAll('records');
-  };
+    try {
+      return await $fetch('/api/records')
+    } catch {
+      return []
+    }
+  }
 
   const clearAllRecords = async () => {
-    const db = await initDb();
-    await db.clear('records');
-  };
+    await $fetch('/api/records/clear', {
+      method: 'DELETE',
+    })
+  }
 
   return {
-    initDb,
     saveRecord,
     getRecord,
     deleteRecord,
     loadAllRecords,
-    clearAllRecords
-  };
-};
+    clearAllRecords,
+  }
+}

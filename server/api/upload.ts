@@ -8,7 +8,7 @@ const writeFile = promisify(fs.writeFile)
 export default defineEventHandler(async (event) => {
   const form = formidable({ multiples: true })
 
-  const { files } = await new Promise((resolve, reject) => {
+  const { files } = await new Promise<{ fields: any; files: any }>((resolve, reject) => {
     form.parse(event.node.req, (err, fields, files) => {
       if (err) reject(err)
       else resolve({ fields, files })
@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
   const dir = path.join(process.cwd(), 'public/rentimg')
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
 
-  const savedFiles = []
+  const savedFiles: string[] = []
 
   const fileArray = Array.isArray(files.file) ? files.file : [files.file]
 
