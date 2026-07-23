@@ -186,13 +186,25 @@ export const useFetchData = () => {
     }
   }
 
+  // 从 localStorage 读取保存的CBG Cookie
+  const getCbgCookie = (): string => {
+    if (import.meta.client) {
+      return localStorage.getItem('cbg_cookie') || ''
+    }
+    return ''
+  }
+
   // 主流程 - extractedId 即数据库中的 link（账号ID）
   const fetchAccountData = async (extractedId: string, record: RecordData | null = null): Promise<ProcessedData> => {
     let equip: EquipData
 
     if (record === null) {
+      const cbgCookie = getCbgCookie()
       // @ts-ignore - Nuxt $fetch has complex route types
-      equip = await $fetch('/api/equip/detail', { params: { ordersn: extractedId } }) as any
+      equip = await $fetch('/api/equip/detail', {
+        params: { ordersn: extractedId },
+        headers: cbgCookie ? { 'x-cbg-cookie': cbgCookie } : {},
+      }) as any
     } else {
       equip = {
         price: record?.data?.equip?.price || 0,

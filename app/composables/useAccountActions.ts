@@ -174,6 +174,7 @@ export const useAccountActions = () => {
         try {
           let record = await getRecord(link)
           if (record) {
+            // 传null强制请求API获取最新价格（不走缓存）
             const processed = await fetchAccountData(link, record)
             record.data = processed
             const priceToUse = prices.length >= index ? Number(prices[index - 1]) : processed.equipPrice
@@ -307,6 +308,7 @@ export const useAccountActions = () => {
     try {
       const record = await getRecord(link)
       if (!record) return
+      // 传null强制重新请求API获取最新价格
       const processed = await fetchAccountData(link, null)
       record.data = processed
       record.equipPrice = processed.equipPrice
@@ -315,8 +317,8 @@ export const useAccountActions = () => {
       await saveRecord(record)
       await loadLinksFromDB()
       ElMessage.success('刷新成功')
-    } catch {
-      ElMessage.error('刷新失败')
+    } catch (err: any) {
+      ElMessage.error(err?.data?.statusMessage || '刷新失败')
     } finally {
       item.loading = false
     }
@@ -338,7 +340,8 @@ export const useAccountActions = () => {
       if (!record) continue
 
       try {
-        const processed = await fetchAccountData(item.link, record)
+        // 传null强制重新请求API获取最新价格
+        const processed = await fetchAccountData(item.link, null)
         record.data = processed
         record.equipPrice = processed.equipPrice
         record.estimatedPrice = processed.estimatedPrice
