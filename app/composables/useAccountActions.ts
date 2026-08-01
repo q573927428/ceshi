@@ -1,5 +1,5 @@
 // composables/useAccountActions.ts
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, watch } from 'vue'
 // @ts-ignore - element-plus nuxt provides types
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useDb } from './useDb'
@@ -100,9 +100,26 @@ export const useAccountActions = () => {
       item.loading = true
     }
 
+    const resetLoading = () => {
+      for (const item of missingDataItems) {
+        item.loading = false
+      }
+    }
+
     try {
       const batchRecords = await batchFetchRecords(links)
-      if (!batchRecords || !batchRecords.length) return
+      if (!batchRecords || !batchRecords.length) {
+        resetLoading()
+        return
+      }
+
+      // 批量结果中可能缺少部分记录，将它们也重置 loading
+      const fetchedLinks = new Set(batchRecords.map((r) => r.link))
+      for (const item of missingDataItems) {
+        if (!fetchedLinks.has(item.link)) {
+          item.loading = false
+        }
+      }
 
       // 用批量获取的 data 更新 zangbaoLinks 中对应项
       for (const record of batchRecords) {
@@ -114,10 +131,7 @@ export const useAccountActions = () => {
       }
     } catch (err) {
       console.error('批量加载 data 失败：', err)
-      // 重置 loading
-      for (const item of missingDataItems) {
-        item.loading = false
-      }
+      resetLoading()
     }
   }
 
@@ -460,6 +474,15 @@ export const useAccountActions = () => {
     const start = (currentPage.value - 1) * pageSize.value
     return filteredLinks.value.slice(start, start + pageSize.value)
   })
+
+  // 监听当前页数据变化，自动加载缺失的完整 data
+  // 覆盖筛选、排序、翻页等所有导致当前页变化的情况
+  watch(
+    () => pagedLinks.value.map((i) => i.link).join(','),
+    () => {
+      ensureCurrentPageData()
+    }
+  )
 
   return {
     zangbaoLinks,
