@@ -175,7 +175,7 @@ export const useAccountActions = () => {
           let record = await getRecord(link)
           if (record) {
             // 传null强制请求API获取最新价格（不走缓存）
-            const processed = await fetchAccountData(link, record)
+            const processed = await fetchAccountData(link, null)
             record.data = processed
             const priceToUse = prices.length >= index ? Number(prices[index - 1]) : processed.equipPrice
             record.equipPrice = priceToUse
