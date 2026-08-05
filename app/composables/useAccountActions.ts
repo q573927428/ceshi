@@ -329,7 +329,14 @@ export const useAccountActions = () => {
       record.estimatedPrice = processed.estimatedPrice
       record.statusDesc = processed.statusDesc
       await saveRecord(record)
-      await loadLinksFromDB()
+
+      // 直接更新当前面板数据，避免全量重载导致所有面板 data 清空再重新加载
+      item.data = processed
+      item.equipPrice = processed.equipPrice
+      item.estimatedPrice = processed.estimatedPrice
+      item.statusDesc = processed.statusDesc
+      item.timestamp = record.timestamp
+
       ElMessage.success('刷新成功')
     } catch (err: any) {
       ElMessage.error(err?.data?.statusMessage || '刷新失败')

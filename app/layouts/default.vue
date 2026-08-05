@@ -37,6 +37,9 @@
         <NuxtPage />
       </el-main>
     </el-container>
+
+    <!-- 返回顶部按钮 -->
+    <BackToTop />
   </el-container>
 </template>
 

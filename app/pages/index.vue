@@ -539,10 +539,19 @@ const handlePageChange = async (page) => {
   // 翻页后异步加载新页的完整 data
   await ensureCurrentPageData();
   nextTick(() => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
+    // 实际的滚动容器是 .admin-main（el-main），window 不会滚动
+    const scrollContainer = document.querySelector('.admin-main');
+    if (scrollContainer) {
+      scrollContainer.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    } else {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
   });
 };
 
