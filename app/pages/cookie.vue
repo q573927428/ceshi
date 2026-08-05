@@ -12,6 +12,15 @@
       <li>右键复制整行Cookie值（从 Cookie: 后面开始复制）</li>
       <li>粘贴到下方输入框并保存</li>
     </ol>
+
+    <el-alert
+      v-if="hasLegacyCookie"
+      type="warning"
+      title="检测到本机浏览器还保存着旧版Cookie，点击「一键迁移」可将其同步到服务器（长期有效）"
+      :closable="false"
+      style="margin-bottom: 12px;"
+    />
+
     <el-input
       v-model="cookieValue"
       type="textarea"
@@ -24,8 +33,16 @@
     <el-button @click="clearCookie" style="margin-top: 12px; margin-left: 8px;">
       清除Cookie
     </el-button>
+    <el-button
+      v-if="hasLegacyCookie"
+      @click="migrateLegacyCookie"
+      style="margin-top: 12px; margin-left: 8px;"
+    >
+      一键迁移旧Cookie
+    </el-button>
+
     <div v-if="saved" style="margin-top: 12px; color: #67c23a;">
-      ✅ Cookie已保存，现在可以正常使用工具了
+      ✅ Cookie已保存到服务器，之后会自动续期
     </div>
   </div>
 </template>
@@ -36,30 +53,74 @@ import { ElMessage } from 'element-plus'
 
 const cookieValue = ref('')
 const saved = ref(false)
+const hasLegacyCookie = ref(false)
 
-onMounted(() => {
-  const savedCookie = localStorage.getItem('cbg_cookie')
-  if (savedCookie) {
-    cookieValue.value = savedCookie
-    saved.value = true
+onMounted(async () => {
+  // 从旧版 localStorage 读取，仅用于一键迁移
+  const legacyCookie = localStorage.getItem('cbg_cookie') || ''
+  hasLegacyCookie.value = !!legacyCookie
+  if (legacyCookie) {
+    cookieValue.value = legacyCookie
+  }
+
+  try {
+    // 读取服务器端已保存的 Cookie（覆盖旧版本地值，展示当前生效的）
+    const res = await $fetch('/api/cookie')
+    if (res?.cookie) {
+      cookieValue.value = res.cookie
+      saved.value = true
+    }
+  } catch {
+    // 服务器读取失败时忽略，保持本地值
   }
 })
 
-const saveCookie = () => {
+const saveCookie = async () => {
   const val = cookieValue.value.trim()
   if (!val) {
     ElMessage.warning('请输入Cookie')
     return
   }
-  localStorage.setItem('cbg_cookie', val)
-  saved.value = true
-  ElMessage.success('Cookie已保存')
+  try {
+    await $fetch('/api/cookie', {
+      method: 'POST',
+      body: { cookie: val },
+    })
+    saved.value = true
+    ElMessage.success('Cookie已保存，之后会自动续期')
+  } catch {
+    ElMessage.error('保存失败，请稍后重试')
+  }
 }
 
-const clearCookie = () => {
+const clearCookie = async () => {
+  try {
+    await $fetch('/api/cookie', { method: 'DELETE' })
+  } catch {
+    // 忽略服务器清除失败
+  }
   localStorage.removeItem('cbg_cookie')
   cookieValue.value = ''
   saved.value = false
+  hasLegacyCookie.value = false
   ElMessage.success('Cookie已清除')
+}
+
+const migrateLegacyCookie = async () => {
+  const legacy = localStorage.getItem('cbg_cookie') || ''
+  if (!legacy) return
+  try {
+    await $fetch('/api/cookie', {
+      method: 'POST',
+      body: { cookie: legacy },
+    })
+    localStorage.removeItem('cbg_cookie')
+    hasLegacyCookie.value = false
+    cookieValue.value = legacy
+    saved.value = true
+    ElMessage.success('旧Cookie已迁移到服务器，之后会自动续期')
+  } catch {
+    ElMessage.error('迁移失败，请稍后重试')
+  }
 }
 </script>

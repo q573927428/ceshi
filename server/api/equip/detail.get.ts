@@ -1,8 +1,15 @@
+import { getCbgCookie, mergeSetCookies, saveCbgCookie } from '../../utils/cbgCookie'
+
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const ordersn = query.ordersn as string
 
-  const cbgCookie = getHeader(event, 'x-cbg-cookie') || ''
+  // 兼容旧版前端：请求头携带的 cookie 优先使用，并同步到数据库
+  const headerCookie = getHeader(event, 'x-cbg-cookie') || ''
+  let cbgCookie = headerCookie || (await getCbgCookie())
+  if (headerCookie) {
+    await saveCbgCookie(headerCookie).catch(() => {})
+  }
 
   const url =
     'https://stzb.cbg.163.com/cgi/api/get_equip_detail?' +
@@ -22,12 +29,24 @@ export default defineEventHandler(async (event) => {
     headers['Cookie'] = cbgCookie
   }
 
-  const data: any = await $fetch(url, { headers })
+  const res: any = await $fetch.raw(url, { headers })
+
+  // 捕获 Set-Cookie 并自动合并续期（login_id 等滚动会话 cookie）
+  const setCookie = res.headers?.getSetCookie
+    ? res.headers.getSetCookie()
+    : res.headers?.get('set-cookie')
+      ? [res.headers.get('set-cookie')]
+      : null
+  if (setCookie?.length) {
+    await mergeSetCookies(setCookie).catch(() => {})
+  }
+
+  const data = res._data
 
   if (data?.status === 2 && data?.status_code === 'SESSION_TIMEOUT') {
     throw createError({
       statusCode: 401,
-      statusMessage: '藏宝阁需要登录，请先在浏览器中打开 https://stzb.cbg.163.com/ 并扫码登录，然后复制完整的Cookie字符串设置到工具中',
+      statusMessage: '藏宝阁需要登录，请先在浏览器中打开 https://stzb.cbg.163.com/ 并扫码登录，然后到「Cookie设置」页面粘贴新的Cookie字符串保存',
     })
   }
 
