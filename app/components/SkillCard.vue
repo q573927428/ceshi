@@ -1,13 +1,31 @@
 <template> 
   <div class="skill-card-container">
+    <div class="list-toolbar"><span>战法列表</span><el-button type="primary" circle title="添加战法" @click="skillDialogOpen = true; skillSearchSubmitted = true">+</el-button></div>
+    <el-dialog v-model="skillDialogOpen" title="添加战法" width="80%">
+      <el-input v-model.trim="skillSearch" placeholder="输入战法名称" clearable @keyup.enter="searchSkills">
+        <template #append><el-button @click="searchSkills">搜索</el-button></template>
+      </el-input>
+      <el-select v-model="skillTargetCategory" style="width: 100%; margin-top: 12px;"><el-option v-for="category in categories" :key="category.name" :label="category.name" :value="category.name" /></el-select>
+        <div v-if="skillSearchSubmitted" class="search-results">
+          <div v-for="group in groupedSkillResults" :key="group.name" class="result-group">
+            <div class="result-group-title">{{ group.name }} ({{ group.skills.length }})</div>
+            <div class="result-group-items">
+              <div v-for="skill in group.skills" :key="skill.skill_id" class="result-item" @click="addSelectedSkill(skill)">
+                <SkillItem v-bind="skill" />
+                <div class="result-id">ID: {{ skill.skill_id }}</div>
+              </div>
+            </div>
+          </div>
+          <span v-if="!skillSearchResults.length">未找到匹配战法</span>
+        </div>
+    </el-dialog>
     <div v-for="category in categories" :key="category.name" class="category-section">
       <h2 class="category-title">{{ category.name }} ({{ category.skills.length }})</h2>
       <div class="skills-container">
-        <SkillItem
-          v-for="skill in category.skills"
-          :key="skill.skill_id"
-          v-bind="skill"
-        />
+        <div v-for="skill in category.skills" :key="skill.skill_id" class="managed-item">
+          <SkillItem v-bind="skill" />
+          <button type="button" class="remove-item" title="删除" @click="removeSkill(category, skill)">×</button>
+        </div>
       </div>
     </div>
   </div>
@@ -25,11 +43,20 @@ export default {
     skillData: {
       type: Array,
       default: () => []
+    },
+    // 可按分组追加技能：{ '主动技能': [{ skill_id, name, ... }] }
+    // 也支持 [{ category: '主动技能', skill: { ... } }] 形式。
+    customSkills: {
+      type: [Object, Array],
+      default: () => ({})
+    },
+    skillQualityMap: {
+      type: Object,
+      default: () => ({})
     }
   },
   data() {
-    return {
-      categories: [
+    const categories = [
         {
           name: '指挥技能',
           skills: this.generateCommandSkills()
@@ -47,9 +74,77 @@ export default {
           skills: this.generatePassiveSkills()
         }
       ]
+    this.appendCustomSkills(categories, this.loadStoredSkills())
+    this.appendCustomSkills(categories, this.customSkills)
+    this.sortSkillsByQuality(categories)
+    return {
+      categories,
+      skillSearch: '',
+      selectedSkillId: null,
+      skillTargetCategory: categories[0].name
+      ,skillDialogOpen: false, skillSearchSubmitted: false
+    }
+  },
+  computed: {
+    skillSearchResults() {
+      const query = String(this.skillSearch || '').trim().toLowerCase()
+      const unique = new Map()
+      const accountSource = Array.isArray(this.skillData)
+        ? this.skillData
+        : (this.skillData?.skills || this.skillData?.data || [])
+      const source = accountSource
+      source.forEach(rawSkill => {
+        const skillId = rawSkill.skill_id ?? rawSkill.id
+        const skill = {
+          ...rawSkill,
+          skill_id: skillId,
+          name: rawSkill.name || rawSkill.skill_name,
+          quality: rawSkill.quality || this.skillQualityMap[skillId] || 'D'
+        }
+        if (skill.skill_id != null && !unique.has(skill.skill_id)) unique.set(skill.skill_id, skill)
+      })
+      return [...unique.values()].filter(skill => String(skill.name || '').toLowerCase().includes(query))
+    },
+    selectedSkill() {
+      return this.skillSearchResults.find(skill => skill.skill_id === this.selectedSkillId)
+    },
+    groupedSkillResults() {
+      const groups = new Map()
+      this.skillSearchResults.forEach(skill => {
+        const infoType = String(skill.skill_info?.[2] || '').trim()
+        const typeName = infoType.includes('指挥')
+          ? '指挥'
+          : infoType.includes('主动')
+            ? '主动'
+            : infoType.includes('追击')
+              ? '追击'
+              : infoType.includes('被动')
+                ? '被动'
+                : ({ 3: '主动', 2: '指挥', 1: '被动', 4: '追击' }[Number(skill.skill_type)] || '其他')
+        if (!groups.has(typeName)) groups.set(typeName, [])
+        groups.get(typeName).push(skill)
+      })
+      const order = ['指挥', '主动', '追击', '被动']
+      return [...groups]
+        .sort(([nameA], [nameB]) => {
+          const indexA = order.indexOf(nameA)
+          const indexB = order.indexOf(nameB)
+          return (indexA < 0 ? order.length : indexA) - (indexB < 0 ? order.length : indexB)
+        })
+        .map(([name, skills]) => ({
+          name,
+          skills: skills.sort((skillA, skillB) => {
+            const qualityOrder = { S: 0, A: 1, B: 2, C: 3, D: 4 }
+            return (qualityOrder[skillA.quality] ?? 4) - (qualityOrder[skillB.quality] ?? 4)
+          })
+        }))
     }
   },
   watch: {
+    skillSearch() {
+      this.selectedSkillId = this.skillSearchResults[0]?.skill_id || null
+      this.skillSearchSubmitted = false
+    },
     skillData: {
       handler(newVal) {
         this.updateSkillOpacity(newVal);
@@ -58,6 +153,51 @@ export default {
     }
   },
   methods: {
+    sortSkillsByQuality(categories) {
+      const qualityOrder = { S: 0, A: 1, B: 2, C: 3, D: 4 }
+      categories.forEach(category => {
+        category.skills.sort((skillA, skillB) =>
+          (qualityOrder[skillA.quality] ?? 4) - (qualityOrder[skillB.quality] ?? 4)
+        )
+      })
+    },
+    loadStoredSkills() { try { return JSON.parse(localStorage.getItem('stzb-custom-skills') || '{}') } catch { return {} } },
+    persistCustomSkills() {
+      const result = {}
+      this.categories.forEach(category => { const items = category.skills.filter(skill => skill._customAdded); if (items.length) result[category.name] = items })
+      localStorage.setItem('stzb-custom-skills', JSON.stringify(result))
+  },
+    searchSkills() { this.skillSearchSubmitted = true },
+    addSelectedSkill(skill = this.selectedSkill) {
+      if (!skill) return
+      const target = this.categories.find(category => category.name === this.skillTargetCategory)
+      if (!target || target.skills.some(item => item.skill_id === skill.skill_id)) return
+      target.skills.push({ ...skill, opacity: 1, _customAdded: true })
+      this.sortSkillsByQuality(this.categories)
+      this.persistCustomSkills()
+      this.skillDialogOpen = false
+    },
+    removeSkill(category, skill) {
+      category.skills = category.skills.filter(item => item.skill_id !== skill.skill_id)
+      this.persistCustomSkills()
+    },
+    appendCustomSkills(categories, customSkills) {
+      const entries = Array.isArray(customSkills)
+        ? customSkills
+        : Object.entries(customSkills || {}).flatMap(([category, skills]) =>
+            (Array.isArray(skills) ? skills : [skills]).map(skill => ({ category, skill }))
+          )
+
+      entries.forEach(entry => {
+        const categoryName = entry.category || entry.group || entry.categoryName
+        const skill = entry.skill || entry.item || entry
+        const target = categories.find(category => category.name === categoryName)
+        if (!target || !skill || skill.skill_id == null) return
+        if (target.skills.some(item => item.skill_id === skill.skill_id)) return
+        target.skills.push({ opacity: 0.3, research_progress: 100, ...skill, _customAdded: true })
+      })
+    },
+
     generateCommandSkills() {
       // 指挥技能示例
       const commandSkills = [
@@ -85,20 +225,20 @@ export default {
     generateActiveSkills() {
       // 主动技能示例
       const activeSkills = [
-        { skill_id: 200847, name: "河内世泽", season: 4, skill_type: 1, research_progress: 100, quality: "S" },
-        { skill_id: 200938, name: "三术奇谋", season: 0, skill_type: 1, research_progress: 100, quality: "S" },
-        { skill_id: 200647, name: "一骑当千", season: 0, skill_type: 1, research_progress: 100, quality: "S" },
-        { skill_id: 200814, name: "汜水关", season: 2, skill_type: 1, research_progress: 100, quality: "A" },
-        { skill_id: 200844, name: "鼎足江东", season: 2, skill_type: 1, research_progress: 100, quality: "A" },
-        { skill_id: 200789, name: "凤仪亭", season: 2, skill_type: 1, research_progress: 100, quality: "A" },
-        { skill_id: 200801, name: "利兵谋胜", season: 0, skill_type: 1, research_progress: 100, quality: "S" },
-        { skill_id: 200886, name: "三军之众", season: 4, skill_type: 1, research_progress: 100, quality: "S" },
-        { skill_id: 200237, name: "妖术", season: 0, skill_type: 1, research_progress: 100, quality: "S" },
-        { skill_id: 200235, name: "浑水摸鱼", season: 0, skill_type: 1, research_progress: 100, quality: "S" },
-        { skill_id: 200263, name: "火烧连营", season: 4, skill_type: 1, research_progress: 100, quality: "S" },
-        { skill_id: 200979, name: "及锋而试", season: 0, skill_type: 1, research_progress: 100, quality: "S" },
-        { skill_id: 200271, name: "袭屯夺气", season: 4, skill_type: 1, research_progress: 100, quality: "A" },
-        { skill_id: 200267, name: "敛众定气", season: 4, skill_type: 1, research_progress: 100, quality: "A" }
+        { skill_id: 200847, name: "河内世泽", season: 4, skill_type: 3, research_progress: 100, quality: "S" },
+        { skill_id: 200938, name: "三术奇谋", season: 0, skill_type: 3, research_progress: 100, quality: "S" },
+        { skill_id: 200647, name: "一骑当千", season: 0, skill_type: 3, research_progress: 100, quality: "S" },
+        { skill_id: 200814, name: "汜水关", season: 2, skill_type: 3, research_progress: 100, quality: "A" },
+        { skill_id: 200844, name: "鼎足江东", season: 2, skill_type: 3, research_progress: 100, quality: "A" },
+        { skill_id: 200789, name: "凤仪亭", season: 2, skill_type: 3, research_progress: 100, quality: "A" },
+        { skill_id: 200801, name: "利兵谋胜", season: 0, skill_type: 3, research_progress: 100, quality: "S" },
+        { skill_id: 200886, name: "三军之众", season: 4, skill_type: 3, research_progress: 100, quality: "S" },
+        { skill_id: 200237, name: "妖术", season: 0, skill_type: 3, research_progress: 100, quality: "S" },
+        { skill_id: 200235, name: "浑水摸鱼", season: 0, skill_type: 3, research_progress: 100, quality: "S" },
+        { skill_id: 200263, name: "火烧连营", season: 4, skill_type: 3, research_progress: 100, quality: "S" },
+        { skill_id: 200979, name: "及锋而试", season: 0, skill_type: 3, research_progress: 100, quality: "S" },
+        { skill_id: 200271, name: "袭屯夺气", season: 4, skill_type: 3, research_progress: 100, quality: "A" },
+        { skill_id: 200267, name: "敛众定气", season: 4, skill_type: 3, research_progress: 100, quality: "A" }
       ];
 
       return activeSkills.map(skill => ({
@@ -122,14 +262,14 @@ export default {
     generatePassiveSkills() {
       // 被动技能示例
       const passiveSkills = [
-        { skill_id: 200252, name: "百战无怯", season: 0, skill_type: 3, research_progress: 100, quality: "S" },
-        { skill_id: 200788, name: "枭雄", season: 2, skill_type: 3, research_progress: 100, quality: "A" },
-        { skill_id: 200863, name: "击势", season: 0, skill_type: 3, research_progress: 100, quality: "S" },
-        { skill_id: 200900, name: "垒实迎击", season: 4, skill_type: 3, research_progress: 100, quality: "S" },
-        { skill_id: 200280, name: "令无空悬", season: 4, skill_type: 3, research_progress: 100, quality: "A" },
-        { skill_id: 200274, name: "以诱待来", season: 0, skill_type: 3, research_progress: 100, quality: "A" },
-        { skill_id: 200261, name: "胜敌益强", season: 0, skill_type: 3, research_progress: 100, quality: "A" },
-        { skill_id: 200289, name: "先声夺人", season: 0, skill_type: 3, research_progress: 100, quality: "A" }
+        { skill_id: 200252, name: "百战无怯", season: 0, skill_type: 1, research_progress: 100, quality: "S" },
+        { skill_id: 200788, name: "枭雄", season: 2, skill_type: 1, research_progress: 100, quality: "A" },
+        { skill_id: 200863, name: "击势", season: 0, skill_type: 1, research_progress: 100, quality: "S" },
+        { skill_id: 200900, name: "垒实迎击", season: 4, skill_type: 1, research_progress: 100, quality: "S" },
+        { skill_id: 200280, name: "令无空悬", season: 4, skill_type: 1, research_progress: 100, quality: "A" },
+        { skill_id: 200274, name: "以诱待来", season: 0, skill_type: 1, research_progress: 100, quality: "A" },
+        { skill_id: 200261, name: "胜敌益强", season: 0, skill_type: 1, research_progress: 100, quality: "A" },
+        { skill_id: 200289, name: "先声夺人", season: 0, skill_type: 1, research_progress: 100, quality: "A" }
       ];
 
       return passiveSkills.map(skill => ({
@@ -159,6 +299,27 @@ export default {
   padding: 1px;
   margin-top: 15px;
 }
+
+.custom-add-panel { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.custom-add-panel input, .custom-add-panel select, .custom-add-panel button { min-height: 32px; padding: 4px 8px; }
+.custom-add-panel input { min-width: 180px; }
+.custom-add-panel button { cursor: pointer; }
+.custom-add-panel button:disabled { cursor: not-allowed; opacity: .5; }
+.add-trigger { width: 34px; height: 34px; font-size: 24px; line-height: 1; cursor: pointer; }
+.list-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.add-dialog-mask { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.45); }
+.add-dialog { width: min(92vw, 440px); max-height: 85vh; overflow: auto; padding: 20px; background: #fff; border-radius: 8px; }
+.add-dialog input, .add-dialog select, .add-dialog > button { margin: 4px; padding: 8px; }
+.search-results { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; max-height: 56vh; overflow-y: auto; margin: 14px 4px; padding: 4px; }
+.result-group { flex: 1 1 100%; }
+.result-group-title { margin: 8px 0; padding-bottom: 5px; border-bottom: 1px solid #ebeef5; color: #606266; font-size: 14px; font-weight: 600; }
+.result-group-items { display: flex; flex-wrap: wrap; gap: 12px; }
+.result-item { position: relative; flex: 0 0 auto; cursor: pointer; }
+.result-id { margin-top: 3px; color: #909399; font-size: 12px; text-align: center; }
+.dialog-close { float: right; }
+.managed-item { position: relative; }
+.remove-item { position: absolute; top: -6px; right: -6px; z-index: 2; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; color: #fff; background: #c43d3d; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .15s; }
+.managed-item:hover .remove-item { opacity: 1; pointer-events: auto; }
 
 .category-section {
   margin-bottom: 30px;

@@ -1,11 +1,19 @@
 <template> 
   <div class="category-cards">
+    <div class="list-toolbar"><span>武将列表</span><el-button type="primary" circle title="添加武将" @click="cardDialogOpen = true; cardSearchSubmitted = true">+</el-button></div>
+    <el-dialog v-model="cardDialogOpen" title="添加武将" width="80%">
+        <el-input v-model.trim="cardSearch" placeholder="输入武将名称" clearable @keyup.enter="searchCards"><template #append><el-button @click="searchCards">搜索</el-button></template></el-input>
+        <el-select v-model="cardTargetCategory" style="width: 100%; margin-top: 12px;"><el-option v-for="category in categories" :key="category.name" :label="category.name" :value="category.name" /></el-select>
+        <div v-if="cardSearchSubmitted" class="search-results">
+          <div v-for="card in cardSearchResults" :key="card.id" class="result-item" @click="addSelectedCard(card)"><CardItem v-bind="card" /><div class="result-id">ID: {{ card.hero_id }}</div></div>
+          <span v-if="!cardSearchResults.length">未找到匹配武将</span>
+        </div>
+    </el-dialog>
     <div v-for="category in categories" :key="category.name" class="category-section">
       <h2 class="category-title">{{ category.name }} ({{ category.cards.length }})</h2>
       <div class="cards-container">
+        <div v-for="card in category.cards" :key="card.hero_id" class="managed-item">
         <CardItem
-          v-for="card in category.cards"
-          :key="card.id"
           :name="card.name"
           :image-url="card.imageUrl"
           :country="card.country"
@@ -19,6 +27,8 @@
           :opacity="card.opacity"
           :hero_id="card.hero_id"
         />
+        <button type="button" class="remove-item" title="删除" @click="removeCard(category, card)">×</button>
+        </div>
       </div>
     </div>
   </div>
@@ -32,9 +42,20 @@ export default {
   components: {
     CardItem
   },
+  props: {
+    uniqueCards: {
+      type: Array,
+      default: () => []
+    },
+    // 可按分组追加武将：{ '小核心S': [{ hero_id, name, ... }] }
+    // 也支持 [{ category: '小核心S', card: { ... } }] 形式。
+    customCards: {
+      type: [Object, Array],
+      default: () => ({})
+    }
+  },
   data() {
-    return {
-      categories: [
+    const categories = [
         {
           name: '特殊',
           cards: this.generateSpecialCards()
@@ -56,9 +77,93 @@ export default {
           cards: this.generateACards()
         }
       ]
+    this.appendCustomCards(categories, this.loadStoredCards())
+    this.appendCustomCards(categories, this.customCards)
+    return {
+      categories,
+      cardSearch: '',
+      selectedCardId: null,
+      cardTargetCategory: categories[0].name
+      ,cardDialogOpen: false, cardSearchSubmitted: false
+    }
+  },
+  computed: {
+    cardSearchResults() {
+      const query = this.cardSearch.toLowerCase()
+      const existingIds = new Set(this.categories.flatMap(category => category.cards.map(card => card.hero_id)))
+      const unique = new Map()
+      this.uniqueCards.forEach(rawCard => {
+        const card = { ...rawCard, hero_id: rawCard.hero_id ?? rawCard.id, name: rawCard.name || rawCard.hero_name }
+        if (card.hero_id != null && !unique.has(card.hero_id)) {
+          const iconHeroId = card.icon_hero_id || card.hero_id
+          unique.set(card.hero_id, { ...card, id: `account-${card.hero_id}`, imageUrl: `https://cbg-stzb.res.netease.com/game_res/cards/cut/card_medium_${iconHeroId}.jpg`, opacity: 1 })
+        }
+      })
+      return [...unique.values()].filter(card => String(card.name || '').toLowerCase().includes(query))
+    },
+    selectedCard() {
+      return this.cardSearchResults.find(card => card.hero_id === this.selectedCardId)
+    }
+  },
+  watch: {
+    cardSearch() {
+      this.selectedCardId = this.cardSearchResults[0]?.hero_id || null
+      this.cardSearchSubmitted = false
     }
   },
   methods: {
+    loadStoredCards() { try { return JSON.parse(localStorage.getItem('stzb-custom-cards') || '{}') } catch { return {} } },
+    persistCustomCards() {
+      const result = {}
+      this.categories.forEach(category => { const items = category.cards.filter(card => card._customAdded); if (items.length) result[category.name] = items })
+      localStorage.setItem('stzb-custom-cards', JSON.stringify(result))
+    },
+    searchCards() { this.cardSearchSubmitted = true },
+    addSelectedCard(card = this.selectedCard) {
+      if (!card) return
+      const target = this.categories.find(category => category.name === this.cardTargetCategory)
+      if (!target || target.cards.some(item => item.hero_id === card.hero_id)) return
+      target.cards.push({ ...card, opacity: 1, _customAdded: true })
+      this.persistCustomCards()
+      this.cardDialogOpen = false
+    },
+    removeCard(category, card) {
+      category.cards = category.cards.filter(item => item.hero_id !== card.hero_id)
+      this.persistCustomCards()
+    },
+    appendCustomCards(categories, customCards) {
+      const entries = Array.isArray(customCards)
+        ? customCards
+        : Object.entries(customCards || {}).flatMap(([category, cards]) =>
+            (Array.isArray(cards) ? cards : [cards]).map(card => ({ category, card }))
+          )
+
+      entries.forEach(entry => {
+        const categoryName = entry.category || entry.group || entry.categoryName
+        const card = entry.card || entry.item || entry
+        const target = categories.find(category => category.name === categoryName)
+        if (!target || !card || card.hero_id == null) return
+        if (target.cards.some(item => item.hero_id === card.hero_id)) return
+        const iconHeroId = card.icon_hero_id || card.hero_id
+        target.cards.push({
+          id: card.id || `custom-${card.hero_id}`,
+          country: 0,
+          quality: 5,
+          awake_state: 0,
+          policy_awake_state: 0,
+          hero_achieve: 0,
+          advance_num: 0,
+          is_support: false,
+          season: 'N',
+          opacity: 0.3,
+          imageUrl: `https://cbg-stzb.res.netease.com/game_res/cards/cut/card_medium_${iconHeroId}.jpg`,
+          ...card,
+          imageUrl: card.imageUrl || `https://cbg-stzb.res.netease.com/game_res/cards/cut/card_medium_${iconHeroId}.jpg`,
+          _customAdded: true
+        })
+      })
+    },
+
     generateSpecialCards() {
       // 特殊类卡片 - 5个
       const specialCardsData = [
@@ -242,6 +347,24 @@ export default {
 .category-cards {
   padding: 10px 0;
 }
+
+.custom-add-panel { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.custom-add-panel input, .custom-add-panel select, .custom-add-panel button { min-height: 32px; padding: 4px 8px; }
+.custom-add-panel input { min-width: 180px; }
+.custom-add-panel button { cursor: pointer; }
+.custom-add-panel button:disabled { cursor: not-allowed; opacity: .5; }
+.add-trigger { width: 34px; height: 34px; font-size: 24px; line-height: 1; cursor: pointer; }
+.list-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.add-dialog-mask { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.45); }
+.add-dialog { width: min(92vw, 440px); max-height: 85vh; overflow: auto; padding: 20px; background: #fff; border-radius: 8px; }
+.add-dialog input, .add-dialog select, .add-dialog > button { margin: 4px; padding: 8px; }
+.search-results { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; max-height: 56vh; overflow-y: auto; margin: 14px 4px; padding: 4px; }
+.result-item { position: relative; flex: 0 0 auto; cursor: pointer; }
+.result-id { margin-top: 3px; color: #909399; font-size: 12px; text-align: center; }
+.dialog-close { float: right; }
+.managed-item { position: relative; }
+.remove-item { position: absolute; top: -6px; right: -6px; z-index: 2; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; color: #fff; background: #c43d3d; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .15s; }
+.managed-item:hover .remove-item { opacity: 1; pointer-events: auto; }
 
 .category-section {
   margin-bottom: 30px;

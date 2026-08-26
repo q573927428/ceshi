@@ -265,7 +265,7 @@
 
                     <el-tab-pane label="技能" name="second">
                       <div v-if="activeTabs[item.link] === 'second'">
-                        <SkillCard :skill-data="item.data.skill || []" />
+                        <SkillCard :skill-data="item.data.skill || []" :skill-quality-map="skillQualityMap" />
                       </div>
                     </el-tab-pane>
 
@@ -374,6 +374,7 @@
 import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue';
 import CategoryCardsList from '~/components/CategoryCardsList.vue';
 import SkillCard from '~/components/SkillCard.vue';
+import skillQualityMap from '~/config/skillQualityMap';
 import WeaponList from '~/components/WeaponList.vue';
 import FormationComponent from '~/components/FormationComponent.vue';
 

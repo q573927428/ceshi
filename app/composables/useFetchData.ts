@@ -143,6 +143,8 @@ export const useFetchData = () => {
     allW.forEach((w) => (w.calculatedValue = getWeaponValue(w)))
     const weaponTotalValue = allW.reduce((s, w) => s + (w.calculatedValue || 0), 0)
 
+    console.log('full', full);
+    
     return {
       extractedId,
       link,
@@ -160,11 +162,13 @@ export const useFetchData = () => {
         icon_hero_id: c.icon_hero_id || 0,
         advance_num: c.advance_num || 0,
       })),
+      // 保留账号接口返回的全部战法，前端可按名称搜索并自定义分组
       skill: (full.skill || [])
-        .filter((s: any) => allSkillIds.includes(s.skill_id))
         .map((s: any) => ({
           skill_id: s.skill_id,
           name: s.name,
+          skill_info: s.skill_info,
+          quality: s.quality,
           skill_type: s.skill_type,
           research_progress: s.research_progress,
         })),
