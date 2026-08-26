@@ -70,7 +70,10 @@ export default {
         { skill_id: 200959, name: "久战熟谋", season: 4, skill_type: 2, research_progress: 100, quality: "A" },
         { skill_id: 200964, name: "合纵连横", season: 0, skill_type: 2, research_progress: 100, quality: "A" },
         { skill_id: 201008, name: "诱敌深入", season: 0, skill_type: 2, research_progress: 100, quality: "A" },
-        { skill_id: 200276, name: "除恶务尽", season: 4, skill_type: 2, research_progress: 100, quality: "S" }
+        { skill_id: 200276, name: "除恶务尽", season: 4, skill_type: 2, research_progress: 100, quality: "S" },
+        { skill_id: 200291, name: "避锐治气", season: 4, skill_type: 2, research_progress: 100, quality: "S" },
+        { skill_id: 200293, name: "定军山", season: 4, skill_type: 2, research_progress: 100, quality: "S" },
+        { skill_id: 200298, name: "七擒七纵", season: 4, skill_type: 2, research_progress: 100, quality: "S" }
       ];
 
       return commandSkills.map(skill => ({

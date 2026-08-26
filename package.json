@@ -3,6 +3,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "find-id": "node scripts/find-stzb-id.mjs",
     "build": "nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
