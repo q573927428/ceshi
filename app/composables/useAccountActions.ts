@@ -204,6 +204,7 @@ export const useAccountActions = () => {
             await saveRecord(record)
             ElMessage.success(`第 ${index} 个已存在，更新成功`)
           } else {
+            const processed = await fetchAccountData(link)
             const newRecord: any = {
               link,
               timestamp: Date.now(),
@@ -211,7 +212,6 @@ export const useAccountActions = () => {
               data: null,
               remark: remarkToUse || limitRemark(processed.defaultRemark),
             }
-            const processed = await fetchAccountData(link)
             newRecord.data = processed
             const priceToUse = prices.length >= index ? Number(prices[index - 1]) : processed.equipPrice
             newRecord.equipPrice = priceToUse
