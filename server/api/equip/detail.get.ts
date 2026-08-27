@@ -62,5 +62,7 @@ export default defineEventHandler(async (event) => {
     area_name: data?.equip?.area_name ?? null,
     server_name: data?.equip?.server_name ?? null,
     status_desc: data?.equip?.status_desc ?? null,
+    // 账号亮点由前端转换为默认备注
+    complex_highlights_v2: data?.equip?.complex_highlights_v2 ?? [],
   }
 })

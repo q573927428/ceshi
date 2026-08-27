@@ -38,6 +38,7 @@ interface EquipData {
   status_desc: string
   area_name: string
   server_name: string
+  complex_highlights_v2?: Array<{ name?: string }> | string[]
 }
 
 interface ProcessedData {
@@ -50,7 +51,9 @@ interface ProcessedData {
     status_desc: string
     area_name: string
     server_name: string
+    complex_highlights_v2?: Array<{ name?: string }> | string[]
   }
+  defaultRemark: string
   uniqueCards: Array<{
     name: string
     hero_id: number
@@ -143,6 +146,16 @@ export const useFetchData = () => {
     const allW = [...weapons.redWeapons, ...weapons.pinkWeapons, ...weapons.blueWeapons]
     allW.forEach((w) => (w.calculatedValue = getWeaponValue(w)))
     const weaponTotalValue = allW.reduce((s, w) => s + (w.calculatedValue || 0), 0)
+    // 亮点可能由 get_equip_detail 返回，也可能只存在 full.json 的 equip 节点
+    const rawHighlights = equip.complex_highlights_v2?.length
+      ? equip.complex_highlights_v2
+      : full?.equip?.complex_highlights_v2
+    const highlights = Array.isArray(rawHighlights)
+      ? rawHighlights
+        .map((item) => typeof item === 'string' ? item : item?.name)
+        .filter((name): name is string => Boolean(name))
+      : []
+    const defaultRemark = highlights.join('、')
 
     console.log('full', full);
     
@@ -156,7 +169,9 @@ export const useFetchData = () => {
         status_desc: equip.status_desc,
         area_name: equip.area_name,
         server_name: equip.server_name,
+        complex_highlights_v2: rawHighlights || [],
       },
+      defaultRemark,
       uniqueCards: uniqueCards.map((c) => ({
         name: c.name || '',
         hero_id: c.hero_id,
@@ -208,6 +223,7 @@ export const useFetchData = () => {
         status_desc: record?.data?.equip?.status_desc || '',
         area_name: record?.data?.equip?.area_name || '',
         server_name: record?.data?.equip?.server_name || '',
+        complex_highlights_v2: record?.data?.equip?.complex_highlights_v2 || [],
       }
     }
 

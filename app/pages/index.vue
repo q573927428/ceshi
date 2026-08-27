@@ -184,7 +184,7 @@
                   </div>
 
                   <div class="price-info">
-                    <span class="remark-bz"><b>备注：</b>{{ item.remark || "无" }}</span>
+                    <span class="remark-bz" :title="item.remark || '无'"><b>备注：</b>{{ item.remark || "无" }}</span>
                   </div>
 
                   
@@ -697,7 +697,11 @@ onMounted(async () => {
   gap: 8px;
   padding: 12px;
   background: #f5f5f5;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+}
+.header-info {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 /* 动态类：背景红色 */
 .panel-header.bg-red {
@@ -765,6 +769,8 @@ onMounted(async () => {
 
 .header-actions {
   margin-bottom: 8px;
+  flex: 0 0 auto;
+  min-width: max-content;
 }
 
 .pagination-container {
@@ -815,9 +821,23 @@ onMounted(async () => {
 
 .remark-bz{
   margin-right: 8px;
-  display: inline-block; 
+  display: block;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   padding-bottom: 8px;
   color: #000;
+}
+
+@media (max-width: 767px) {
+  .panel-header {
+    flex-wrap: wrap;
+  }
+
+  .header-info {
+    flex-basis: 100%;
+  }
 }
 
 .timestamp-text{

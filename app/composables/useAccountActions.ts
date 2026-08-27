@@ -62,7 +62,7 @@ export const useAccountActions = () => {
   const limitRemark = (text: string): string => {
     if (!text) return ''
     const s = text.trim()
-    return s.length > 38 ? s.slice(0, 38) : s
+    return s.length > 100 ? s.slice(0, 100) : s
   }
 
   // 按 index 选择最终 remark
@@ -197,6 +197,8 @@ export const useAccountActions = () => {
             record.timestamp = Date.now()
             if (remarkToUse.trim() !== '') {
               record.remark = remarkToUse.trim()
+            } else if (!record.remark?.trim()) {
+              record.remark = limitRemark(processed.defaultRemark)
             }
             record.statusDesc = processed.statusDesc
             await saveRecord(record)
@@ -207,7 +209,7 @@ export const useAccountActions = () => {
               timestamp: Date.now(),
               isFavorite: false,
               data: null,
-              remark: remarkToUse,
+              remark: remarkToUse || limitRemark(processed.defaultRemark),
             }
             const processed = await fetchAccountData(link)
             newRecord.data = processed
@@ -328,6 +330,9 @@ export const useAccountActions = () => {
       record.equipPrice = processed.equipPrice
       record.estimatedPrice = processed.estimatedPrice
       record.statusDesc = processed.statusDesc
+      if (!record.remark?.trim()) {
+        record.remark = limitRemark(processed.defaultRemark)
+      }
       await saveRecord(record)
 
       // 直接更新当前面板数据，避免全量重载导致所有面板 data 清空再重新加载
@@ -335,6 +340,7 @@ export const useAccountActions = () => {
       item.equipPrice = processed.equipPrice
       item.estimatedPrice = processed.estimatedPrice
       item.statusDesc = processed.statusDesc
+      item.remark = record.remark || ''
       item.timestamp = record.timestamp
 
       ElMessage.success('刷新成功')
@@ -367,6 +373,9 @@ export const useAccountActions = () => {
         record.equipPrice = processed.equipPrice
         record.estimatedPrice = processed.estimatedPrice
         record.statusDesc = processed.statusDesc
+        if (!record.remark?.trim()) {
+          record.remark = limitRemark(processed.defaultRemark)
+        }
         await saveRecord(record)
       } catch (err) {
         // 跳过失败的
