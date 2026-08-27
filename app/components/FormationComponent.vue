@@ -155,6 +155,7 @@ export default {
         {
           category: '攻其不备',
           teams: [
+          { title: '三曹队', heroes: [100683, 100498, 100023] },
             { title: '小鸟刀', heroes: [100498, 100704, 100027] },
             { title: '曹纯刀', heroes: [100498, 100013, 100027] },
             { title: '鬼龙骑', heroes: [100479, 100498, 100023] },
@@ -169,6 +170,7 @@ export default {
         {
           category: '百战',
           teams: [
+          { title: '鬼马韦', heroes: [100479, 100799, 100769] },
             { title: '同心队', heroes: [100016, 100792, 100449] },
             { title: '夏侯螃蟹', heroes: [100024, 100023, 100449] },
             { title: '孙策螃蟹', heroes: [100450, 100023, 100449] },
