@@ -55,6 +55,7 @@ interface ProcessedData {
     name: string
     hero_id: number
     icon_hero_id: number
+    country: number
     advance_num: number
   }>
   skill: Array<{
@@ -160,6 +161,8 @@ export const useFetchData = () => {
         name: c.name || '',
         hero_id: c.hero_id,
         icon_hero_id: c.icon_hero_id || 0,
+        // 保留武将所属国家，供 CardItem 渲染对应的 state 图标
+        country: c.country ?? 5,
         advance_num: c.advance_num || 0,
       })),
       // 保留账号接口返回的全部战法，前端可按名称搜索并自定义分组

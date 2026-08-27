@@ -151,7 +151,13 @@ export default {
       const existingIds = new Set(this.categories.flatMap(category => category.cards.map(card => card.hero_id)))
       const unique = new Map()
       this.uniqueCards.forEach(rawCard => {
-        const card = { ...rawCard, hero_id: rawCard.hero_id ?? rawCard.id, name: rawCard.name || rawCard.hero_name }
+        const heroId = rawCard.hero_id ?? rawCard.id
+        // 兼容历史缓存数据：旧记录没有 country 时，从内置卡片配置回填
+        const configuredCard = this.categories
+          .flatMap(category => category.cards)
+          .find(item => item.hero_id === heroId)
+        const country = rawCard.country ?? rawCard.country_id ?? rawCard.faction ?? configuredCard?.country ?? 5
+        const card = { ...rawCard, hero_id: heroId, country: Number(country), name: rawCard.name || rawCard.hero_name }
         if (card.hero_id != null && !unique.has(card.hero_id)) {
           const iconHeroId = card.icon_hero_id || card.hero_id
           unique.set(card.hero_id, { ...card, id: `account-${card.hero_id}`, imageUrl: `https://cbg-stzb.res.netease.com/game_res/cards/cut/card_medium_${iconHeroId}.jpg`, opacity: 1 })
@@ -393,6 +399,8 @@ export default {
           
           if (matchedCard) {
             card.advance_num = matchedCard.advance_num;
+            const country = matchedCard.country ?? matchedCard.country_id ?? matchedCard.faction
+            if (country != null) card.country = Number(country)
             card.opacity = 1; // 恢复不透明
           }
         })
