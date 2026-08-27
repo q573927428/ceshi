@@ -702,6 +702,7 @@ onMounted(async () => {
 .header-info {
   flex: 1 1 auto;
   min-width: 0;
+  min-height: 110px;
 }
 /* 动态类：背景红色 */
 .panel-header.bg-red {
