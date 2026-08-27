@@ -5,6 +5,7 @@
   "scripts": {
     "find-id": "node scripts/find-stzb-id.mjs",
     "build": "nuxt build",
+    "start": "node .output/server/index.mjs",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
