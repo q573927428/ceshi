@@ -7,7 +7,7 @@ const db = await mysql.createConnection({
   host: '127.0.0.1',
   port: 3306,
   user: 'root',
-  password: '123456',
+  password: '90d25ae1cec0a563',
   database: 'zangbao',
 })
 
