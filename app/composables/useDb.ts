@@ -82,6 +82,10 @@ export const useDb = () => {
     }
   }
 
+  const preflightRecords = async (links: string[]) => {
+    return await $fetch('/api/records/preflight', { method: 'POST', body: { links } }) as any
+  }
+
   const loadAllRecordsWithData = async (): Promise<any[]> => {
     // 兼容旧逻辑 - 返回全部记录的完整数据（含 data）
     try {
@@ -108,6 +112,7 @@ export const useDb = () => {
     loadAllRecords,
     loadPageRecords,
     batchFetchRecords,
+    preflightRecords,
     loadAllRecordsWithData,
     clearAllRecords,
   }

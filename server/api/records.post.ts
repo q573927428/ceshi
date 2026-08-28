@@ -1,4 +1,4 @@
-import { query } from '../db'
+import { getPool } from '../db'
 import { requireUser } from '../utils/auth'
 
 interface RecordBody {
@@ -18,16 +18,32 @@ export default defineEventHandler(async (event) => {
   if (!body?.link) {
     throw createError({ statusCode: 400, statusMessage: 'link is required' })
   }
-
-  const timestamp = body.timestamp || Date.now()
-
-  const existing = await query('SELECT id FROM records WHERE link = ? AND user_id = ?', [body.link, user.id])
-  if (!existing.length) {
-    const count = await query('SELECT COUNT(*) AS total FROM records WHERE user_id = ?', [user.id])
-    if (Number(count[0]?.total || 0) >= Number(user.quota_limit || 2)) throw createError({ statusCode: 402, statusMessage: '金币不足，请充值后继续添加' })
+  const link = body.link.trim()
+  if (!/^\d{15}-1-[A-Z0-9]{14}$/i.test(link) || link.length > 100) {
+    throw createError({ statusCode: 400, statusMessage: 'link 格式无效' })
   }
 
-  await query(
+  const timestamp = body.timestamp || Date.now()
+  const pool = getPool()
+  const conn = await pool.getConnection()
+  try {
+    await conn.beginTransaction()
+    // 锁住用户行，串行化同一用户的额度检查，避免并发请求同时通过 COUNT 检查。
+    await conn.execute('SELECT id FROM users WHERE id = ? FOR UPDATE', [user.id])
+    const [sameLinkRows] = await conn.execute('SELECT id, user_id FROM records WHERE link = ? FOR UPDATE', [link])
+    const sameLink = (sameLinkRows as any[])[0]
+    if (sameLink && Number(sameLink.user_id) !== Number(user.id)) {
+      throw createError({ statusCode: 409, statusMessage: '该链接已被其他用户添加' })
+    }
+    if (!sameLink) {
+      const [countRows] = await conn.execute('SELECT COUNT(*) AS total FROM records WHERE user_id = ?', [user.id])
+      const quota = user.quota_limit == null ? 2 : Number(user.quota_limit)
+      if (Number((countRows as any[])[0]?.total || 0) >= quota) {
+        throw createError({ statusCode: 402, statusMessage: '金币不足，请充值后继续添加' })
+      }
+    }
+
+    await conn.execute(
     `INSERT INTO records (user_id, link, timestamp, is_favorite, equip_price, estimated_price, status_desc, remark, data)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON DUPLICATE KEY UPDATE
@@ -38,9 +54,9 @@ export default defineEventHandler(async (event) => {
        status_desc = VALUES(status_desc),
        remark = VALUES(remark),
        data = VALUES(data)`,
-    [
+      [
       user.id,
-      body.link,
+      link,
       timestamp,
       body.isFavorite ? 1 : 0,
       body.equipPrice ?? null,
@@ -48,8 +64,15 @@ export default defineEventHandler(async (event) => {
       body.statusDesc || '',
       body.remark || null,
       body.data ? JSON.stringify(body.data) : null,
-    ]
-  )
+      ]
+    )
+    await conn.commit()
+  } catch (err) {
+    await conn.rollback()
+    throw err
+  } finally {
+    conn.release()
+  }
 
-  return { success: true, link: body.link }
+  return { success: true, link }
 })

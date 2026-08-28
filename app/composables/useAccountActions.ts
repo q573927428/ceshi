@@ -36,7 +36,7 @@ const describeError = (err: any): string => {
 }
 
 export const useAccountActions = () => {
-  const { saveRecord, getRecord, deleteRecord, loadAllRecords, clearAllRecords, batchFetchRecords } = useDb()
+  const { saveRecord, getRecord, deleteRecord, loadAllRecords, clearAllRecords, batchFetchRecords, preflightRecords } = useDb()
   const { fetchAccountData } = useFetchData()
 
   // 所有状态
@@ -181,7 +181,8 @@ export const useAccountActions = () => {
       return
     }
 
-    const links = extractCbgLink(input)
+    const parsedLinks = extractCbgLink(input)
+    const links = Array.from(new Set(parsedLinks))
     if (!links || links.length === 0) {
       ElMessage.warning('未识别到合法链接')
       return
@@ -189,6 +190,18 @@ export const useAccountActions = () => {
 
     const remarks = parseRemarkLines(newLinkRemark.value)
     const prices = parseRemarkLines(newLinkPrice.value)
+
+    let skippedLinks: string[] = []
+    try {
+      const preflight = await preflightRecords(links)
+      skippedLinks = preflight.skippedLinks || []
+      if (skippedLinks.length) ElMessage.warning(`额度不足，已跳过 ${skippedLinks.length} 个新账号`)
+      const allowed = new Set(preflight.allowedLinks || [])
+      for (let i = links.length - 1; i >= 0; i--) if (!allowed.has(links[i])) links.splice(i, 1)
+    } catch (err) {
+      ElMessage.error(describeError(err))
+      return
+    }
 
     globalLoading.value = true
     const failed: string[] = []
@@ -252,6 +265,7 @@ export const useAccountActions = () => {
       newLinkPrice.value = ''
     }
 
+    failed.push(...skippedLinks)
     if (failed.length) ElMessage.warning(`部分失败：${failed.length} 个`)
     else ElMessage.success('全部完成')
   }

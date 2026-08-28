@@ -1,5 +1,5 @@
 // scripts/migrate-link-unique.mjs
-// 将 records 表的唯一约束从 (user_id, link) 改为 (link) 单独唯一
+// 将 records 表的唯一约束统一为 (user_id, link)，避免跨用户覆盖记录
 // 并清理重复记录
 
 import mysql from 'mysql2/promise'
@@ -13,11 +13,11 @@ const db = await mysql.createConnection({
 })
 
 try {
-  // 1. 查找所有重复的 link
+  // 1. 清理同一用户内的重复 link
   const [duplicates] = await db.query(`
-    SELECT link, COUNT(*) as cnt
+    SELECT user_id, link, COUNT(*) as cnt
     FROM records
-    GROUP BY link
+    GROUP BY user_id, link
     HAVING cnt > 1
   `)
 
@@ -27,8 +27,8 @@ try {
     // 对于每个重复的 link，只保留 id 最大的那条记录
     for (const dup of duplicates) {
       const [rows] = await db.query(`
-        SELECT id FROM records WHERE link = ? ORDER BY id DESC
-      `, [dup.link])
+        SELECT id FROM records WHERE user_id = ? AND link = ? ORDER BY id DESC
+      `, [dup.user_id, dup.link])
       
       // 保留第一条（id最大的），删除其余
       const keepId = rows[0].id
@@ -51,11 +51,17 @@ try {
     // 索引可能不存在
     console.log('uk_user_link 索引不存在，跳过删除')
   }
-
-  // 3. 添加新的唯一约束（link 单独唯一）
   try {
-    await db.execute(`ALTER TABLE records ADD UNIQUE INDEX uk_link (link)`)
-    console.log('已添加新唯一约束 uk_link (link)')
+    await db.execute(`ALTER TABLE records DROP INDEX uk_link`)
+    console.log('已删除旧的全局唯一约束 uk_link')
+  } catch (e) {
+    // uk_link 可能不存在
+  }
+
+  // 3. 添加按用户隔离的唯一约束
+  try {
+    await db.execute(`ALTER TABLE records ADD UNIQUE INDEX uk_user_link (user_id, link)`)
+    console.log('已添加用户链接唯一约束 uk_user_link (user_id, link)')
   } catch (e) {
     if (e.code === 'ER_DUP_ENTRY') {
       console.error('仍有重复数据，请检查后重试')
