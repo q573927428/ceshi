@@ -7,7 +7,7 @@ const plans: Record<string, { plan: string; quota: number; amountFen: number }> 
 }
 export default defineEventHandler(async (event) => {
   const user = await requireUser(event); const body = await readBody(event); const p = plans[String(body?.planId)]
-  if (!p) throw createError({ statusCode: 400, statusMessage: '套餐不存在' })
+  if (!p) throw createError({ statusCode: 400, message: '套餐不存在' })
   const orderNo = `CBG${Date.now()}${crypto.randomBytes(3).toString('hex')}`
   await query('INSERT INTO payment_orders (order_no,user_id,plan,quota_increment,amount_fen) VALUES (?,?,?,?,?)', [orderNo, user.id, p.plan, p.quota, p.amountFen])
   if (!process.env.WECHAT_MCHID || !process.env.WECHAT_API_KEY || !process.env.WECHAT_APPID || !process.env.WECHAT_NOTIFY_URL) return { orderNo, status: 'pending_config', message: '微信支付参数未配置，请联系管理员' }

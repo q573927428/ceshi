@@ -16,11 +16,11 @@ export default defineEventHandler(async (event) => {
   const user = await requireUser(event)
   const body = await readBody<RecordBody>(event)
   if (!body?.link) {
-    throw createError({ statusCode: 400, statusMessage: 'link is required' })
+    throw createError({ statusCode: 400, message: 'link is required' })
   }
   const link = body.link.trim()
   if (!/^\d{15}-1-[A-Z0-9]{14}$/i.test(link) || link.length > 100) {
-    throw createError({ statusCode: 400, statusMessage: 'link 格式无效' })
+    throw createError({ statusCode: 400, message: 'link 格式无效' })
   }
 
   const timestamp = body.timestamp || Date.now()
@@ -33,13 +33,13 @@ export default defineEventHandler(async (event) => {
     const [sameLinkRows] = await conn.execute('SELECT id, user_id FROM records WHERE link = ? FOR UPDATE', [link])
     const sameLink = (sameLinkRows as any[])[0]
     if (sameLink && Number(sameLink.user_id) !== Number(user.id)) {
-      throw createError({ statusCode: 409, statusMessage: '该链接已被其他用户添加' })
+      throw createError({ statusCode: 409, message: '该链接已被其他用户添加' })
     }
     if (!sameLink) {
       const [countRows] = await conn.execute('SELECT COUNT(*) AS total FROM records WHERE user_id = ?', [user.id])
       const quota = user.quota_limit == null ? 2 : Number(user.quota_limit)
       if (Number((countRows as any[])[0]?.total || 0) >= quota) {
-        throw createError({ statusCode: 402, statusMessage: '金币不足，请充值后继续添加' })
+      throw createError({ statusCode: 402, message: '金币不足，请充值后继续添加' })
       }
     }
 

@@ -27,7 +27,7 @@ const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, 
 
 const describeError = (err: any): string => {
   const status = err?.statusCode || err?.status || err?.response?.status || err?.data?.statusCode
-  const message = err?.statusMessage || err?.data?.statusMessage || err?.message
+  const message = err?.data?.message || err?.message || err?.statusMessage || err?.data?.statusMessage
   if (status === 402) return '金币不足，请前往充值中心充值后继续添加'
   if (status === 401) return '登录已失效，请重新登录'
   if (status >= 500) return '服务器或数据库异常，请稍后重试'
@@ -376,7 +376,7 @@ export const useAccountActions = () => {
 
       ElMessage.success('刷新成功')
     } catch (err: any) {
-      ElMessage.error(err?.data?.statusMessage || '刷新失败')
+      ElMessage.error(err?.data?.message || err?.data?.statusMessage || '刷新失败')
     } finally {
       item.loading = false
     }

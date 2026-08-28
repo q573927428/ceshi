@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
   const body = await readBody<{ links?: string[] }>(event)
   const links = Array.from(new Set((body?.links || []).filter((x) => typeof x === 'string' && x.trim())))
   if (links.length > MAX_BATCH_LINKS) {
-    throw createError({ statusCode: 413, statusMessage: `单次最多添加 ${MAX_BATCH_LINKS} 个账号` })
+    throw createError({ statusCode: 413, message: `单次最多添加 ${MAX_BATCH_LINKS} 个账号` })
   }
   if (!links.length) return { allowedLinks: [], skippedLinks: [], existingLinks: [], remaining: Math.max(0, Number(user.quota_limit ?? 2)) }
 

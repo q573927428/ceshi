@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
   if (data?.status !== 1) {
     throw createError({
       statusCode: 500,
-      statusMessage: data?.msg || `藏宝阁API返回异常: status=${data?.status}`,
+      message: data?.msg || `藏宝阁API返回异常: status=${data?.status}`,
     })
   }
 

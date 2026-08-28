@@ -31,13 +31,13 @@ export function destroySession(event: any) { deleteCookie(event, COOKIE, { path:
 
 export async function requireUser(event: any) {
   const token = getCookie(event, COOKIE)
-  if (!token) throw createError({ statusCode: 401, statusMessage: '请先登录' })
+  if (!token) throw createError({ statusCode: 401, message: '请先登录' })
   const parts = token.split('.')
-  if (parts.length < 3) throw createError({ statusCode: 401, statusMessage: '登录已失效' })
+  if (parts.length < 3) throw createError({ statusCode: 401, message: '登录已失效' })
   const payload = parts.slice(0, 2).join('.')
-  if (sign(payload) !== parts[2]) throw createError({ statusCode: 401, statusMessage: '登录已失效' })
+  if (sign(payload) !== parts[2]) throw createError({ statusCode: 401, message: '登录已失效' })
   const user = await queryOne('SELECT id, username, phone, nickname, plan, quota_limit, plan_expires_at FROM users WHERE id = ?', [Number(parts[0])])
-  if (!user) throw createError({ statusCode: 401, statusMessage: '用户不存在' })
+  if (!user) throw createError({ statusCode: 401, message: '用户不存在' })
   return user
 }
 
