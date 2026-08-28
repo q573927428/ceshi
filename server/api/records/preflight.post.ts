@@ -15,9 +15,7 @@ export default defineEventHandler(async (event) => {
   const placeholders = links.map(() => '?').join(',')
   const rows = await query(`SELECT link FROM records WHERE user_id = ? AND link IN (${placeholders})`, [user.id, ...links]) as any[]
   const existing = new Set(rows.map((r) => r.link))
-  const countRows = await query('SELECT COUNT(*) AS total FROM records WHERE user_id = ?', [user.id])
-  const quota = user.quota_limit == null ? 2 : Number(user.quota_limit)
-  const remaining = Math.max(0, quota - Number(countRows[0]?.total || 0))
+  const remaining = Math.max(0, Number(user.quota_limit ?? 2))
   const newLinks = links.filter((link) => !existing.has(link))
   const allowedNew = new Set(newLinks.slice(0, remaining))
   const allowedLinks = links.filter((link) => existing.has(link) || allowedNew.has(link))

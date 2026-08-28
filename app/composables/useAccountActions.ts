@@ -68,10 +68,10 @@ export const useAccountActions = () => {
   const newLinkPrice = ref('')
 
   // 通知顶部布局同步当前已用额度，避免新增记录后仍显示旧计数。
-  const notifyRecordCountChanged = () => {
+  const notifyRecordCountChanged = (remaining?: number) => {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('records-count-changed', {
-        detail: { count: zangbaoLinks.value.length },
+        detail: { count: zangbaoLinks.value.length, remaining },
       }))
     }
   }
@@ -215,6 +215,7 @@ export const useAccountActions = () => {
     globalLoading.value = true
     const failed: string[] = []
     let index = 0
+    let remainingQuota: number | undefined
 
     try {
       for (const raw of links) {
@@ -240,7 +241,8 @@ export const useAccountActions = () => {
               record.remark = limitRemark(processed.defaultRemark)
             }
             record.statusDesc = processed.statusDesc
-            await saveRecord(record)
+            const result = await saveRecord(record)
+            remainingQuota = result?.remaining
             ElMessage.success(`第 ${index} 个已存在，更新成功`)
           } else {
             const processed = await fetchAccountData(link)
@@ -256,12 +258,13 @@ export const useAccountActions = () => {
             newRecord.equipPrice = priceToUse
             newRecord.estimatedPrice = processed.estimatedPrice
             newRecord.statusDesc = processed.statusDesc
-            await saveRecord(newRecord)
+            const result = await saveRecord(newRecord)
+            remainingQuota = result?.remaining
             ElMessage.success(`第 ${index} 个添加成功`)
           }
 
           await loadLinksFromDB()
-          notifyRecordCountChanged()
+          notifyRecordCountChanged(remainingQuota)
         } catch (err) {
           console.error('处理链接失败：', link, err)
           failed.push(link)

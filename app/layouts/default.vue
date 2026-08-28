@@ -32,7 +32,7 @@
             <el-tag class="user-name" effect="plain" size="small">{{ user.username }}</el-tag>
             <el-tag class="quota-badge" :type="user.plan === 'free' ? 'info' : 'warning'" effect="plain" size="small" title="金币余额" aria-label="金币余额">
               <el-icon class="quota-icon" aria-hidden="true"><Coin /></el-icon>
-              {{ usedCount }} / {{ user.quotaLimit }}
+               {{ user.quotaLimit }}
             </el-tag>
             <el-button text size="small" title="退出登录" aria-label="退出登录" @click="logout">
               <el-icon><SwitchButton /></el-icon>
@@ -82,8 +82,10 @@ const logout = async () => { await authLogout(); usedCount.value = 0; window.loc
 const submitAuth = async () => { try { if (authMode.value === 'login') await login(authForm.value.username, authForm.value.password); authVisible.value = false; usedCount.value = (await loadAllRecords()).length } catch {} }
 
 const onRecordsCountChanged = (event: Event) => {
-  const count = (event as CustomEvent<{ count?: number }>).detail?.count
+  const detail = (event as CustomEvent<{ count?: number; remaining?: number }>).detail
+  const count = detail?.count
   if (typeof count === 'number') usedCount.value = count
+  if (typeof detail?.remaining === 'number' && user.value) user.value.quotaLimit = detail.remaining
 }
 
 // 登录页完成登录后布局不会重新挂载，需要在登录状态变化时同步一次使用量。

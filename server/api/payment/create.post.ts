@@ -3,7 +3,7 @@ import { query } from '../../db'
 import { requireUser } from '../../utils/auth'
 
 const plans: Record<string, { plan: string; quota: number; amountFen: number }> = {
-  quota10: { plan: 'quota', quota: 10, amountFen: 100 }, quota100: { plan: 'quota', quota: 100, amountFen: 1000 }, pro30: { plan: 'pro', quota: 300, amountFen: 1990 },
+  quota100: { plan: 'quota', quota: 100, amountFen: 1000 }, quota500: { plan: 'quota', quota: 500, amountFen: 5000 }, quota1000: { plan: 'quota', quota: 1000, amountFen: 10000 }, quota2000: { plan: 'quota', quota: 2000, amountFen: 20000 }, quota5000: { plan: 'quota', quota: 5000, amountFen: 50000 }, pro30: { plan: 'pro', quota: 300, amountFen: 1990 },
 }
 
 const WECHAT_UNIFIED_ORDER_URL = 'https://api.mch.weixin.qq.com/pay/unifiedorder'

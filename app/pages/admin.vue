@@ -11,12 +11,12 @@
     <el-table v-loading="loading" :data="users" stripe border>
       <el-table-column prop="username" label="用户名" min-width="150" />
       <el-table-column prop="phone" label="手机号" min-width="130" />
-      <el-table-column label="账号数" width="100">
-        <template #default="{ row }">{{ row.usedCount }} / {{ row.quotaLimit }}</template>
+      <el-table-column label="已用账号数" width="120">
+        <template #default="{ row }">{{ row.usedCount }}</template>
       </el-table-column>
-      <el-table-column label="金币总额度" width="220">
+      <el-table-column label="剩余金币" width="220">
         <template #default="{ row }">
-          <el-input-number v-model="row.quotaLimit" :min="row.usedCount" :step="1" controls-position="right" />
+          <el-input-number v-model="row.quotaLimit" :min="0" :step="1" controls-position="right" />
         </template>
       </el-table-column>
       <el-table-column label="会员类型" width="150">

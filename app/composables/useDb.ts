@@ -14,7 +14,7 @@ interface RecordData {
 }
 
 export const useDb = () => {
-  const saveRecord = async (record: RecordData): Promise<void> => {
+  const saveRecord = async (record: RecordData): Promise<{ remaining?: number }> => {
     const body = {
       link: record.link,
       timestamp: record.timestamp,
@@ -26,7 +26,7 @@ export const useDb = () => {
       data: record.data || null,
     }
     // @ts-ignore - Nuxt $fetch has complex route types
-    await $fetch('/api/records', {
+    return await $fetch('/api/records', {
       method: 'POST',
       body,
     })
