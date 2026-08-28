@@ -1,6 +1,7 @@
 <template> 
   <div class="skill-item" :style="{ opacity: opacity }">
-    <div class="card-frame">
+      <div class="card-frame">
+      <div v-if="canDismantle" class="dismantle-tag">可拆</div>
       <!-- 技能边框，根据品质不同而变化 -->
       <div class="quality-frame" :class="'quality-' + qualityLevel"></div>
       
@@ -62,6 +63,14 @@ export default {
     opacity: {
       type: Number,
       default: 1
+    },
+    hero_id: {
+      type: Array,
+      default: () => []
+    },
+    canDismantle: {
+      type: Boolean,
+      default: false
     }
   },
   computed: {
@@ -235,6 +244,19 @@ export default {
   color: #ffffff;
   text-align: center;
   padding-top: 52px;
+}
+
+.dismantle-tag {
+  position: absolute;
+  bottom: 19px;
+  left: 22px;
+  z-index: 5;
+  padding: 1px 4px;
+  border-radius: 3px;
+  color: #fff;
+  background: #e67e22;
+  font-size: 12px;
+  line-height: 14px;
 }
 
 .skill-type {

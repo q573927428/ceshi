@@ -185,6 +185,10 @@ export const useFetchData = () => {
         .map((s: any) => ({
           skill_id: s.skill_id,
           name: s.name,
+          // 一个技能可能由多个武将拆除，统一保存为数组便于前端判断
+          hero_id: Array.isArray(s.hero_id)
+            ? s.hero_id
+            : (s.hero_id == null ? [] : [s.hero_id]),
           skill_info: s.skill_info,
           quality: s.quality,
           skill_type: s.skill_type,

@@ -261,7 +261,7 @@
 
                     <el-tab-pane label="技能" name="second">
                       <div v-if="activeTabs[item.link] === 'second'">
-                        <SkillCard :skill-data="item.data.skill || []" :skill-quality-map="skillQualityMap" />
+                        <SkillCard :skill-data="item.data.skill || []" :unique-cards="item.data.uniqueCards || []" :skill-quality-map="skillQualityMap" />
                       </div>
                     </el-tab-pane>
 

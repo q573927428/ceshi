@@ -53,6 +53,10 @@ export default {
     skillQualityMap: {
       type: Object,
       default: () => ({})
+    },
+    uniqueCards: {
+      type: Array,
+      default: () => []
     }
   },
   data() {
@@ -150,6 +154,12 @@ export default {
         this.updateSkillOpacity(newVal);
       },
       immediate: true
+    },
+    uniqueCards: {
+      handler() {
+        this.updateDismantleStatus()
+      },
+      immediate: true
     }
   },
   methods: {
@@ -201,19 +211,19 @@ export default {
     generateCommandSkills() {
       // 指挥技能示例
       const commandSkills = [
-        { skill_id: 200244, name: "正始之变", season: 2, skill_type: 2, research_progress: 100, quality: "S" },
-        { skill_id: 200755, name: "攻其不备", season: 3, skill_type: 2, research_progress: 100, quality: "S" },
-        { skill_id: 200784, name: "桃园结义", season: 2, skill_type: 2, research_progress: 100, quality: "S" },
-        { skill_id: 200201, name: "无心恋战", season: 0, skill_type: 2, research_progress: 100, quality: "S" },
-        { skill_id: 200862, name: "单骑救主", season: 2, skill_type: 2, research_progress: 100, quality: "A" },
-        { skill_id: 200754, name: "胜兵求战", season: 3, skill_type: 2, research_progress: 100, quality: "B" },
-        { skill_id: 200959, name: "久战熟谋", season: 4, skill_type: 2, research_progress: 100, quality: "A" },
-        { skill_id: 200964, name: "合纵连横", season: 0, skill_type: 2, research_progress: 100, quality: "A" },
-        { skill_id: 201008, name: "诱敌深入", season: 0, skill_type: 2, research_progress: 100, quality: "A" },
-        { skill_id: 200276, name: "除恶务尽", season: 4, skill_type: 2, research_progress: 100, quality: "S" },
-        { skill_id: 200291, name: "避锐治气", season: 4, skill_type: 2, research_progress: 100, quality: "S" },
-        { skill_id: 200293, name: "定军山", season: 4, skill_type: 2, research_progress: 100, quality: "S" },
-        { skill_id: 200298, name: "七擒七纵", season: 4, skill_type: 2, research_progress: 100, quality: "S" }
+        { skill_id: 200244, name: "正始之变", season: 2, skill_type: 2, research_progress: 100, quality: "S", hero_id: [100701] },
+        { skill_id: 200755, name: "攻其不备", season: 3, skill_type: 2, research_progress: 100, quality: "S", hero_id: [100498,100495] },
+        { skill_id: 200784, name: "桃园结义", season: 2, skill_type: 2, research_progress: 100, quality: "S", hero_id: [100016] },
+        { skill_id: 200201, name: "无心恋战", season: 0, skill_type: 2, research_progress: 100, quality: "S", hero_id: [100026,100337] },
+        { skill_id: 200862, name: "单骑救主", season: 2, skill_type: 2, research_progress: 100, quality: "A", hero_id: [102001] },
+        { skill_id: 200754, name: "胜兵求战", season: 3, skill_type: 2, research_progress: 100, quality: "B", hero_id: [100497,100496] },
+        { skill_id: 200959, name: "久战熟谋", season: 4, skill_type: 2, research_progress: 100, quality: "A", hero_id: [100683,100684] },
+        { skill_id: 200964, name: "合纵连横", season: 0, skill_type: 2, research_progress: 100, quality: "A", hero_id: [100689,100690] },
+        { skill_id: 201008, name: "诱敌深入", season: 0, skill_type: 2, research_progress: 100, quality: "A", hero_id: [100771,100741] },
+        { skill_id: 200276, name: "除恶务尽", season: 4, skill_type: 2, research_progress: 100, quality: "S", hero_id: [100799,100800] },
+        { skill_id: 200291, name: "避锐治气", season: 4, skill_type: 2, research_progress: 100, quality: "S", hero_id: [100806,100807,100808] },
+        { skill_id: 200293, name: "定军山", season: 4, skill_type: 2, research_progress: 100, quality: "S", hero_id: [100810] },
+        { skill_id: 200298, name: "七擒七纵", season: 4, skill_type: 2, research_progress: 100, quality: "S", hero_id: [100815] }
       ];
 
       return commandSkills.map(skill => ({
@@ -225,20 +235,20 @@ export default {
     generateActiveSkills() {
       // 主动技能示例
       const activeSkills = [
-        { skill_id: 200847, name: "河内世泽", season: 4, skill_type: 3, research_progress: 100, quality: "S" },
-        { skill_id: 200938, name: "三术奇谋", season: 0, skill_type: 3, research_progress: 100, quality: "S" },
-        { skill_id: 200647, name: "一骑当千", season: 0, skill_type: 3, research_progress: 100, quality: "S" },
-        { skill_id: 200814, name: "汜水关", season: 2, skill_type: 3, research_progress: 100, quality: "A" },
-        { skill_id: 200844, name: "鼎足江东", season: 2, skill_type: 3, research_progress: 100, quality: "A" },
-        { skill_id: 200789, name: "凤仪亭", season: 2, skill_type: 3, research_progress: 100, quality: "A" },
-        { skill_id: 200801, name: "利兵谋胜", season: 0, skill_type: 3, research_progress: 100, quality: "S" },
-        { skill_id: 200886, name: "三军之众", season: 4, skill_type: 3, research_progress: 100, quality: "S" },
-        { skill_id: 200237, name: "妖术", season: 0, skill_type: 3, research_progress: 100, quality: "S" },
-        { skill_id: 200235, name: "浑水摸鱼", season: 0, skill_type: 3, research_progress: 100, quality: "S" },
-        { skill_id: 200263, name: "火烧连营", season: 4, skill_type: 3, research_progress: 100, quality: "S" },
-        { skill_id: 200979, name: "及锋而试", season: 0, skill_type: 3, research_progress: 100, quality: "S" },
-        { skill_id: 200271, name: "袭屯夺气", season: 4, skill_type: 3, research_progress: 100, quality: "A" },
-        { skill_id: 200267, name: "敛众定气", season: 4, skill_type: 3, research_progress: 100, quality: "A" }
+        { skill_id: 200847, name: "河内世泽", season: 4, skill_type: 3, research_progress: 100, quality: "S", hero_id: [100472] },
+        { skill_id: 200938, name: "三术奇谋", season: 0, skill_type: 3, research_progress: 100, quality: "S", hero_id: [100654,100672] },
+        { skill_id: 200647, name: "一骑当千", season: 0, skill_type: 3, research_progress: 100, quality: "S", hero_id: [100022,100003] },
+        { skill_id: 200814, name: "汜水关", season: 2, skill_type: 3, research_progress: 100, quality: "A", hero_id: [100026] },
+        { skill_id: 200844, name: "鼎足江东", season: 2, skill_type: 3, research_progress: 100, quality: "A", hero_id: [100030] },
+        { skill_id: 200789, name: "凤仪亭", season: 2, skill_type: 3, research_progress: 100, quality: "A", hero_id: [100005] },
+        { skill_id: 200801, name: "利兵谋胜", season: 0, skill_type: 3, research_progress: 100, quality: "S", hero_id: [100443,100801] },
+        { skill_id: 200886, name: "三军之众", season: 4, skill_type: 3, research_progress: 100, quality: "S", hero_id: [100620,100619] },
+        { skill_id: 200237, name: "妖术", season: 0, skill_type: 3, research_progress: 100, quality: "S", hero_id: [100005,100028] },
+        { skill_id: 200235, name: "浑水摸鱼", season: 0, skill_type: 3, research_progress: 100, quality: "S", hero_id: [100025,100029,100002] },
+        { skill_id: 200263, name: "火烧连营", season: 4, skill_type: 3, research_progress: 100, quality: "S", hero_id: [100791] },
+        { skill_id: 200979, name: "及锋而试", season: 0, skill_type: 3, research_progress: 100, quality: "S", hero_id: [100701,100702,100703] },
+        { skill_id: 200271, name: "袭屯夺气", season: 4, skill_type: 3, research_progress: 100, quality: "A", hero_id: [100794,100795] },
+        { skill_id: 200267, name: "敛众定气", season: 4, skill_type: 3, research_progress: 100, quality: "A", hero_id: [100791,100792] }
       ];
 
       return activeSkills.map(skill => ({
@@ -250,7 +260,7 @@ export default {
     generateChaseSkills() {
       // 追击技能示例
       const chaseSkills = [
-        { skill_id: 200980, name: "乘胜追击", season: 0, skill_type: 4, research_progress: 100, quality: "S" },
+        { skill_id: 200980, name: "乘胜追击", season: 0, skill_type: 4, research_progress: 100, quality: "S", hero_id: [100704,100705] },
       ];
 
       return chaseSkills.map(skill => ({
@@ -262,14 +272,14 @@ export default {
     generatePassiveSkills() {
       // 被动技能示例
       const passiveSkills = [
-        { skill_id: 200252, name: "百战无怯", season: 0, skill_type: 1, research_progress: 100, quality: "S" },
-        { skill_id: 200788, name: "枭雄", season: 2, skill_type: 1, research_progress: 100, quality: "A" },
-        { skill_id: 200863, name: "击势", season: 0, skill_type: 1, research_progress: 100, quality: "S" },
-        { skill_id: 200900, name: "垒实迎击", season: 4, skill_type: 1, research_progress: 100, quality: "S" },
-        { skill_id: 200280, name: "令无空悬", season: 4, skill_type: 1, research_progress: 100, quality: "A" },
-        { skill_id: 200274, name: "以诱待来", season: 0, skill_type: 1, research_progress: 100, quality: "A" },
-        { skill_id: 200261, name: "胜敌益强", season: 0, skill_type: 1, research_progress: 100, quality: "A" },
-        { skill_id: 200289, name: "先声夺人", season: 0, skill_type: 1, research_progress: 100, quality: "A" }
+        { skill_id: 200252, name: "百战无怯", season: 0, skill_type: 1, research_progress: 100, quality: "S", hero_id: [100587,100785] },
+        { skill_id: 200788, name: "枭雄", season: 2, skill_type: 1, research_progress: 100, quality: "A", hero_id: [100023] },
+        { skill_id: 200863, name: "击势", season: 0, skill_type: 1, research_progress: 100, quality: "S", hero_id: [100615,100616] },
+        { skill_id: 200900, name: "垒实迎击", season: 4, skill_type: 1, research_progress: 100, quality: "S", hero_id: [100630,100631] },
+        { skill_id: 200280, name: "令无空悬", season: 4, skill_type: 1, research_progress: 100, quality: "A", hero_id: [100802] },
+        { skill_id: 200274, name: "以诱待来", season: 0, skill_type: 1, research_progress: 100, quality: "A", hero_id: [100796,100811] },
+        { skill_id: 200261, name: "胜敌益强", season: 0, skill_type: 1, research_progress: 100, quality: "A", hero_id: [100790,100793] },
+        { skill_id: 200289, name: "先声夺人", season: 0, skill_type: 1, research_progress: 100, quality: "A", hero_id: [100805,100804,100803] }
       ];
 
       return passiveSkills.map(skill => ({
@@ -278,17 +288,41 @@ export default {
       }));
     },
     updateSkillOpacity(skillIds) {
+      const source = Array.isArray(skillIds) ? skillIds : []
       this.categories.forEach(category => {
         category.skills.forEach(skill => {
           //// 查找匹配的技能数据，使用skill_id作为匹配条件
-          const matchedSkill = skillIds.find(item => item.skill_id === skill.skill_id);
+          const matchedSkill = source.find(item => item.skill_id === skill.skill_id);
           if (matchedSkill) {
             skill.opacity = 1;// 恢复不透明
             skill.research_progress = matchedSkill.research_progress;
+            if (matchedSkill.hero_id != null) skill.hero_id = this.normalizeHeroIds(matchedSkill.hero_id);
 
           }
         });
       });
+      this.updateDismantleStatus()
+    },
+    updateDismantleStatus() {
+      const ownedIds = new Set((this.uniqueCards || []).map(card => Number(card.hero_id)).filter(Number.isFinite))
+      // 已拥有的战法不能再次通过武将拆除，优先按账号技能 ID 排除
+      const accountSkills = Array.isArray(this.skillData)
+        ? this.skillData
+        : (this.skillData?.skills || this.skillData?.data || [])
+      const ownedSkillIds = new Set(accountSkills
+        .map(skill => Number(skill.skill_id ?? skill.id))
+        .filter(Number.isFinite))
+      this.categories.forEach(category => category.skills.forEach(skill => {
+        const heroIds = this.normalizeHeroIds(skill.hero_id)
+        skill.hero_id = heroIds
+        skill.canDismantle = !ownedSkillIds.has(Number(skill.skill_id))
+          && heroIds.length > 0
+          && heroIds.some(id => ownedIds.has(id))
+      }))
+    },
+    normalizeHeroIds(value) {
+      const values = Array.isArray(value) ? value : (value == null ? [] : [value])
+      return values.map(Number).filter(Number.isFinite)
     }
   }
 }
@@ -318,7 +352,7 @@ export default {
 .result-id { margin-top: 3px; color: #909399; font-size: 12px; text-align: center; }
 .dialog-close { float: right; }
 .managed-item { position: relative; }
-.remove-item { position: absolute; top: -6px; right: -6px; z-index: 2; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; color: #fff; background: #c43d3d; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .15s; }
+.remove-item { position: absolute; top: -1px; right: -1px; z-index: 10; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; color: #fff; background: #c43d3d; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .15s; }
 .managed-item:hover .remove-item { opacity: 1; pointer-events: auto; }
 
 .category-section {
