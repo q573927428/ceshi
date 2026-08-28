@@ -8,6 +8,7 @@
     "migrate-billing": "node scripts/migrate-billing.mjs",
     "build": "nuxt build",
     "start": "node .output/server/index.mjs",
+    "start:env": "node --env-file=.env .output/server/index.mjs",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
