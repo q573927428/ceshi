@@ -7,7 +7,7 @@
       class="admin-aside"
       :class="{ 'aside-overlay': !isDesktop }"
     >
-      <AppHeader :is-collapse="isDesktop && isCollapse" @toggle="toggleSidebar" />
+      <AppHeader :is-collapse="isDesktop && isCollapse" :is-admin="user?.isAdmin" @toggle="toggleSidebar" />
     </el-aside>
 
     <!-- 移动端遮罩 -->
@@ -59,7 +59,7 @@
   </el-container>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Coin, Fold, Expand, SwitchButton } from '@element-plus/icons-vue'
 import { useAuth } from '~/composables/useAuth'
@@ -81,6 +81,11 @@ const toggleAuthMode = () => { authMode.value = authMode.value === 'login' ? 're
 const logout = async () => { await authLogout(); usedCount.value = 0; window.location.reload() }
 const submitAuth = async () => { try { if (authMode.value === 'login') await login(authForm.value.username, authForm.value.password); authVisible.value = false; usedCount.value = (await loadAllRecords()).length } catch {} }
 
+const onRecordsCountChanged = (event: Event) => {
+  const count = (event as CustomEvent<{ count?: number }>).detail?.count
+  if (typeof count === 'number') usedCount.value = count
+}
+
 const toggleSidebar = () => {
   isCollapse.value = !isCollapse.value
 }
@@ -94,6 +99,7 @@ const onResize = () => {
 }
 
 onMounted(() => {
+  window.addEventListener('records-count-changed', onRecordsCountChanged)
   load().then(async () => { if (isLoggedIn.value) usedCount.value = (await loadAllRecords()).length; else if (location.pathname === '/') navigateTo('/login') })
   windowWidth.value = window.innerWidth
   if (windowWidth.value <= 768) {
@@ -104,6 +110,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', onResize)
+  window.removeEventListener('records-count-changed', onRecordsCountChanged)
 })
 </script>
 

@@ -1,5 +1,5 @@
 import { query } from '../../db'
-import { createPasswordHash, setSession } from '../../utils/auth'
+import { createPasswordHash, setSession, isAdminUser } from '../../utils/auth'
 import { verifySmsCode } from '../../utils/sms'
 
 export default defineEventHandler(async (event) => {
@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
   try {
     const result: any = await query('INSERT INTO users (username, phone, password_hash, plan, quota_limit) VALUES (?, ?, ?, "free", 2)', [username, phone, createPasswordHash(password)])
     setSession(event, result.insertId)
-    return { user: { id: result.insertId, username, phone, plan: 'free', quotaLimit: 2 } }
+    return { user: { id: result.insertId, username, phone, plan: 'free', quotaLimit: 2, isAdmin: isAdminUser({ username }) } }
   } catch (e: any) {
     if (e?.code === 'ER_DUP_ENTRY') throw createError({ statusCode: 409, message: '用户名或手机号已存在' })
     throw e

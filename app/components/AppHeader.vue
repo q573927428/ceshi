@@ -25,6 +25,10 @@
         <el-icon><Wallet /></el-icon>
         <template #title>充值中心</template>
       </el-menu-item>
+      <el-menu-item v-if="isAdmin" index="/admin">
+        <el-icon><Setting /></el-icon>
+        <template #title>用户管理</template>
+      </el-menu-item>
     </el-menu>
   </div>
 
@@ -50,13 +54,17 @@
 <script setup>
 import { useRoute } from 'vue-router'
 import { computed } from 'vue'
-import { House, Wallet, ArrowUpBold } from '@element-plus/icons-vue'
+import { House, Wallet, ArrowUpBold, Setting } from '@element-plus/icons-vue'
 
 defineProps({
   isCollapse: {
     type: Boolean,
     default: false
-  }
+  },
+  isAdmin: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const route = useRoute()

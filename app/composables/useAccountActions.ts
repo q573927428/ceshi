@@ -67,6 +67,15 @@ export const useAccountActions = () => {
 
   const newLinkPrice = ref('')
 
+  // 通知顶部布局同步当前已用额度，避免新增记录后仍显示旧计数。
+  const notifyRecordCountChanged = () => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('records-count-changed', {
+        detail: { count: zangbaoLinks.value.length },
+      }))
+    }
+  }
+
   // 解析备注行（去空行）
   const parseRemarkLines = (text: string): string[] => {
     if (!text) return []
@@ -252,6 +261,7 @@ export const useAccountActions = () => {
           }
 
           await loadLinksFromDB()
+          notifyRecordCountChanged()
         } catch (err) {
           console.error('处理链接失败：', link, err)
           failed.push(link)
@@ -278,6 +288,7 @@ export const useAccountActions = () => {
       })
       await deleteRecord(link)
       await loadLinksFromDB()
+      notifyRecordCountChanged()
       ElMessage.success('删除成功')
     } catch (err) {
       // 用户取消
@@ -292,6 +303,7 @@ export const useAccountActions = () => {
       })
       await clearAllRecords()
       await loadLinksFromDB()
+      notifyRecordCountChanged()
       ElMessage.success('已清空')
     } catch {
       // 用户取消
@@ -334,6 +346,7 @@ export const useAccountActions = () => {
     }
 
     await loadLinksFromDB()
+    notifyRecordCountChanged()
     globalLoading.value = false
     updateProgress.value = ''
     currentPage.value = 1

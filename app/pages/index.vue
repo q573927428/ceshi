@@ -37,7 +37,7 @@
         </div>
         <div class="button-section">
           <el-button type="primary" @click="addLink" :loading = "globalLoading">添加链接</el-button>
-          <el-button type="warning" @click="updateAll" :loading = "globalLoading" plain>更新全部</el-button>
+          <!-- <el-button type="warning" @click="updateAll" :loading = "globalLoading" plain>更新全部</el-button>
           <el-button type="info" @click="clearLinks" plain>清空链接</el-button>
           <el-button type="primary" @click="exportDB" plain>导出数据</el-button>
           <el-upload
@@ -46,7 +46,7 @@
             :before-upload="importDB"
           >
             <el-button type="warning" plain>导入数据</el-button>
-          </el-upload>
+          </el-upload> -->
           <el-checkbox v-model="showRemarkInput">写备注</el-checkbox>
           <el-checkbox v-model="showPriceInput">写价格</el-checkbox>
         </div>

@@ -3,6 +3,7 @@ import { queryOne } from '../db'
 
 const COOKIE = 'cbg_session'
 const SECRET = process.env.AUTH_SECRET || 'change-me-in-production'
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'q573927428'
 
 function sign(value: string) {
   return crypto.createHmac('sha256', SECRET).update(value).digest('base64url')
@@ -38,6 +39,16 @@ export async function requireUser(event: any) {
   if (sign(payload) !== parts[2]) throw createError({ statusCode: 401, message: '登录已失效' })
   const user = await queryOne('SELECT id, username, phone, nickname, plan, quota_limit, plan_expires_at FROM users WHERE id = ?', [Number(parts[0])])
   if (!user) throw createError({ statusCode: 401, message: '用户不存在' })
+  return user
+}
+
+export function isAdminUser(user: any) {
+  return user?.username === ADMIN_USERNAME
+}
+
+export async function requireAdmin(event: any) {
+  const user = await requireUser(event)
+  if (!isAdminUser(user)) throw createError({ statusCode: 403, message: '无管理员权限' })
   return user
 }
 
