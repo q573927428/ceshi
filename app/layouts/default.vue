@@ -25,7 +25,7 @@
           <el-button text @click="toggleSidebar" style="font-size: 18px;">
             <el-icon><Fold v-if="!isCollapse" /><Expand v-else /></el-icon>
           </el-button>
-          <span class="header-title">藏宝阁助手</span>
+          <!-- <span class="header-title">藏宝阁助手</span> -->
         </div>
         <div class="header-right">
           <template v-if="isLoggedIn">
