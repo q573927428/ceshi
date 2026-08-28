@@ -20,6 +20,11 @@ interface LinkItem {
   statusDesc: string
 }
 
+// 批量操作中相邻账号请求的最小间隔，避免短时间内触发过多外部 API 请求。
+const BATCH_ITEM_DELAY_MS = 3000
+
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
+
 export const useAccountActions = () => {
   const { saveRecord, getRecord, deleteRecord, loadAllRecords, clearAllRecords, batchFetchRecords } = useDb()
   const { fetchAccountData } = useFetchData()
@@ -182,6 +187,8 @@ export const useAccountActions = () => {
     try {
       for (const raw of links) {
         index++
+        // 第一条立即执行，后续条目之间留出间隔；即使上一条失败也保持节奏。
+        if (index > 1) await wait(BATCH_ITEM_DELAY_MS)
         const link = normalizeLink(raw)
         const remarkToUse = pickRemarkForIndex(links, remarks, index)
 
@@ -362,6 +369,9 @@ export const useAccountActions = () => {
     for (const item of zangbaoLinks.value) {
       index++
       updateProgress.value = `正在更新 ${index}/${total}`
+
+      // 第一条立即执行，后续条目之间留出间隔，降低被目标站点限流的概率。
+      if (index > 1) await wait(BATCH_ITEM_DELAY_MS)
 
       const record = await getRecord(item.link)
       if (!record) continue

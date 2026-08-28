@@ -21,10 +21,6 @@
         <el-icon><House /></el-icon>
         <template #title>首页</template>
       </el-menu-item>
-      <el-menu-item index="/cookie">
-        <el-icon><Key /></el-icon>
-        <template #title>Cookie设置</template>
-      </el-menu-item>
     </el-menu>
   </div>
 
@@ -50,7 +46,7 @@
 <script setup>
 import { useRoute } from 'vue-router'
 import { computed } from 'vue'
-import { House, ArrowUpBold, Key } from '@element-plus/icons-vue'
+import { House, ArrowUpBold } from '@element-plus/icons-vue'
 
 defineProps({
   isCollapse: {
