@@ -30,10 +30,13 @@
         <div class="header-right">
           <template v-if="isLoggedIn">
             <el-tag class="user-name" effect="plain" size="small">{{ user.username }}</el-tag>
-            <el-tag class="quota-badge" :type="user.plan === 'free' ? 'info' : 'warning'" effect="plain" size="small">
-              金币 {{ usedCount }} / {{ user.quotaLimit }}
+            <el-tag class="quota-badge" :type="user.plan === 'free' ? 'info' : 'warning'" effect="plain" size="small" title="金币余额" aria-label="金币余额">
+              <el-icon class="quota-icon" aria-hidden="true"><Coin /></el-icon>
+              {{ usedCount }} / {{ user.quotaLimit }}
             </el-tag>
-            <el-button text size="small" @click="logout">退出</el-button>
+            <el-button text size="small" title="退出登录" aria-label="退出登录" @click="logout">
+              <el-icon><SwitchButton /></el-icon>
+            </el-button>
           </template>
         </div>
       </el-header>
@@ -58,7 +61,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Fold, Expand } from '@element-plus/icons-vue'
+import { Coin, Fold, Expand, SwitchButton } from '@element-plus/icons-vue'
 import { useAuth } from '~/composables/useAuth'
 import { useDb } from '~/composables/useDb'
 import { useRoute } from 'vue-router'
@@ -184,6 +187,10 @@ onUnmounted(() => {
   min-width: 58px;
   justify-content: center;
   font-variant-numeric: tabular-nums;
+}
+
+.quota-icon {
+  margin-right: 4px;
 }
 
 .admin-main {
