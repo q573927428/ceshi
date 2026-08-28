@@ -2,7 +2,7 @@
   <div class="sidebar-wrap">
     <!-- Logo -->
     <div class="sidebar-logo" :class="{ collapsed: isCollapse }">
-      <span v-if="!isCollapse">藏宝阁</span>
+      <span v-if="!isCollapse">藏宝阁助手</span>
       <span v-else>藏</span>
     </div>
 
