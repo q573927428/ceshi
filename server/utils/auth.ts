@@ -27,7 +27,7 @@ export function setSession(event: any, userId: number) {
   setCookie(event, COOKIE, `${payload}.${sign(payload)}`, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 60 * 60 * 24 * 30, path: '/' })
 }
 
-export function clearSession(event: any) { deleteCookie(event, COOKIE, { path: '/' }) }
+export function destroySession(event: any) { deleteCookie(event, COOKIE, { path: '/' }) }
 
 export async function requireUser(event: any) {
   const token = getCookie(event, COOKIE)
