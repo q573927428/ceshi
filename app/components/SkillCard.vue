@@ -276,7 +276,7 @@ export default {
         { skill_id: 200788, name: "枭雄", season: 2, skill_type: 1, research_progress: 100, quality: "A", hero_id: [100023] },
         { skill_id: 200863, name: "击势", season: 0, skill_type: 1, research_progress: 100, quality: "S", hero_id: [100615,100616] },
         { skill_id: 200900, name: "垒实迎击", season: 4, skill_type: 1, research_progress: 100, quality: "S", hero_id: [100630,100631] },
-        { skill_id: 200280, name: "令无空悬", season: 4, skill_type: 1, research_progress: 100, quality: "A", hero_id: [100802] },
+        { skill_id: 200280, name: "令无空悬", season: 4, skill_type: 1, research_progress: 100, quality: "A", hero_id: [100802,100810] },
         { skill_id: 200274, name: "以诱待来", season: 0, skill_type: 1, research_progress: 100, quality: "A", hero_id: [100796,100811] },
         { skill_id: 200261, name: "胜敌益强", season: 0, skill_type: 1, research_progress: 100, quality: "A", hero_id: [100790,100793] },
         { skill_id: 200289, name: "先声夺人", season: 0, skill_type: 1, research_progress: 100, quality: "A", hero_id: [100805,100804,100803] }
