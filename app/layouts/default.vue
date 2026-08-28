@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { Coin, Fold, Expand, SwitchButton } from '@element-plus/icons-vue'
 import { useAuth } from '~/composables/useAuth'
 import { useDb } from '~/composables/useDb'
@@ -85,6 +85,12 @@ const onRecordsCountChanged = (event: Event) => {
   const count = (event as CustomEvent<{ count?: number }>).detail?.count
   if (typeof count === 'number') usedCount.value = count
 }
+
+// 登录页完成登录后布局不会重新挂载，需要在登录状态变化时同步一次使用量。
+watch(isLoggedIn, async (loggedIn) => {
+  if (loggedIn) usedCount.value = (await loadAllRecords()).length
+  else usedCount.value = 0
+})
 
 const toggleSidebar = () => {
   isCollapse.value = !isCollapse.value
