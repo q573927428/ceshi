@@ -34,8 +34,8 @@ export const aCardsData: number[] = [
 
 // 2️⃣ 定义稀有度倍数
 export const cardAdvanceRates: Record<string, number> = {
-  special: 3.5,
-  sss: 2,
+  special: 1.5,
+  sss: 1.2,
   ss: 1.5,
   s: 1,
   a: 0.6

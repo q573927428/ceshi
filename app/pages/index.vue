@@ -37,8 +37,8 @@
         </div>
         <div class="button-section">
           <el-button type="primary" @click="addLink" :loading = "globalLoading">添加链接</el-button>
-          <!-- <el-button type="warning" @click="updateAll" :loading = "globalLoading" plain>更新全部</el-button>
-          <el-button type="info" @click="clearLinks" plain>清空链接</el-button>
+          <el-button type="warning" @click="updateAll" :loading = "globalLoading" plain>更新全部</el-button>
+          <!-- <el-button type="info" @click="clearLinks" plain>清空链接</el-button>
           <el-button type="primary" @click="exportDB" plain>导出数据</el-button>
           <el-upload
             :show-file-list="false"
@@ -63,36 +63,35 @@
       </el-alert>
 
       <!-- 筛选排序与列配置 -->
-      <div class="filter-sort">
-        <span style="margin-top: 3px;">排序：</span>
-        <el-button @click="setSort('time')" plain :type="sortKey === 'time' ? 'danger' : 'primary'">
-          时间 {{ sortKey === 'time' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
-        </el-button>
-        <el-button @click="setSort('estimatedPrice')" plain :type="sortKey === 'estimatedPrice' ? 'danger' : 'primary'">
-          预估价值 {{ sortKey === 'estimatedPrice' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
-        </el-button>
-        <el-button @click="setSort('price')" plain :type="sortKey === 'price' ? 'danger' : 'primary'">
-          藏宝阁价格 {{ sortKey === 'price' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
-        </el-button>
+      <div class="filter-controls">
+        <div class="filter-sort">
+          <span style="margin-top: 3px;">排序：</span>
+          <el-button @click="setSort('time')" plain :type="sortKey === 'time' ? 'danger' : 'primary'">
+            时间 {{ sortKey === 'time' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+          </el-button>
+          <el-button @click="setSort('estimatedPrice')" plain :type="sortKey === 'estimatedPrice' ? 'danger' : 'primary'">
+            预估价 {{ sortKey === 'estimatedPrice' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+          </el-button>
+          <el-button @click="setSort('price')" plain :type="sortKey === 'price' ? 'danger' : 'primary'">
+            藏宝阁价 {{ sortKey === 'price' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+          </el-button>
 
-        <el-button @click="setSort('ratio')" plain :type="sortKey === 'ratio' ? 'danger' : 'primary'">
-          溢价比率 {{ sortKey === 'ratio' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
-        </el-button>
+          <el-button @click="setSort('ratio')" plain :type="sortKey === 'ratio' ? 'danger' : 'primary'">
+            溢价率 {{ sortKey === 'ratio' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+          </el-button>
 
-        <el-button-group class="column-selector">
-          <el-button :type="columnMode === 1 ? 'primary' : 'default'" @click="columnMode = 1">1 列</el-button>
-          <el-button :type="columnMode === 2 ? 'primary' : 'default'" @click="columnMode = 2">2 列</el-button>
-          <el-button :type="columnMode === 3 ? 'primary' : 'default'" @click="columnMode = 3">3 列</el-button>
-          <el-button :type="columnMode === 4 ? 'primary' : 'default'" @click="columnMode = 4">4 列</el-button>
-          <el-button :type="columnMode === 5 ? 'primary' : 'default'" @click="columnMode = 5">5 列</el-button>
-        </el-button-group>
-      </div>
+          <el-button-group class="column-selector">
+            <el-button :type="columnMode === 1 ? 'primary' : 'default'" @click="columnMode = 1">1 列</el-button>
+            <el-button :type="columnMode === 2 ? 'primary' : 'default'" @click="columnMode = 2">2 列</el-button>
+            <el-button :type="columnMode === 3 ? 'primary' : 'default'" @click="columnMode = 3">3 列</el-button>
+          </el-button-group>
+        </div>
 
-      <!-- 价格区间筛选 -->
-      <div class="price-filter">
+        <!-- 价格区间筛选 -->
+        <div class="price-filter">
         <span style="margin-bottom: 12px;">筛选：</span>
         <el-select v-model="priceFilterType" placeholder="选择筛选字段" class="select-filter">
-          <el-option label="藏宝阁价格" value="equipPrice" ></el-option>
+          <el-option label="藏宝阁价" value="equipPrice" ></el-option>
           <el-option label="预估价值" value="estimatedPrice"></el-option>
         </el-select>
         <span class="price-filter-input">
@@ -127,11 +126,12 @@
         <span class="filter-interval"> | </span>
 
         <el-button @click="deleteFilteredResults" type="danger" style="margin-bottom: 10px;" v-if="filteredLinks.length < zangbaoLinks.length">
-          删除筛选结果 {{ filteredLinks.length }} 条
+          删 {{ filteredLinks.length }} 条
         </el-button>
         <el-button plain text style="margin-bottom: 10px;">
-          总共 {{ filteredLinks.length }} 条数据
+          共 {{ filteredLinks.length }} 条
         </el-button>
+        </div>
       </div>
     </div>
 
@@ -160,7 +160,7 @@
                         class="price-percent"
                         :class="{ up: item.estimatedPrice / item.equipPrice >= 1, down: item.estimatedPrice / item.equipPrice < 1 }"
                       >
-                      溢价率 {{
+                      溢 {{
                           item.equipPrice > 0
                             ? ((item.estimatedPrice / item.equipPrice) * 100).toFixed(1) + '%'
                             : '0%'
@@ -232,16 +232,12 @@
                       <el-icon><Star /></el-icon>
                     </el-button>
 
-                    <el-button type="primary" circle plain @click="copyUrl(item.link,item.remark)" title="分享链接">
-                      <el-icon><Share /></el-icon>
-                    </el-button>
-
                     <el-button type="danger" circle plain @click="removeLink(item.link)" title="删除">
                       <el-icon><Delete /></el-icon>
                     </el-button>
                   </div>
                   <div class="price-info">
-                    <el-tag type="primary" size="large" effect="plain" round>卡池 {{ item.data.cardTotalValue || 0 }} 元</el-tag> + <el-tag type="success" effect="plain" size="large" round>武器 {{ item.data.weaponTotalValue || 0 }} 元</el-tag> =
+                    <el-tag type="primary" size="large" effect="plain" round>卡池 {{ item.data.cardTotalValue || 0 }}</el-tag> + <el-tag type="success" effect="plain" size="large" round>武器 {{ item.data.weaponTotalValue || 0 }}</el-tag> =
                     <el-tag type="danger" size="large" effect="plain" round> {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }}  元 </el-tag> 
                   </div>
                 </div>
@@ -653,8 +649,17 @@ onMounted(async () => {
   width: 100%;
 }
 
-.filter-sort {
+.filter-controls {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
   margin-top: 12px;
+  width: 100%;
+}
+.filter-sort {
+  flex: 1 1 500px;
+  min-width: 0;
+  margin-top: 0;
   display: flex;
   gap: 1px;
   flex-wrap: wrap;
@@ -663,8 +668,10 @@ onMounted(async () => {
   border-radius: 10px;
 }
 .price-filter{
+  flex: 2 1 680px;
+  min-width: 0;
   align-items: center;
-  margin-top: 12px;
+  margin-top: 0;
   display: flex;
   gap: 1px;
   flex-wrap: wrap;
@@ -689,6 +696,15 @@ onMounted(async () => {
   width: 80px; 
   margin-right: 3px; 
   margin-bottom: 10px;
+}
+@media (max-width: 1100px) {
+  .filter-controls {
+    flex-wrap: wrap;
+  }
+  .filter-sort,
+  .price-filter {
+    flex-basis: 100%;
+  }
 }
 .compare-results {
   margin-top: 16px;
