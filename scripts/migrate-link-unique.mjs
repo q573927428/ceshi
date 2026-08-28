@@ -1,6 +1,7 @@
 // scripts/migrate-link-unique.mjs
-// 将 records 表的唯一约束统一为 (user_id, link)，避免跨用户覆盖记录
-// 并清理重复记录
+// 将 records 表的唯一约束统一为 (user_id, link)。
+// 同一个藏宝阁 link 可以被多个用户保存，但同一用户不能重复保存同一 link。
+// 脚本可重复执行，并会清理同一用户内的历史重复记录。
 
 import mysql from 'mysql2/promise'
 
@@ -8,7 +9,7 @@ const db = await mysql.createConnection({
   host: '127.0.0.1',
   port: 3306,
   user: 'root',
-  password: '123456',
+  password: process.env.MYSQL_PASSWORD || '90d25ae1cec0a563',
   database: 'zangbao',
 })
 

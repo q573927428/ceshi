@@ -5,8 +5,12 @@ const [columns] = await db.query("SELECT COLUMN_NAME FROM information_schema.COL
 const existingColumns = new Set(columns.map((c) => c.COLUMN_NAME))
 if (!existingColumns.has('plan')) await db.query("ALTER TABLE users ADD COLUMN plan VARCHAR(20) NOT NULL DEFAULT 'free'")
 if (!existingColumns.has('quota_limit')) await db.query("ALTER TABLE users ADD COLUMN quota_limit INT NOT NULL DEFAULT 2")
+// 旧版本使用 link 全局唯一，会阻止不同用户保存同一个藏宝阁账号。
+// 迁移为按用户隔离的联合唯一索引后，同一 link 可被多个用户分别保存。
 try { await db.query('ALTER TABLE records DROP INDEX uk_link') } catch {}
-try { await db.query('ALTER TABLE records ADD UNIQUE KEY uk_user_link (user_id, link)') } catch {}
+try { await db.query('ALTER TABLE records ADD UNIQUE KEY uk_user_link (user_id, link)') } catch (err) {
+  if (err?.code !== 'ER_DUP_KEYNAME') throw err
+}
 // 将用户系统上线前的历史记录归属到最早创建的账号（单用户迁移场景）。
 const [owners] = await db.query('SELECT id FROM users ORDER BY id ASC LIMIT 1')
 if (owners.length) {

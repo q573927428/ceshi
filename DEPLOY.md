@@ -112,6 +112,8 @@ node scripts/migrate-cbg-session.mjs
 node scripts/migrate-link-unique.mjs
 ```
 
+该迁移会删除旧的 `uk_link` 全局唯一索引，并确保使用 `uk_user_link (user_id, link)`；迁移后同一藏宝阁账号可由多个用户分别添加，价格和备注互不影响。
+
 执行前建议先备份数据库：
 
 ```bash
