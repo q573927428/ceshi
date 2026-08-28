@@ -1,7 +1,7 @@
 <template>
-  <el-container class="admin-container">
+  <el-container v-if="isLoggedIn || isAuthPage" class="admin-container">
     <!-- 左侧边栏 -->
-    <el-aside
+    <el-aside v-if="isLoggedIn"
       v-show="!isCollapse || isDesktop"
       :width="isDesktop ? (isCollapse ? '64px' : '200px') : '200px'"
       class="admin-aside"
@@ -20,7 +20,7 @@
     <!-- 右侧内容区 -->
     <el-container class="admin-main-area">
       <!-- 顶部 header -->
-      <el-header class="admin-header" height="50px">
+      <el-header v-if="isLoggedIn" class="admin-header" height="50px">
         <div class="header-left">
           <el-button text @click="toggleSidebar" style="font-size: 18px;">
             <el-icon><Fold v-if="!isCollapse" /><Expand v-else /></el-icon>
@@ -28,7 +28,13 @@
           <span class="header-title">藏宝阁助手</span>
         </div>
         <div class="header-right">
-          <el-tag type="info" effect="plain" size="small">v1.0</el-tag>
+          <template v-if="isLoggedIn">
+            <el-tag class="user-name" effect="plain" size="small">{{ user.username }}</el-tag>
+            <el-tag class="quota-badge" :type="user.plan === 'free' ? 'info' : 'warning'" effect="plain" size="small">
+              金币 {{ usedCount }} / {{ user.quotaLimit }}
+            </el-tag>
+            <el-button text size="small" @click="logout">退出</el-button>
+          </template>
         </div>
       </el-header>
 
@@ -40,17 +46,37 @@
 
     <!-- 返回顶部按钮 -->
     <BackToTop />
+
+    <el-dialog v-if="false" v-model="authVisible" title="登录藏宝阁助手" width="360px" :close-on-click-modal="false">
+      <el-input v-model="authForm.username" placeholder="用户名" class="auth-input" />
+      <el-input v-model="authForm.password" type="password" show-password placeholder="密码（至少6位）" class="auth-input" />
+      <div v-if="authError" class="auth-error">{{ authError }}</div>
+      <template #footer><el-button @click="toggleAuthMode">{{ authMode === 'login' ? '注册账号' : '返回登录' }}</el-button><el-button type="primary" :loading="authLoading" @click="submitAuth">{{ authMode === 'login' ? '登录' : '注册并登录' }}</el-button></template>
+    </el-dialog>
   </el-container>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Fold, Expand } from '@element-plus/icons-vue'
+import { useAuth } from '~/composables/useAuth'
+import { useDb } from '~/composables/useDb'
+import { useRoute } from 'vue-router'
 
 const isCollapse = ref(false)
 const windowWidth = ref(1024)
 
 const isDesktop = computed(() => windowWidth.value > 768)
+const isAuthPage = computed(() => ['/login', '/register'].includes(useRoute().path))
+const { user, isLoggedIn, load, login, register, logout: authLogout, loading: authLoading, error: authError } = useAuth()
+const { loadAllRecords } = useDb()
+const authVisible = ref(false)
+const authMode = ref<'login'|'register'>('login')
+const authForm = ref({ username: '', password: '' })
+const usedCount = ref(0)
+const toggleAuthMode = () => { authMode.value = authMode.value === 'login' ? 'register' : 'login' }
+const logout = async () => { await authLogout(); usedCount.value = 0; window.location.reload() }
+const submitAuth = async () => { try { if (authMode.value === 'login') await login(authForm.value.username, authForm.value.password); authVisible.value = false; usedCount.value = (await loadAllRecords()).length } catch {} }
 
 const toggleSidebar = () => {
   isCollapse.value = !isCollapse.value
@@ -65,6 +91,7 @@ const onResize = () => {
 }
 
 onMounted(() => {
+  load().then(async () => { if (isLoggedIn.value) usedCount.value = (await loadAllRecords()).length; else if (location.pathname === '/') navigateTo('/login') })
   windowWidth.value = window.innerWidth
   if (windowWidth.value <= 768) {
     isCollapse.value = true // 移动端默认隐藏侧边栏
@@ -144,6 +171,19 @@ onUnmounted(() => {
 .header-right {
   display: flex;
   align-items: center;
+  gap: 8px;
+}
+
+.user-name {
+  color: #303133;
+  border-color: #dcdfe6;
+  background: #fff;
+}
+
+.quota-badge {
+  min-width: 58px;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
 }
 
 .admin-main {

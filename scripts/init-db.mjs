@@ -47,7 +47,7 @@ await db.execute(`
     raw_json       JSON DEFAULT NULL,
     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY uk_link (link),
+    UNIQUE KEY uk_user_link (user_id, link),
     INDEX idx_timestamp (timestamp),
     INDEX idx_user_id (user_id),
     INDEX idx_status_desc (status_desc),
@@ -61,10 +61,31 @@ await db.execute(`
   CREATE TABLE IF NOT EXISTS users (
     id            INT AUTO_INCREMENT PRIMARY KEY,
     username      VARCHAR(100) NOT NULL UNIQUE,
+    phone         VARCHAR(20) DEFAULT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     nickname      VARCHAR(100) DEFAULT '',
+    plan          VARCHAR(20) NOT NULL DEFAULT 'free',
+    quota_limit   INT NOT NULL DEFAULT 2,
+    plan_expires_at TIMESTAMP NULL DEFAULT NULL,
     created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  )
+`)
+
+await db.execute(`
+  CREATE TABLE IF NOT EXISTS payment_orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_no VARCHAR(40) NOT NULL UNIQUE,
+    user_id INT NOT NULL,
+    plan VARCHAR(20) NOT NULL,
+    quota_increment INT NOT NULL,
+    amount_fen INT NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    transaction_id VARCHAR(64) DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    paid_at TIMESTAMP NULL DEFAULT NULL,
+    INDEX idx_payment_user (user_id),
+    INDEX idx_payment_status (status)
   )
 `)
 

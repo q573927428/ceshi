@@ -1,4 +1,5 @@
 import { query, toCamelCase, getPool, type RecordRow } from '../db'
+import { requireUser } from '../utils/auth'
 
 // 元数据字段列表（不含 data/raw_json 大字段）
 const META_FIELDS = [
@@ -8,6 +9,7 @@ const META_FIELDS = [
 ].join(', ')
 
 export default defineEventHandler(async (event) => {
+  const user = await requireUser(event)
   const queryParams = getQuery(event)
   const page = parseInt(String(queryParams.page || '1'), 10)
   const pageSize = parseInt(String(queryParams.pageSize || '0'), 10)
@@ -18,11 +20,11 @@ export default defineEventHandler(async (event) => {
     const offset = (page - 1) * pageSize
     const pool = getPool()
     const [rows] = await pool.execute(
-      'SELECT * FROM records ORDER BY timestamp DESC LIMIT ? OFFSET ?',
-      [pageSize, offset]
+      'SELECT * FROM records WHERE user_id = ? ORDER BY timestamp DESC LIMIT ? OFFSET ?',
+      [user.id, pageSize, offset]
     )
     const [countRows] = await pool.execute(
-      'SELECT COUNT(*) as total FROM records'
+      'SELECT COUNT(*) as total FROM records WHERE user_id = ?', [user.id]
     )
     const total = (countRows as any[])[0]?.total || 0
 
@@ -35,8 +37,8 @@ export default defineEventHandler(async (event) => {
   }
 
   // 非分页请求 - 返回全部记录的元数据（不含 data）
-  const sql = `SELECT ${META_FIELDS} FROM records ORDER BY timestamp DESC`
-  const rows = await query(sql)
+  const sql = `SELECT ${META_FIELDS} FROM records WHERE user_id = ? ORDER BY timestamp DESC`
+  const rows = await query(sql, [user.id])
   return (rows as RecordRow[]).map((row) => ({
     id: row.id,
     user_id: row.user_id,

@@ -1,5 +1,5 @@
 <template> 
-  <div class="zangbao-page">
+  <div v-if="isLoggedIn" class="zangbao-page">
     <!-- 链接输入 + 操作 -->
     <div class="link-section">
       <div class="link-input-container">
@@ -385,6 +385,9 @@ import { exportIndexedDB, importIndexedDB } from '~/utils/dbTools';
 // 使用拆分后的 composables（如果你尚未创建，请按前一条回复建立）
 import { useAccountActions } from '~/composables/useAccountActions';
 import { useDb } from '~/composables/useDb';
+import { useAuth } from '~/composables/useAuth';
+
+const { isLoggedIn, load: loadAuth } = useAuth();
 
 // ============== 从 composable 获取状态与方法 ==============
 const {
@@ -602,7 +605,8 @@ const importDB = async (file) => {
 
 // ============== 页面生命周期 ==============
 onMounted(async () => {
-  await loadLinksFromDB();
+  await loadAuth();
+  if (isLoggedIn.value) await loadLinksFromDB();
 });
 </script>
 

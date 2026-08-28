@@ -25,6 +25,16 @@ const BATCH_ITEM_DELAY_MS = 3000
 
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
+const describeError = (err: any): string => {
+  const status = err?.statusCode || err?.status || err?.response?.status || err?.data?.statusCode
+  const message = err?.statusMessage || err?.data?.statusMessage || err?.message
+  if (status === 402) return '金币不足，请前往充值中心充值后继续添加'
+  if (status === 401) return '登录已失效，请重新登录'
+  if (status >= 500) return '服务器或数据库异常，请稍后重试'
+  if (message) return String(message)
+  return '藏宝阁接口返回异常或网络请求失败'
+}
+
 export const useAccountActions = () => {
   const { saveRecord, getRecord, deleteRecord, loadAllRecords, clearAllRecords, batchFetchRecords } = useDb()
   const { fetchAccountData } = useFetchData()
@@ -232,7 +242,7 @@ export const useAccountActions = () => {
         } catch (err) {
           console.error('处理链接失败：', link, err)
           failed.push(link)
-          ElMessage.error(`第 ${index} 个失败`)
+          ElMessage.error(`第 ${index} 个失败：${describeError(err)}`)
         }
       }
     } finally {

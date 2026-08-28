@@ -1,0 +1,7 @@
+<template><div class="auth-page"><h2>注册</h2><el-input v-model="phone" placeholder="手机号" /><div class="code-row"><el-input v-model="code" placeholder="验证码" /><el-button @click="sendCode" :disabled="cooldown>0">{{ cooldown ? `${cooldown}s` : '获取验证码' }}</el-button></div><el-input v-model="username" placeholder="用户名（至少3位）" /><el-input v-model="password" type="password" show-password placeholder="密码（至少6位）" /><p v-if="error" class="error">{{ error }}</p><el-button type="primary" :loading="loading" @click="submit">注册并登录</el-button><el-button link @click="navigateTo('/login')">返回登录</el-button></div></template>
+<script setup lang="ts">
+const { register, loading, error } = useAuth(); const username = ref(''); const password = ref(''); const phone = ref(''); const code = ref(''); const cooldown = ref(0)
+const sendCode = async () => { await $fetch('/api/auth/sms', { method: 'POST', body: { phone: phone.value } }); cooldown.value = 60; const t = setInterval(() => { cooldown.value--; if (cooldown.value <= 0) clearInterval(t) }, 1000) }
+const submit = async () => { try { await register(username.value, password.value, phone.value, code.value); await navigateTo('/') } catch {} }
+</script>
+<style scoped>.auth-page{max-width:360px;margin:15vh auto;padding:32px;background:#fff}.auth-page>*{margin-bottom:14px;width:100%}.code-row{display:flex;gap:8px}.code-row .el-input{flex:1}.code-row .el-button{width:110px}.error{color:#f56c6c}</style>

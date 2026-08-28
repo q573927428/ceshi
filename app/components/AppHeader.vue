@@ -21,6 +21,10 @@
         <el-icon><House /></el-icon>
         <template #title>首页</template>
       </el-menu-item>
+      <el-menu-item index="/recharge">
+        <el-icon><Wallet /></el-icon>
+        <template #title>充值中心</template>
+      </el-menu-item>
     </el-menu>
   </div>
 
@@ -46,7 +50,7 @@
 <script setup>
 import { useRoute } from 'vue-router'
 import { computed } from 'vue'
-import { House, ArrowUpBold } from '@element-plus/icons-vue'
+import { House, Wallet, ArrowUpBold } from '@element-plus/icons-vue'
 
 defineProps({
   isCollapse: {

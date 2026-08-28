@@ -1,4 +1,5 @@
 import { query } from '../../db'
+import { requireUser } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
   const rawLink = event.context.params?.link
@@ -6,6 +7,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'link is required' })
   }
   const link = decodeURIComponent(rawLink)
-  await query('DELETE FROM records WHERE link = ?', [link])
+  const user = await requireUser(event)
+  await query('DELETE FROM records WHERE link = ? AND user_id = ?', [link, user.id])
   return { success: true }
 })
