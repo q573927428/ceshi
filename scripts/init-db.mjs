@@ -4,7 +4,7 @@ const connection = await mysql.createConnection({
   host: '127.0.0.1',
   port: 3306,
   user: 'root',
-  password: '90d25ae1cec0a563',
+  password: 'zangbao2024',
 })
 
 // 创建数据库（execute 不支持 CREATE DATABASE，用 query）
@@ -18,7 +18,7 @@ const db = await mysql.createConnection({
   host: '127.0.0.1',
   port: 3306,
   user: 'root',
-  password: '90d25ae1cec0a563',
+  password: 'zangbao2024',
   database: 'zangbao',
 })
 

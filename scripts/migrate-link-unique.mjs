@@ -5,12 +5,14 @@
 
 import mysql from 'mysql2/promise'
 
+// 默认沿用应用运行账号；如确实需要使用 root，请在命令行显式设置 MYSQL_USER/MYSQL_PASSWORD。
+// Node 直接执行 .mjs 不会自动读取项目 .env，因此这里同时支持环境变量覆盖。
 const db = await mysql.createConnection({
-  host: '127.0.0.1',
-  port: 3306,
-  user: 'root',
-  password: process.env.MYSQL_PASSWORD || '90d25ae1cec0a563',
-  database: 'zangbao',
+  host: process.env.MYSQL_HOST || '127.0.0.1',
+  port: Number(process.env.MYSQL_PORT || 3306),
+  user: process.env.MYSQL_USER || 'zangbao',
+  password: process.env.MYSQL_PASSWORD || 'zangbao2024',
+  database: process.env.MYSQL_DATABASE || 'zangbao',
 })
 
 try {
