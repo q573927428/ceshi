@@ -105,15 +105,15 @@ export default {
 <style scoped>
 .wujiang-item {
   list-style: none;
-  width: 86px;
+  width: 66px;
   margin: 2px auto;
   opacity: v-bind(opacity);
 }
 
 .wrap {
   position: relative;
-  width: 82px;
-  height: 120px;
+  width: 62px;
+  height: 90px;
   cursor: pointer;
 }
 
@@ -206,7 +206,7 @@ export default {
 
 .season-wrap {
   position: absolute;
-  bottom: 20px;
+  bottom: 15px;
   right: 2px;
   width: 22px;
   height: 22px;
@@ -330,8 +330,8 @@ export default {
 
 .star {
   display: inline-block;
-  width: 12px;
-  height: 12px;
+  width: 9px;
+  height: 9px;
   margin: 0 0.5px;
 }
 
@@ -354,7 +354,8 @@ export default {
   left: 2px;
   width: 10px;
   height: 14px;
-  font-size: 12px;
+  line-height: 15px;
+  font-size: 11px;
   text-align: center;
   color: #fbe385;
   font-style: normal;
@@ -363,11 +364,11 @@ export default {
 
 @media (max-width: 576px) {
   .wujiang-item {
-    width: 82px;
+    width: 62px;
   }
   .wrap {
-    width: 82px;
-    height: 120px;
+    width: 62px;
+    height: 90px;
   }
   .state-wrap {
     width: 14px;

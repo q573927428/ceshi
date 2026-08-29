@@ -262,6 +262,7 @@ export default {
         { id: 6, name: '张辽', country: 2, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100027, icon_hero_id: 100027 },
         { id: 7, name: '马超', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100013, icon_hero_id: 100013 },
         { id: 8, name: '关羽', country: 3, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100451, icon_hero_id: 100451 },
+        { id: 8, name: '司马懿', country: 6, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100807, icon_hero_id: 100807 },
       ];
 
       return sssCardsData.map(card => ({
@@ -282,7 +283,6 @@ export default {
         { id: 2, name: '田丰', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100692, icon_hero_id: 100692 },
         { id: 40, name: '魏延', country: 3, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100649, icon_hero_id: 100649 },
         { id: 11, name: '程昱', country: 2, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100787, icon_hero_id: 100787 },
-        { id: 8, name: '司马懿', country: 6, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100807, icon_hero_id: 100807 },
         { id: 96, name: '沮授', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100771, icon_hero_id: 100771 },
         { id: 97, name: '荀彧', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100794, icon_hero_id: 100794 },
         { id: 9, name: '文鸯', country: 6, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100704, icon_hero_id: 100704 },
@@ -296,6 +296,7 @@ export default {
         { id: 2, name: '刘徽', country: 6, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100814, icon_hero_id: 100814 },
         { id: 62, name: '黄盖', country: 4, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100783, icon_hero_id: 100783 },
         { id: 88, name: '袁术', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100790, icon_hero_id: 100790 },
+        { id: 47, name: '张飞', country: 3, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100022, icon_hero_id: 100022 },
         { id: 2, name: '妲己', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100372, icon_hero_id: 100372 },
       ];
 
@@ -327,7 +328,6 @@ export default {
         { id: 42, name: '蒋钦', country: 4, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100671, icon_hero_id: 100671 },
         { id: 43, name: '徐晃', country: 2, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100645, icon_hero_id: 100645 },
         { id: 44, name: '张宁', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100474, icon_hero_id: 100474 },
-        { id: 47, name: '张飞', country: 3, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100022, icon_hero_id: 100022 },
         { id: 49, name: '公孙瓒', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100677, icon_hero_id: 100677 },
         { id: 50, name: '周瑜', country: 4, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100784, icon_hero_id: 100784 },
         { id: 51, name: '皇甫嵩', country: 1, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100630, icon_hero_id: 100630 },
@@ -341,6 +341,7 @@ export default {
         { id: 60, name: '左慈', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100802, icon_hero_id: 100802 },
         { id: 61, name: '孙坚', country: 1, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100805, icon_hero_id: 100805 },
         { id: 6, name: '孙权', country: 1, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100808, icon_hero_id: 100808 },
+        { id: 63, name: '孟获', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100815, icon_hero_id: 100815 },
         { id: 65, name: '小乔', country: 4, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100687, icon_hero_id: 100687 }
       ];
 
@@ -361,6 +362,7 @@ export default {
         { id: 70, name: '凌统', country: 4, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100616, icon_hero_id: 100616 },
         { id: 71, name: '甘宁', country: 4, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100034, icon_hero_id: 100034 },
         { id: 72, name: '太史慈', country: 4, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100090, icon_hero_id: 100090 },
+        { id: 99, name: '太史慈', country: 4, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'SP', hero_id: 102003, icon_hero_id: 100090 },
         { id: 73, name: '荀彧', country: 2, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100024, icon_hero_id: 100024 },
         { id: 74, name: '吕布', country: 1, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100003, icon_hero_id: 100003 },
         { id: 75, name: '严颜', country: 3, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100631, icon_hero_id: 100631 },
@@ -434,16 +436,17 @@ export default {
 .managed-item:hover .remove-item { opacity: 1; pointer-events: auto; }
 
 .category-section {
-  margin-bottom: 2px;
+  margin-bottom: 10px;
   background: #f5f5f5;
   padding: 15px ;
   border-radius: 25px;
   display: inline-block;
   margin-right: 8px;
+  width: 100%;
 }
 
 .category-title {
-  font-size: 20px;
+  font-size: 14px;
   font-weight: bold;
   margin-top: 1px;
   margin-bottom: 5px;

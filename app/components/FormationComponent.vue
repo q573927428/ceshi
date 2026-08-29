@@ -292,14 +292,14 @@ export default {
   }
   
   .team-title {
-    font-size: 18px;
+    font-size: 14px;
     font-weight: bold;
-    margin-bottom: 6px; /* 可选：增加与卡片的间距 */
+    margin-bottom: 2px; /* 可选：增加与卡片的间距 */
   }
   
   .team-total-advance {
     color: #d32f2f;
-    font-size: 22px;
+    font-size: 16px;
     font-weight: bold;
   }
   
