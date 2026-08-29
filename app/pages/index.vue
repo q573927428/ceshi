@@ -5,10 +5,10 @@
       <div class="link-input-container">
         <div class="link-input-grid">
           <div class="link-input">
-            <p>藏宝阁账号链接(可多个URL):</p>
+            <p>藏宝阁账号链接(一行一个URL):</p>
             <LineNumberTextarea
               v-model="newLink"
-              placeholder="请输入藏宝阁账号链接，例如：https://stzb.cbg.163.com/cgi/mweb/equip/1/202608211102116-1-PNZ5TGFJGE0XU4"
+              placeholder="请输入藏宝阁账号链接"
               :maxlength="25000"
               show-word-limit
             />
