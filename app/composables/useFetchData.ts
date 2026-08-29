@@ -162,7 +162,8 @@ export const useFetchData = () => {
     return {
       extractedId,
       link,
-      equipPrice: equip.price / 100,
+      // 接口价格单位为分，换算为元后统一保存为整数。
+      equipPrice: Math.round((Number(equip.price) || 0) / 100),
       statusDesc: equip.status_desc,
       equip: {
         price: equip.price,
@@ -197,7 +198,7 @@ export const useFetchData = () => {
       ...weapons,
       cardTotalValue,
       weaponTotalValue,
-      estimatedPrice: cardTotalValue + weaponTotalValue,
+      estimatedPrice: Math.round(cardTotalValue + weaponTotalValue),
       tenures: {
         yuan_bao: full.tenure?.yuan_bao || 0,
         bind_yuan_bao: full.tenure?.bind_yuan_bao || 0,

@@ -25,6 +25,13 @@ const BATCH_ITEM_DELAY_MS = 10000
 
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
+// 价格统一按整数元处理，兼容数据库中历史遗留的小数值。
+const normalizePrice = (value: unknown): number | null => {
+  if (value === null || value === undefined || value === '') return null
+  const numberValue = Number(value)
+  return Number.isFinite(numberValue) ? Math.round(numberValue) : null
+}
+
 const describeError = (err: any): string => {
   const status = err?.statusCode || err?.status || err?.response?.status || err?.data?.statusCode
   const message = err?.data?.message || err?.message || err?.statusMessage || err?.data?.statusMessage
@@ -166,12 +173,12 @@ export const useAccountActions = () => {
       link: r.link,
       timestamp: r.timestamp,
       isFavorite: r.isFavorite,
-      equipPrice: r.equipPrice,
+      equipPrice: normalizePrice(r.equipPrice),
       data: r.data || null,  // 元数据没有 data，设为 null
       loading: false,
       remark: r.remark || '',
       statusDesc: r.statusDesc,
-      estimatedPrice: r.estimatedPrice,
+      estimatedPrice: normalizePrice(r.estimatedPrice),
     }))
 
     zangbaoLinks.value.forEach((i) => {
@@ -231,9 +238,9 @@ export const useAccountActions = () => {
             // 传null强制请求API获取最新价格（不走缓存）
             const processed = await fetchAccountData(link, null)
             record.data = processed
-            const priceToUse = prices.length >= index ? Number(prices[index - 1]) : processed.equipPrice
+            const priceToUse = prices.length >= index ? normalizePrice(prices[index - 1]) : normalizePrice(processed.equipPrice)
             record.equipPrice = priceToUse
-            record.estimatedPrice = processed.estimatedPrice
+            record.estimatedPrice = normalizePrice(processed.estimatedPrice)
             record.timestamp = Date.now()
             if (remarkToUse.trim() !== '') {
               record.remark = remarkToUse.trim()
@@ -254,9 +261,9 @@ export const useAccountActions = () => {
               remark: remarkToUse || limitRemark(processed.defaultRemark),
             }
             newRecord.data = processed
-            const priceToUse = prices.length >= index ? Number(prices[index - 1]) : processed.equipPrice
+            const priceToUse = prices.length >= index ? normalizePrice(prices[index - 1]) : normalizePrice(processed.equipPrice)
             newRecord.equipPrice = priceToUse
-            newRecord.estimatedPrice = processed.estimatedPrice
+            newRecord.estimatedPrice = normalizePrice(processed.estimatedPrice)
             newRecord.statusDesc = processed.statusDesc
             const result = await saveRecord(newRecord)
             remainingQuota = result?.remaining
@@ -374,8 +381,8 @@ export const useAccountActions = () => {
       // 传null强制重新请求API获取最新价格
       const processed = await fetchAccountData(link, null)
       record.data = processed
-      record.equipPrice = processed.equipPrice
-      record.estimatedPrice = processed.estimatedPrice
+      record.equipPrice = normalizePrice(processed.equipPrice)
+      record.estimatedPrice = normalizePrice(processed.estimatedPrice)
       record.statusDesc = processed.statusDesc
       if (!record.remark?.trim()) {
         record.remark = limitRemark(processed.defaultRemark)
@@ -384,8 +391,8 @@ export const useAccountActions = () => {
 
       // 直接更新当前面板数据，避免全量重载导致所有面板 data 清空再重新加载
       item.data = processed
-      item.equipPrice = processed.equipPrice
-      item.estimatedPrice = processed.estimatedPrice
+      item.equipPrice = normalizePrice(processed.equipPrice)
+      item.estimatedPrice = normalizePrice(processed.estimatedPrice)
       item.statusDesc = processed.statusDesc
       item.remark = record.remark || ''
       item.timestamp = record.timestamp
@@ -420,8 +427,8 @@ export const useAccountActions = () => {
         // 传null强制重新请求API获取最新价格
         const processed = await fetchAccountData(item.link, null)
         record.data = processed
-        record.equipPrice = processed.equipPrice
-        record.estimatedPrice = processed.estimatedPrice
+        record.equipPrice = normalizePrice(processed.equipPrice)
+        record.estimatedPrice = normalizePrice(processed.estimatedPrice)
         record.statusDesc = processed.statusDesc
         if (!record.remark?.trim()) {
           record.remark = limitRemark(processed.defaultRemark)

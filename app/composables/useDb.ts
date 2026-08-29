@@ -15,12 +15,17 @@ interface RecordData {
 
 export const useDb = () => {
   const saveRecord = async (record: RecordData): Promise<{ remaining?: number }> => {
+    const normalizePrice = (value: unknown): number | null => {
+      if (value === null || value === undefined || value === '') return null
+      const numberValue = Number(value)
+      return Number.isFinite(numberValue) ? Math.round(numberValue) : null
+    }
     const body = {
       link: record.link,
       timestamp: record.timestamp,
       isFavorite: !!record.isFavorite,
-      equipPrice: record.equipPrice ?? null,
-      estimatedPrice: record.estimatedPrice ?? null,
+      equipPrice: normalizePrice(record.equipPrice),
+      estimatedPrice: normalizePrice(record.estimatedPrice),
       statusDesc: record.statusDesc || '',
       remark: record.remark || null,
       data: record.data || null,

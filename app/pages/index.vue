@@ -151,10 +151,10 @@
               <div class="panel-header" :class="{ 'bg-red': item.equipPrice > 0 && item.estimatedPrice / item.equipPrice > 1 }">
                 <div class="header-info" v-if="item.data?.equip">
                   <h3 class="equip-header">
-                    <span class="price-main">¥{{ item.equipPrice }}</span>
+                    <span class="price-main">¥{{ formatPrice(item.equipPrice) }}</span>
 
                     <span class="price-estimated">
-                      (估 ¥{{ item.estimatedPrice }}
+                      (估 ¥{{ formatPrice(item.estimatedPrice) }}
                       <span class="separator">|</span>
                       <span
                         class="price-percent"
@@ -453,7 +453,7 @@ const saveRemark = async () => {
 
       // 用户填写了价格时才更新
       if (editDialog.price !== null && editDialog.price !== '') {
-        record.equipPrice = Number(editDialog.price);
+        record.equipPrice = formatPrice(editDialog.price);
       }
 
       await saveRecord(record);
@@ -467,6 +467,12 @@ const saveRemark = async () => {
     console.error(err);
     ElMessage.error('保存失败');
   }
+};
+
+// 价格展示统一为整数元，兼容历史数据中的小数值。
+const formatPrice = (value) => {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? Math.round(numberValue) : 0;
 };
 
 // ============== 复制 / 打开链接 ==============

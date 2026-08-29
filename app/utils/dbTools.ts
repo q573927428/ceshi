@@ -60,8 +60,12 @@ export async function importIndexedDB(file: File): Promise<boolean> {
                 link: record.link,
                 timestamp: record.timestamp,
                 isFavorite: !!record.isFavorite,
-                equipPrice: record.equipPrice ?? null,
-                estimatedPrice: record.estimatedPrice ?? null,
+                equipPrice: record.equipPrice === null || record.equipPrice === undefined || record.equipPrice === ''
+                  ? null
+                  : (Number.isFinite(Number(record.equipPrice)) ? Math.round(Number(record.equipPrice)) : null),
+                estimatedPrice: record.estimatedPrice === null || record.estimatedPrice === undefined || record.estimatedPrice === ''
+                  ? null
+                  : (Number.isFinite(Number(record.estimatedPrice)) ? Math.round(Number(record.estimatedPrice)) : null),
                 statusDesc: record.statusDesc || '',
                 remark: record.remark || null,
                 data: record.data || null,

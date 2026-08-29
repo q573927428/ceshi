@@ -24,6 +24,11 @@ export default defineEventHandler(async (event) => {
   }
 
   const timestamp = body.timestamp || Date.now()
+  const normalizePrice = (value: unknown): number | null => {
+    if (value === null || value === undefined || value === '') return null
+    const numberValue = Number(value)
+    return Number.isFinite(numberValue) ? Math.round(numberValue) : null
+  }
   const pool = getPool()
   const conn = await pool.getConnection()
   try {
@@ -60,8 +65,8 @@ export default defineEventHandler(async (event) => {
       link,
       timestamp,
       body.isFavorite ? 1 : 0,
-      body.equipPrice ?? null,
-      body.estimatedPrice ?? null,
+      normalizePrice(body.equipPrice),
+      normalizePrice(body.estimatedPrice),
       body.statusDesc || '',
       body.remark || null,
       body.data ? JSON.stringify(body.data) : null,
