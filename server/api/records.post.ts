@@ -6,9 +6,11 @@ interface RecordBody {
   timestamp?: number
   isFavorite?: boolean
   equipPrice?: number | null
+  userPrice?: number | null
   estimatedPrice?: number | null
   statusDesc?: string
   remark?: string | null
+  userRemark?: string | null
   data?: any
 }
 
@@ -50,15 +52,17 @@ export default defineEventHandler(async (event) => {
     }
 
     await conn.execute(
-    `INSERT INTO records (user_id, link, timestamp, is_favorite, equip_price, estimated_price, status_desc, remark, data)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO records (user_id, link, timestamp, is_favorite, equip_price, user_price, estimated_price, status_desc, remark, user_remark, data)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON DUPLICATE KEY UPDATE
        timestamp = VALUES(timestamp),
        is_favorite = VALUES(is_favorite),
        equip_price = VALUES(equip_price),
+       user_price = VALUES(user_price),
        estimated_price = VALUES(estimated_price),
        status_desc = VALUES(status_desc),
        remark = VALUES(remark),
+       user_remark = VALUES(user_remark),
        data = VALUES(data)`,
       [
       user.id,
@@ -66,9 +70,11 @@ export default defineEventHandler(async (event) => {
       timestamp,
       body.isFavorite ? 1 : 0,
       normalizePrice(body.equipPrice),
+      normalizePrice(body.userPrice),
       normalizePrice(body.estimatedPrice),
       body.statusDesc || '',
       body.remark || null,
+      body.userRemark || null,
       body.data ? JSON.stringify(body.data) : null,
       ]
     )

@@ -6,9 +6,11 @@ interface RecordData {
   timestamp?: number
   isFavorite?: boolean
   equipPrice?: number | null
+  userPrice?: number | null
   estimatedPrice?: number | null
   statusDesc?: string
   remark?: string | null
+  userRemark?: string | null
   data?: any
   [key: string]: any
 }
@@ -25,9 +27,11 @@ export const useDb = () => {
       timestamp: record.timestamp,
       isFavorite: !!record.isFavorite,
       equipPrice: normalizePrice(record.equipPrice),
+      userPrice: normalizePrice(record.userPrice),
       estimatedPrice: normalizePrice(record.estimatedPrice),
       statusDesc: record.statusDesc || '',
       remark: record.remark || null,
+      userRemark: record.userRemark || null,
       data: record.data || null,
     }
     // @ts-ignore - Nuxt $fetch has complex route types

@@ -148,21 +148,21 @@
           >
             <div v-loading = "item.loading">
               <!-- panel header -->
-              <div class="panel-header" :class="{ 'bg-red': item.equipPrice > 0 && item.estimatedPrice / item.equipPrice > 1 }">
+              <div class="panel-header" :class="{ 'bg-red': displayPrice(item) > 0 && item.estimatedPrice / displayPrice(item) > 1 }">
                 <div class="header-info" v-if="item.data?.equip">
                   <h3 class="equip-header">
-                    <span class="price-main">¥{{ formatPrice(item.equipPrice) }}</span>
+                    <span class="price-main">¥{{ formatPrice(item.userPrice ?? item.equipPrice) }}</span>
 
                     <span class="price-estimated">
-                      (估 ¥{{ formatPrice(item.estimatedPrice) }}
+                      (CBG ¥{{ formatPrice(item.equipPrice) }} | 估 ¥{{ formatPrice(item.estimatedPrice) }}
                       <span class="separator">|</span>
                       <span
                         class="price-percent"
-                        :class="{ up: item.estimatedPrice / item.equipPrice >= 1, down: item.estimatedPrice / item.equipPrice < 1 }"
+                        :class="{ up: item.estimatedPrice / displayPrice(item) >= 1, down: item.estimatedPrice / displayPrice(item) < 1 }"
                       >
                       溢 {{
-                          item.equipPrice > 0
-                            ? ((item.estimatedPrice / item.equipPrice) * 100).toFixed(1) + '%'
+                          displayPrice(item) > 0
+                            ? ((item.estimatedPrice / displayPrice(item)) * 100).toFixed(1) + '%'
                             : '0%'
                         }}
                       </span>
@@ -442,18 +442,19 @@ const editRecord = (item) => {
   editDialog.link = item.link;
   editDialog.remark = item.remark || '';
   editDialog.visible = true;
-  editDialog.price = item.equipPrice || null;
+  editDialog.price = item.userPrice ?? null;
 };
 
 const saveRemark = async () => {
   try {
     const record = await getRecord(editDialog.link);
     if (record) {
-      record.remark = editDialog.remark || '';
+      record.userRemark = editDialog.remark.trim() || null;
+      record.remark = record.userRemark || '';
 
       // 用户填写了价格时才更新
       if (editDialog.price !== null && editDialog.price !== '') {
-        record.equipPrice = formatPrice(editDialog.price);
+        record.userPrice = formatPrice(editDialog.price);
       }
 
       await saveRecord(record);
@@ -474,6 +475,8 @@ const formatPrice = (value) => {
   const numberValue = Number(value);
   return Number.isFinite(numberValue) ? Math.round(numberValue) : 0;
 };
+
+const displayPrice = (item) => formatPrice(item?.userPrice ?? item?.equipPrice);
 
 // ============== 复制 / 打开链接 ==============
 const CBG_PREFIX = 'https://stzb.cbg.163.com/cgi/mweb/equip/1/';

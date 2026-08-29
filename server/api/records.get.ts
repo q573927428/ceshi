@@ -4,7 +4,7 @@ import { requireUser } from '../utils/auth'
 // 元数据字段列表（不含 data/raw_json 大字段）
 const META_FIELDS = [
   'id', 'user_id', 'link', 'timestamp', 'is_favorite',
-  'equip_price', 'estimated_price', 'status_desc', 'remark',
+    'equip_price', 'user_price', 'estimated_price', 'status_desc', 'remark', 'user_remark',
   'created_at', 'updated_at'
 ].join(', ')
 
@@ -46,9 +46,11 @@ export default defineEventHandler(async (event) => {
     timestamp: row.timestamp,
     isFavorite: !!row.is_favorite,
     equipPrice: row.equip_price,
+    userPrice: row.user_price,
     estimatedPrice: row.estimated_price,
     statusDesc: row.status_desc,
     remark: row.remark,
+    userRemark: row.user_remark,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     // data 字段不返回

@@ -7,6 +7,7 @@
     "migrate-user-quota": "node scripts/migrate-user-quota.mjs",
     "migrate-quota-to-remaining": "node scripts/migrate-quota-to-remaining.mjs",
     "migrate-link-unique": "node scripts/migrate-link-unique.mjs",
+    "migrate-user-price": "node scripts/migrate-user-price.mjs",
     "migrate-billing": "node scripts/migrate-billing.mjs",
     "build": "nuxt build",
     "start": "node .output/server/index.mjs",

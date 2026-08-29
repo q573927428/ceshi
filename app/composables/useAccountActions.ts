@@ -13,10 +13,12 @@ interface LinkItem {
   timestamp: number
   isFavorite: boolean
   equipPrice: number | null
+  userPrice: number | null
   estimatedPrice: number | null
   data: any
   loading: boolean
   remark: string
+  userRemark: string | null
   statusDesc: string
 }
 
@@ -174,9 +176,11 @@ export const useAccountActions = () => {
       timestamp: r.timestamp,
       isFavorite: r.isFavorite,
       equipPrice: normalizePrice(r.equipPrice),
+      userPrice: normalizePrice(r.userPrice),
       data: r.data || null,  // 元数据没有 data，设为 null
       loading: false,
       remark: r.remark || '',
+      userRemark: r.userRemark || null,
       statusDesc: r.statusDesc,
       estimatedPrice: normalizePrice(r.estimatedPrice),
     }))
@@ -238,15 +242,13 @@ export const useAccountActions = () => {
             // 传null强制请求API获取最新价格（不走缓存）
             const processed = await fetchAccountData(link, null)
             record.data = processed
-            const priceToUse = prices.length >= index ? normalizePrice(prices[index - 1]) : normalizePrice(processed.equipPrice)
-            record.equipPrice = priceToUse
+            const enteredPrice = prices.length >= index ? normalizePrice(prices[index - 1]) : null
+            if (enteredPrice !== null) record.userPrice = enteredPrice
+            record.equipPrice = normalizePrice(processed.equipPrice)
             record.estimatedPrice = normalizePrice(processed.estimatedPrice)
             record.timestamp = Date.now()
-            if (remarkToUse.trim() !== '') {
-              record.remark = remarkToUse.trim()
-            } else if (!record.remark?.trim()) {
-              record.remark = limitRemark(processed.defaultRemark)
-            }
+            if (remarkToUse.trim() !== '') record.userRemark = remarkToUse.trim()
+            record.remark = record.userRemark?.trim() || limitRemark(processed.defaultRemark)
             record.statusDesc = processed.statusDesc
             const result = await saveRecord(record)
             remainingQuota = result?.remaining
@@ -259,10 +261,12 @@ export const useAccountActions = () => {
               isFavorite: false,
               data: null,
               remark: remarkToUse || limitRemark(processed.defaultRemark),
+              userRemark: remarkToUse || null,
             }
             newRecord.data = processed
-            const priceToUse = prices.length >= index ? normalizePrice(prices[index - 1]) : normalizePrice(processed.equipPrice)
-            newRecord.equipPrice = priceToUse
+            const enteredPrice = prices.length >= index ? normalizePrice(prices[index - 1]) : null
+            newRecord.userPrice = enteredPrice
+            newRecord.equipPrice = normalizePrice(processed.equipPrice)
             newRecord.estimatedPrice = normalizePrice(processed.estimatedPrice)
             newRecord.statusDesc = processed.statusDesc
             const result = await saveRecord(newRecord)
@@ -384,9 +388,7 @@ export const useAccountActions = () => {
       record.equipPrice = normalizePrice(processed.equipPrice)
       record.estimatedPrice = normalizePrice(processed.estimatedPrice)
       record.statusDesc = processed.statusDesc
-      if (!record.remark?.trim()) {
-        record.remark = limitRemark(processed.defaultRemark)
-      }
+      record.remark = record.userRemark?.trim() || limitRemark(processed.defaultRemark)
       await saveRecord(record)
 
       // 直接更新当前面板数据，避免全量重载导致所有面板 data 清空再重新加载
@@ -430,9 +432,7 @@ export const useAccountActions = () => {
         record.equipPrice = normalizePrice(processed.equipPrice)
         record.estimatedPrice = normalizePrice(processed.estimatedPrice)
         record.statusDesc = processed.statusDesc
-        if (!record.remark?.trim()) {
-          record.remark = limitRemark(processed.defaultRemark)
-        }
+        record.remark = record.userRemark?.trim() || limitRemark(processed.defaultRemark)
         await saveRecord(record)
       } catch (err) {
         // 跳过失败的

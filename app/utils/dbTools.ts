@@ -63,9 +63,13 @@ export async function importIndexedDB(file: File): Promise<boolean> {
                 equipPrice: record.equipPrice === null || record.equipPrice === undefined || record.equipPrice === ''
                   ? null
                   : (Number.isFinite(Number(record.equipPrice)) ? Math.round(Number(record.equipPrice)) : null),
+                userPrice: record.userPrice === null || record.userPrice === undefined || record.userPrice === ''
+                  ? null
+                  : (Number.isFinite(Number(record.userPrice)) ? Math.round(Number(record.userPrice)) : null),
                 estimatedPrice: record.estimatedPrice === null || record.estimatedPrice === undefined || record.estimatedPrice === ''
                   ? null
                   : (Number.isFinite(Number(record.estimatedPrice)) ? Math.round(Number(record.estimatedPrice)) : null),
+                userRemark: record.userRemark || null,
                 statusDesc: record.statusDesc || '',
                 remark: record.remark || null,
                 data: record.data || null,

@@ -17,6 +17,8 @@ export interface RecordRow {
   timestamp: number
   is_favorite: number
   equip_price: number | null
+  user_price: number | null
+  user_remark: string | null
   estimated_price: number | null
   status_desc: string
   remark: string | null
@@ -33,6 +35,8 @@ export interface RecordOutput {
   timestamp: number
   isFavorite: boolean
   equipPrice: number | null
+  userPrice: number | null
+  userRemark: string | null
   estimatedPrice: number | null
   statusDesc: string
   remark: string | null
@@ -59,6 +63,8 @@ export function toCamelCase(row: RecordRow): RecordOutput {
     timestamp: row.timestamp,
     isFavorite: !!row.is_favorite,
     equipPrice: row.equip_price,
+    userPrice: row.user_price,
+    userRemark: row.user_remark,
     estimatedPrice: row.estimated_price,
     statusDesc: row.status_desc,
     remark: row.remark,
