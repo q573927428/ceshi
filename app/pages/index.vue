@@ -315,16 +315,10 @@
           </div>
         </div>
 
-        <!-- 分页 -->
-        <div class="pagination-container" v-if="filteredLinks.length > pageSize">
-          <el-pagination
-            @current-change="handlePageChange"
-            :current-page="currentPage"
-            :page-size="pageSize"
-            :total="filteredLinks.length"
-            layout="prev, pager, next"
-            background
-          />
+        <!-- 无限滚动触发器 -->
+        <div ref="loadMoreRef" class="load-more-sentinel" role="status" aria-live="polite">
+          <span v-if="isLoadingMore">正在加载...</span>
+          <span v-else-if="!hasMore">已加载全部</span>
         </div>
       </div>
 
@@ -370,7 +364,7 @@
 
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue';
+import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import CategoryCardsList from '~/components/CategoryCardsList.vue';
 import SkillCard from '~/components/SkillCard.vue';
 import skillQualityMap from '~/config/skillQualityMap';
@@ -390,6 +384,10 @@ const { isLoggedIn, load: loadAuth } = useAuth();
 
 // 翻页后将视图定位到排序筛选区域，避免回到页面最顶部。
 const filterControlsRef = ref(null);
+const loadMoreRef = ref(null);
+const isLoadingMore = ref(false);
+const hasMore = computed(() => currentPage.value * pageSize.value < filteredLinks.value.length);
+let loadMoreObserver = null;
 
 // ============== 从 composable 获取状态与方法 ==============
 const {
@@ -556,29 +554,25 @@ const formatTimestamp = (ts) => {
   });
 };
 
-// ============== 分页事件 ==============
-const handlePageChange = async (page) => {
-  currentPage.value = page;
-  // 翻页后异步加载新页的完整 data
+// ============== 无限滚动 ==============
+const loadNextPage = async () => {
+  if (isLoadingMore.value || !hasMore.value) return;
+  isLoadingMore.value = true;
+  currentPage.value += 1;
   await ensureCurrentPageData();
-  nextTick(() => {
-    // 实际的滚动容器是 .admin-main（el-main），按目标元素相对位置滚动。
-    const scrollContainer = document.querySelector('.admin-main');
-    const target = filterControlsRef.value;
-    if (scrollContainer && target) {
-      const containerRect = scrollContainer.getBoundingClientRect();
-      const targetRect = target.getBoundingClientRect();
-      scrollContainer.scrollTo({
-        top: scrollContainer.scrollTop + targetRect.top - containerRect.top,
-        behavior: 'smooth'
-      });
-    } else {
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
-    }
-  });
+  isLoadingMore.value = false;
+};
+
+const observeLoadMore = async () => {
+  await nextTick();
+  if (!loadMoreRef.value) return;
+  if (!loadMoreObserver) {
+    loadMoreObserver = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting) loadNextPage();
+    }, { root: document.querySelector('.admin-main'), rootMargin: '300px 0px' });
+  }
+  loadMoreObserver.disconnect();
+  loadMoreObserver.observe(loadMoreRef.value);
 };
 
 // ============== gridStyle 计算 ==============
@@ -628,7 +622,17 @@ const importDB = async (file) => {
 // ============== 页面生命周期 ==============
 onMounted(async () => {
   await loadAuth();
-  if (isLoggedIn.value) await loadLinksFromDB();
+  if (isLoggedIn.value) {
+    await loadLinksFromDB();
+    observeLoadMore();
+  }
+});
+
+watch(() => pagedLinks.value.length, () => observeLoadMore());
+
+onUnmounted(() => {
+  loadMoreObserver?.disconnect();
+  loadMoreObserver = null;
 });
 </script>
 
@@ -825,6 +829,19 @@ onMounted(async () => {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+}
+
+.load-more-sentinel {
+  width: 100%;
+  min-height: 56px;
+  margin: 24px 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #909399;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
 }
 
 .panel-loading {

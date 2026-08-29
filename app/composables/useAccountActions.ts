@@ -585,8 +585,8 @@ export const useAccountActions = () => {
   })
 
   const pagedLinks = computed(() => {
-    const start = (currentPage.value - 1) * pageSize.value
-    return filteredLinks.value.slice(start, start + pageSize.value)
+    // 无限滚动模式下保留已加载页，避免翻页时旧卡片消失。
+    return filteredLinks.value.slice(0, currentPage.value * pageSize.value)
   })
 
   // 监听当前页数据变化，自动加载缺失的完整 data
