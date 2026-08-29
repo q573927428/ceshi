@@ -5,7 +5,12 @@
         <el-input v-model.trim="cardSearch" placeholder="输入武将名称" clearable @keyup.enter="searchCards"><template #append><el-button @click="searchCards">搜索</el-button></template></el-input>
         <el-select v-model="cardTargetCategory" style="width: 100%; margin-top: 12px;"><el-option v-for="category in categories" :key="category.name" :label="category.name" :value="category.name" /></el-select>
         <div v-if="cardSearchSubmitted" class="search-results">
-          <div v-for="card in cardSearchResults" :key="card.id" class="result-item" @click="addSelectedCard(card)"><CardItem v-bind="card" /><div class="result-id">ID: {{ card.hero_id }}</div></div>
+          <div v-for="group in groupedCardSearchResults" :key="group.name" class="search-country-group">
+            <div class="search-country-title">{{ group.name }} ({{ group.cards.length }})</div>
+            <div class="search-country-cards">
+              <div v-for="card in group.cards" :key="card.id" class="result-item" @click="addSelectedCard(card)"><CardItem v-bind="card" /><div class="result-id">ID: {{ card.hero_id }}</div></div>
+            </div>
+          </div>
           <span v-if="!cardSearchResults.length">未找到匹配武将</span>
         </div>
     </el-dialog>
@@ -106,6 +111,19 @@ export default {
         }
       })
       return [...unique.values()].filter(card => String(card.name || '').toLowerCase().includes(query))
+    },
+    groupedCardSearchResults() {
+      const countryNames = { 1: '汉', 2: '魏', 3: '蜀', 4: '吴', 5: '群', 6: '晋' }
+      const groups = new Map()
+      this.cardSearchResults.forEach(card => {
+        const name = countryNames[Number(card.country)] || '其他'
+        if (!groups.has(name)) groups.set(name, [])
+        groups.get(name).push(card)
+      })
+      const order = ['汉', '魏', '蜀', '吴', '群', '晋', '其他']
+      return [...groups]
+        .map(([name, cards]) => ({ name, cards: cards.sort((a, b) => Number(a.hero_id) - Number(b.hero_id)) }))
+        .sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name))
     },
     selectedCard() {
       return this.cardSearchResults.find(card => card.hero_id === this.selectedCardId)
@@ -366,7 +384,10 @@ export default {
 .add-dialog-mask { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.45); }
 .add-dialog { width: min(92vw, 440px); max-height: 85vh; overflow: auto; padding: 20px; background: #fff; border-radius: 8px; }
 .add-dialog input, .add-dialog select, .add-dialog > button { margin: 4px; padding: 8px; }
-.search-results { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; max-height: 56vh; overflow-y: auto; margin: 14px 4px; padding: 4px; }
+.search-results { max-height: 56vh; overflow-y: auto; margin: 14px 4px; padding: 4px; }
+.search-country-group { margin-bottom: 16px; }
+.search-country-title { padding: 6px 8px; margin-bottom: 8px; border-bottom: 1px solid #ebeef5; color: #303133; font-size: 14px; font-weight: 600; }
+.search-country-cards { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; }
 .result-item { position: relative; flex: 0 0 auto; cursor: pointer; }
 .result-id { margin-top: 3px; color: #909399; font-size: 12px; text-align: center; }
 .dialog-close { float: right; }
