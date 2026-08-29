@@ -193,6 +193,42 @@ export const useAccountActions = () => {
     await ensureCurrentPageData()
   }
 
+  // 删除成功后只更新本地列表，避免重新加载所有账号导致页面闪烁和卡片状态丢失。
+  const removeLinksLocally = (links: string[]) => {
+    const deletedLinks = new Set(links)
+    zangbaoLinks.value = zangbaoLinks.value.filter((item) => !deletedLinks.has(item.link))
+
+    for (const link of deletedLinks) {
+      delete activeTabs[link]
+    }
+
+    const pageCount = Math.max(1, Math.ceil(filteredLinks.value.length / pageSize.value))
+    currentPage.value = Math.min(currentPage.value, pageCount)
+  }
+
+  // 添加或更新成功后同步单条记录，避免重新加载整个列表。
+  const upsertLinkLocally = (record: any) => {
+    const item = {
+      link: record.link,
+      timestamp: record.timestamp,
+      isFavorite: !!record.isFavorite,
+      equipPrice: normalizePrice(record.equipPrice),
+      userPrice: normalizePrice(record.userPrice),
+      data: record.data || null,
+      loading: false,
+      remark: record.remark || '',
+      userRemark: record.userRemark || null,
+      statusDesc: record.statusDesc || '',
+      estimatedPrice: normalizePrice(record.estimatedPrice),
+    }
+    const existing = zangbaoLinks.value.find((linkItem) => linkItem.link === record.link)
+
+    if (existing) Object.assign(existing, item)
+    else zangbaoLinks.value.push(item)
+
+    activeTabs[record.link] = activeTabs[record.link] || 'first'
+  }
+
   // 添加
   const addLink = async () => {
     const input = newLink.value.trim()
@@ -223,6 +259,7 @@ export const useAccountActions = () => {
       return
     }
 
+    const isSingleLink = links.length === 1
     globalLoading.value = true
     const failed: string[] = []
     let index = 0
@@ -237,6 +274,7 @@ export const useAccountActions = () => {
         const remarkToUse = pickRemarkForIndex(links, remarks, index)
 
         try {
+          let savedRecord: any
           let record = await getRecord(link)
           if (record) {
             // 传null强制请求API获取最新价格（不走缓存）
@@ -251,6 +289,7 @@ export const useAccountActions = () => {
             record.remark = record.userRemark?.trim() || limitRemark(processed.defaultRemark)
             record.statusDesc = processed.statusDesc
             const result = await saveRecord(record)
+            savedRecord = record
             remainingQuota = result?.remaining
             ElMessage.success(`第 ${index} 个已存在，更新成功`)
           } else {
@@ -270,11 +309,12 @@ export const useAccountActions = () => {
             newRecord.estimatedPrice = normalizePrice(processed.estimatedPrice)
             newRecord.statusDesc = processed.statusDesc
             const result = await saveRecord(newRecord)
+            savedRecord = newRecord
             remainingQuota = result?.remaining
-            ElMessage.success(`第 ${index} 个添加成功`)
+            ElMessage.success(isSingleLink ? '添加成功' : `第 ${index} 个添加成功`)
           }
 
-          await loadLinksFromDB()
+          upsertLinkLocally(savedRecord)
           notifyRecordCountChanged(remainingQuota)
         } catch (err) {
           console.error('处理链接失败：', link, err)
@@ -291,7 +331,7 @@ export const useAccountActions = () => {
 
     failed.push(...skippedLinks)
     if (failed.length) ElMessage.warning(`部分失败：${failed.length} 个`)
-    else ElMessage.success('全部完成')
+    else if (!isSingleLink) ElMessage.success('全部完成')
   }
 
   // 删除
@@ -301,7 +341,7 @@ export const useAccountActions = () => {
         type: 'warning',
       })
       await deleteRecord(link)
-      await loadLinksFromDB()
+      removeLinksLocally([link])
       notifyRecordCountChanged()
       ElMessage.success('删除成功')
     } catch (err) {
@@ -346,6 +386,7 @@ export const useAccountActions = () => {
     globalLoading.value = true
     updateProgress.value = `正在删除 0/${list.length}`
     const failed: string[] = []
+    const deleted: string[] = []
 
     let idx = 0
     for (const item of list) {
@@ -353,17 +394,17 @@ export const useAccountActions = () => {
       updateProgress.value = `正在删除 ${idx}/${list.length}`
       try {
         await deleteRecord(item.link)
+        deleted.push(item.link)
       } catch (err) {
         console.error('删除失败：', item.link, err)
         failed.push(item.link)
       }
     }
 
-    await loadLinksFromDB()
+    removeLinksLocally(deleted)
     notifyRecordCountChanged()
     globalLoading.value = false
     updateProgress.value = ''
-    currentPage.value = 1
 
     if (failed.length) {
       ElMessage.warning(`删除完成，但 ${failed.length} 条失败`)

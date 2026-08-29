@@ -458,9 +458,17 @@ const saveRemark = async () => {
       }
 
       await saveRecord(record);
-      await loadLinksFromDB();
+      // 保存成功后同步当前卡片，避免重新加载全部账号导致页面闪烁。
+      const item = zangbaoLinks.value.find((linkItem) => linkItem.link === editDialog.link);
+      if (item) {
+        item.remark = record.remark || '';
+        item.userRemark = record.userRemark || null;
+        if (editDialog.price !== null && editDialog.price !== '') {
+          item.userPrice = formatPrice(editDialog.price);
+        }
+      }
       editDialog.visible = false;
-      ElMessage.success('备注已保存');
+      ElMessage.success('保存成功');
     } else {
       ElMessage.error('未找到记录');
     }
