@@ -195,6 +195,7 @@
                     <div class="header-actions-top">
                     <el-button
                       type="info"
+                      size="small"
                       circle
                       plain
                       :loading="item.loading"
@@ -204,12 +205,13 @@
                       <el-icon><Refresh /></el-icon>
                     </el-button>
 
-                    <el-button type="primary" circle plain @click="copyUrl(item.link,item.remark)" title="复制链接">
+                    <el-button type="primary" size="small" circle plain @click="copyUrl(item.link,item.remark)" title="复制链接">
                       <el-icon><DocumentCopy /></el-icon>
                     </el-button>
 
                     <el-button
                       type="warning"
+                      size="small"
                       circle
                       plain
                       @click="editRecord(item)"
@@ -218,12 +220,13 @@
                       <el-icon><Edit /></el-icon>
                     </el-button>
 
-                    <el-button type="primary" circle plain @click="openLink(item.link)" title="打开链接">
+                    <el-button type="primary" size="small" circle plain @click="openLink(item.link)" title="打开链接">
                       <el-icon><Connection /></el-icon>
                     </el-button>
 
                     <el-button
                       type="warning"
+                      size="small"
                       circle
                       :plain="!item.isFavorite"
                       @click="toggleFavorite(item)"
@@ -232,13 +235,13 @@
                       <el-icon><Star /></el-icon>
                     </el-button>
 
-                    <el-button type="danger" circle plain @click="removeLink(item.link)" title="删除">
+                    <el-button type="danger" size="small" circle plain @click="removeLink(item.link)" title="删除">
                       <el-icon><Delete /></el-icon>
                     </el-button>
                   </div>
                   <div class="price-info">
-                    <el-tag type="primary" size="large" effect="plain" round>卡池 {{ item.data.cardTotalValue || 0 }}</el-tag> + <el-tag type="success" effect="plain" size="large" round>武器 {{ item.data.weaponTotalValue || 0 }}</el-tag> =
-                    <el-tag type="danger" size="large" effect="plain" round> {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }}  元 </el-tag> 
+                    <el-tag type="primary" size="small" effect="plain" round>卡 {{ item.data.cardTotalValue || 0 }}</el-tag> + <el-tag type="success" effect="plain" size="small" round>武 {{ item.data.weaponTotalValue || 0 }}</el-tag> =
+                    <el-tag type="danger" size="small" effect="plain" round> {{ (item.data.cardTotalValue || 0) + (item.data.weaponTotalValue || 0) }}  元 </el-tag> 
                   </div>
                 </div>
               </div>
