@@ -47,8 +47,22 @@
           >
             <el-button type="warning" plain>导入数据</el-button>
           </el-upload> -->
-          <el-checkbox v-model="showRemarkInput">写备注</el-checkbox>
-          <el-checkbox v-model="showPriceInput">写价格</el-checkbox>
+          <el-switch
+            v-model="showRemarkInput"
+            class="input-mode-switch"
+            inline-prompt
+            active-text="写备注"
+            inactive-text="备注"
+            aria-label="写备注"
+          />
+          <el-switch
+            v-model="showPriceInput"
+            class="input-mode-switch"
+            inline-prompt
+            active-text="写价格"
+            inactive-text="价格"
+            aria-label="写价格"
+          />
         </div>
       </div>
 
@@ -829,6 +843,11 @@ onUnmounted(() => {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+}
+.input-mode-switch {
+  --el-switch-on-color: #409eff;
+  --el-switch-off-color: #c0c4cc;
+  min-width: 72px;
 }
 
 .load-more-sentinel {
