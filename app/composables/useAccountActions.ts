@@ -23,7 +23,7 @@ interface LinkItem {
 }
 
 // 批量操作中相邻账号请求的最小间隔，避免短时间内触发过多外部 API 请求。
-const BATCH_ITEM_DELAY_MS = 10000
+const BATCH_ITEM_DELAY_MS = 5000
 
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 

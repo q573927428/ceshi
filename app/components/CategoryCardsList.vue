@@ -460,10 +460,10 @@ export default {
   margin-bottom: 10px;
   background: #f5f5f5;
   padding: 15px ;
-  border-radius: 25px;
+  border-radius: 15px;
   display: inline-block;
   margin-right: 8px;
-  width: 100%;
+  min-width: 96%;
 }
 
 .category-title {
