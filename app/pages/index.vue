@@ -63,7 +63,7 @@
       </el-alert>
 
       <!-- 筛选排序与列配置 -->
-      <div class="filter-controls">
+      <div ref="filterControlsRef" class="filter-controls">
         <div class="filter-sort">
           <span style="margin-top: 3px;">排序：</span>
           <el-button @click="setSort('time')" plain :type="sortKey === 'time' ? 'danger' : 'primary'">
@@ -388,6 +388,9 @@ import { useAuth } from '~/composables/useAuth';
 
 const { isLoggedIn, load: loadAuth } = useAuth();
 
+// 翻页后将视图定位到排序筛选区域，避免回到页面最顶部。
+const filterControlsRef = ref(null);
+
 // ============== 从 composable 获取状态与方法 ==============
 const {
   // 状态
@@ -559,11 +562,14 @@ const handlePageChange = async (page) => {
   // 翻页后异步加载新页的完整 data
   await ensureCurrentPageData();
   nextTick(() => {
-    // 实际的滚动容器是 .admin-main（el-main），window 不会滚动
+    // 实际的滚动容器是 .admin-main（el-main），按目标元素相对位置滚动。
     const scrollContainer = document.querySelector('.admin-main');
-    if (scrollContainer) {
+    const target = filterControlsRef.value;
+    if (scrollContainer && target) {
+      const containerRect = scrollContainer.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
       scrollContainer.scrollTo({
-        top: 0,
+        top: scrollContainer.scrollTop + targetRect.top - containerRect.top,
         behavior: 'smooth'
       });
     } else {
