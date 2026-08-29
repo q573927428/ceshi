@@ -493,7 +493,8 @@ export const useAccountActions = () => {
 
     record.isFavorite = !record.isFavorite
     await saveRecord(record)
-    await loadLinksFromDB()
+    // 只同步当前卡片，避免收藏切换导致所有账号重新加载。
+    item.isFavorite = !!record.isFavorite
   }
 
   const setStatusFilter = (value: string) => {
