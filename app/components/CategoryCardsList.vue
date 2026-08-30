@@ -162,7 +162,14 @@ export default {
           .flatMap(category => category.cards)
           .find(item => item.hero_id === heroId)
         const country = rawCard.country ?? rawCard.country_id ?? rawCard.faction ?? configuredCard?.country ?? 5
-        const card = { ...rawCard, hero_id: heroId, country: Number(country), name: rawCard.name || rawCard.hero_name }
+        const card = {
+          ...rawCard,
+          hero_id: heroId,
+          country: Number(country),
+          name: rawCard.name || rawCard.hero_name,
+          // 兼容旧接口/旧缓存：从内置卡片配置补回季节标识
+          season: rawCard.season ?? configuredCard?.season ?? 'N'
+        }
         if (card.hero_id != null && !unique.has(card.hero_id)) {
           const iconHeroId = card.icon_hero_id || card.hero_id
           unique.set(card.hero_id, { ...card, id: `account-${card.hero_id}`, imageUrl: `https://cbg-stzb.res.netease.com/game_res/cards/cut/card_medium_${iconHeroId}.jpg`, opacity: 1 })
@@ -383,10 +390,11 @@ export default {
         { id: 58, name: '于禁', country: 2, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100796, icon_hero_id: 100796 },
         { id: 59, name: '陆逊', country: 4, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100791, icon_hero_id: 100791 },
         { id: 60, name: '左慈', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100802, icon_hero_id: 100802 },
-        { id: 61, name: '孙坚', country: 1, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100805, icon_hero_id: 100805 },
         { id: 6, name: '孙权', country: 1, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100808, icon_hero_id: 100808 },
         { id: 63, name: '孟获', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100815, icon_hero_id: 100815 },
-        { id: 65, name: '小乔', country: 4, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100687, icon_hero_id: 100687 }
+        { id: 65, name: '小乔', country: 4, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100687, icon_hero_id: 100687 },
+        { id: 66, name: '司马徽', country: 5, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100811, icon_hero_id: 100811 },
+        { id: 67, name: '冯嫽', country: 1, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100812, icon_hero_id: 100812 },
       ];
 
       return sCardsData.map(card => ({
@@ -426,7 +434,10 @@ export default {
         { id: 91, name: '裴秀', country: 6, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100801, icon_hero_id: 100801 },
         { id: 93, name: '蒋琬', country: 3, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100800, icon_hero_id: 100800 },
         { id: 94, name: '周仓', country: 3, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'XP', hero_id: 100691, icon_hero_id: 100691 },
-        { id: 95, name: '陈到', country: 3, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100793, icon_hero_id: 100793 }
+        { id: 95, name: '陈到', country: 3, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100793, icon_hero_id: 100793 },
+        { id: 96, name: '刘备', country: 1, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100803, icon_hero_id: 100803 },
+        { id: 97, name: '曹操', country: 1, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100804, icon_hero_id: 100804 },
+        { id: 98, name: '孙坚', country: 1, quality: 5, awake_state: 1, policy_awake_state: 0, hero_achieve: 0, advance_num: 0, is_support: false, season: 'N', hero_id: 100805, icon_hero_id: 100805 },
       ];
 
       return aCardsData.map(card => ({

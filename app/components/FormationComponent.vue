@@ -18,7 +18,10 @@
               'team-group-medium-advance': team.totalAdvanceNum >= 10 && team.totalAdvanceNum < 15
             }"
           >
-            <div class="team-title">{{ team.title }} （ <span class="team-total-advance"> {{ team.totalAdvanceNum }} </span> 红 ）</div>
+            <div class="team-title">
+              <span>{{ team.title }} （ <span class="team-total-advance"> {{ team.totalAdvanceNum }} </span> 红 ）</span>
+              <span class="team-tier" :class="getTierClass(team.tier)">{{ team.tier }}</span>
+            </div>
             <div class="team-cards">
               <CardItem
                 v-for="card in team.cards" 
@@ -76,124 +79,127 @@ export default {
         {
           category: '开荒',
           teams: [
-            { title: '大乐于', heroes: [100619, 100685, 100796] },
-            { title: '大黄乐', heroes: [100619, 100020, 100685] },
-            { title: '大黄机', heroes: [100619, 100020, 100526] },
-            { title: '马魏甄', heroes: [100013, 100649, 100015] }
+            { title: '大乐于', heroes: [100619, 100685, 100796], tier: 'T0' },
+            { title: '大黄乐', heroes: [100619, 100020, 100685], tier: 'T1' },
+            { title: '大黄机', heroes: [100619, 100020, 100526], tier: 'T1+' },
+            { title: '马魏甄', heroes: [100013, 100649, 100015], tier: 'T2' }
           ]
         },
         {
           category: '垒石',
           teams: [
-            { title: '司马霸府', heroes: [100701, 100807, 100703] },
-            { title: '钱步', heroes: [100703, 100708, 100709] },
-            { title: '庞司刘', heroes: [100477, 100016, 100807] },
-            { title: '大桥流氓', heroes: [100619, 100526, 100030] },
-            { title: '大张鲁', heroes: [100619, 100526, 100741] },
-            { title: '鬼吕流氓', heroes: [100479, 100526, 100030] },
-            { title: '吕布网红', heroes: [100479, 100337, 100526] },
-            { title: '大章鱼', heroes: [100619, 100526, 100787] },
-            { title: 'XP周瑜打火机', heroes: [100478, 100526, 100784] },
-            { title: '李儒流氓', heroes: [100604, 100526, 100030] },
-            { title: '赵无敌', heroes: [100021, 100526, 100649] },
-            { title: '周泰张机肉步', heroes: [100574, 100526, 100589] },
-            { title: '大张张', heroes: [100619, 100526, 100648] },
-            { title: '爷爷队', heroes: [100574, 100526, 100630] },
-            { title: '庞张昱', heroes: [100477, 100526, 100787] },
-            { title: 'SP赵无敌', heroes: [102001, 100526, 102012] },
-            { title: '黄无敌', heroes: [100526, 100649, 100630] },
-            { title: '鬼无敌', heroes: [100479, 100526, 100649] },
-            { title: '赵诸魏', heroes: [100021, 100496, 100649] }
+            { title: '司马霸府', heroes: [100701, 100807, 100703], tier: 'T0' },
+            { title: '钱步', heroes: [100703, 100708, 100709], tier: 'T0' },
+            { title: '庞司刘', heroes: [100477, 100016, 100807], tier: 'T0' },
+            { title: '大司机', heroes: [100619, 100807, 100526], tier: 'T0' },
+            { title: '大桥流氓', heroes: [100619, 100526, 100030], tier: 'T1-' },
+            { title: '大张鲁', heroes: [100619, 100526, 100741], tier: 'T1' },
+            { title: '鬼吕流氓', heroes: [100479, 100526, 100030], tier: 'T1-' },
+            { title: '吕布网红', heroes: [100479, 100337, 100526], tier: 'T1' },
+            { title: '大章鱼', heroes: [100619, 100526, 100787], tier: 'T1' },
+            { title: 'XP周瑜打火机', heroes: [100478, 100526, 100784], tier: 'T1-' },
+            { title: '李儒流氓', heroes: [100604, 100526, 100030], tier: 'T2' },
+            { title: '赵无敌', heroes: [100021, 100526, 100649], tier: 'T1-' },
+            { title: '周泰张机肉步', heroes: [100574, 100526, 100589], tier: 'T2-' },
+            { title: '大张张', heroes: [100619, 100526, 100648], tier: 'T2' },
+            { title: '爷爷队', heroes: [100574, 100526, 100630], tier: 'T2+' },
+            { title: '庞张昱', heroes: [100477, 100526, 100787], tier: 'T1+' },
+            { title: 'SP赵无敌', heroes: [102001, 100526, 102012], tier: 'T2+' },
+            { title: '黄无敌', heroes: [100526, 100649, 100630], tier: 'T2-' },
+            { title: '鬼无敌', heroes: [100479, 100526, 100649], tier: 'T2' },
+            { title: '赵诸魏', heroes: [100021, 100496, 100649], tier: 'T2' }
             
           ]
         },
         {
           category: '神兵大赏',
           teams: [
-            { title: '朱狗刀', heroes: [100024, 100807, 100553] },
-            { title: '司马懿核弹', heroes: [100474, 100807, 100553] },
-            { title: '曹彰法刀', heroes: [100683, 100692, 100023] },
-            { title: '狗刀', heroes: [100024, 100035, 100023] },
-            { title: '王异法刀1', heroes: [100028, 100814, 100023] },
-            { title: '王异法刀2', heroes: [100028, 100807, 100023] },
-            { title: '王异法刀3', heroes: [100028, 100035, 100023] },
-            { title: '杜预卫瓘法刀', heroes: [100705, 100707, 100035] },
-            { title: '曹操杜预法刀', heroes: [100705, 100035, 100023] },
-            { title: '陈宫袁绍刀', heroes: [100670, 100443, 100035] },
-            { title: '李儒袁绍刀', heroes: [100670, 100604, 100035] },
-            { title: '田丰袁绍刀', heroes: [100670, 100035, 100692] },
-            { title: '鬼神刀', heroes: [100479, 100035, 100692] },
-            { title: '核弹', heroes: [100604, 100474, 100035] },
-            { title: '朱儁核弹', heroes: [100604, 100474, 100553] },
-            { title: '战龙刀', heroes: [100494, 100647, 100023] },
-            { title: '大乔法刀', heroes: [100619, 100035, 100496] },
-            { title: '大都督', heroes: [100478, 100031, 100035] },
+            { title: '朱狗刀', heroes: [100024, 100807, 100553], tier: 'T0' },
+            { title: '司马懿核弹', heroes: [100474, 100807, 100553], tier: 'T0' },
+            { title: '曹彰法刀', heroes: [100683, 100692, 100023], tier: 'T1+' },
+            { title: '狗刀', heroes: [100024, 100035, 100023], tier: 'T1-' },
+            { title: '王异法刀1', heroes: [100028, 100814, 100023], tier: 'T0' },
+            { title: '王异法刀2', heroes: [100028, 100807, 100023], tier: 'T1' },
+            { title: '王异法刀3', heroes: [100028, 100035, 100023], tier: 'T1' },
+            { title: '杜预卫瓘法刀', heroes: [100705, 100707, 100035], tier: 'T1-' },
+            { title: '曹操杜预法刀', heroes: [100705, 100035, 100023], tier: 'T1' },
+            { title: '陈宫袁绍刀', heroes: [100670, 100443, 100035], tier: 'T1' },
+            { title: '李儒袁绍刀', heroes: [100670, 100604, 100035], tier: 'T1' },
+            { title: '田丰袁绍刀', heroes: [100670, 100035, 100692], tier: 'T1' },
+            { title: '鬼神刀', heroes: [100479, 100035, 100692], tier: 'T1-' },
+            { title: '核弹', heroes: [100604, 100474, 100035], tier: 'T2' },
+            { title: '朱儁核弹', heroes: [100604, 100474, 100553], tier: 'T2-' },
+            { title: '斩龙刀', heroes: [100494, 100647, 100023], tier: 'T1-' },
+            { title: '大乔法刀', heroes: [100619, 100035, 100496], tier: 'T1+' },
+            { title: '大都督', heroes: [100478, 100031, 100035], tier: 'T2-' },
             
           ]
         },
         {
           category: '战必磐阵',
           teams: [
-            { title: '三马队', heroes: [100615, 100799, 100785] },
-            { title: '马谡蜀骑', heroes: [100615, 100799, 100620] },
-            { title: '属性队', heroes: [100794, 100771, 100474] },
-            { title: '程昱魏智', heroes: [100024, 100787, 100476] },
-            { title: '曹彰流氓', heroes: [100683, 100029, 100030] },
-            { title: '多马队', heroes: [100701, 100687, 100476] },
-            { title: '雨化田', heroes: [100451, 100647, 100692] },
-            { title: '五虎队', heroes: [100022, 100451, 100021] },
-            { title: '刘禅关银屏', heroes: [100072, 100029, 100689] },
-            { title: '张绣蜀骑', heroes: [100615, 100451, 100620] },
-            { title: '合纵蜀骑1', heroes: [100615, 100027, 100620] },
-            { title: '合纵蜀骑2', heroes: [100615, 100645, 100620] },
-            { title: '徐庶蜀骑', heroes: [100615, 100451, 100534] },
-            { title: '张飞流氓队', heroes: [100022, 100496, 100030] },
-            { title: '普通魏智', heroes: [100024, 100618, 100476] }
+            { title: '三马队', heroes: [100615, 100799, 100785], tier: 'T0' },
+            { title: '马谡蜀骑', heroes: [100615, 100799, 100620], tier: 'T1+' },
+            { title: '属性队', heroes: [100794, 100771, 100474], tier: 'T1' },
+            { title: '程昱魏智', heroes: [100024, 100787, 100476], tier: 'T1' },
+            { title: '曹彰流氓', heroes: [100683, 100029, 100030], tier: 'T1-' },
+            { title: '多马队', heroes: [100701, 100687, 100476], tier: 'T1' },
+            { title: '雨化田', heroes: [100451, 100647, 100692], tier: 'T1' },
+            { title: '五虎队', heroes: [100022, 100451, 100021], tier: 'T1-' },
+            { title: '刘禅关银屏', heroes: [100072, 100029, 100689], tier: 'T1-' },
+            { title: '张绣蜀骑', heroes: [100615, 100451, 100620], tier: 'T2-' },
+            { title: '合纵蜀骑1', heroes: [100615, 100027, 100620], tier: 'T2' },
+            { title: '合纵蜀骑2', heroes: [100615, 100645, 100620], tier: 'T2' },
+            { title: '徐庶蜀骑', heroes: [100615, 100451, 100534], tier: 'T2-' },
+            { title: '飞猪队', heroes: [100022, 100496, 100030], tier: 'T0' },
+            { title: '普通魏智', heroes: [100024, 100618, 100476], tier: 'T2+' }
           ]
         },
         {
           category: '攻其不备',
           teams: [
-            { title: '三曹队', heroes: [100683, 100498, 100023] },
-            { title: '小鸟刀', heroes: [100498, 100704, 100027] },
-            { title: '曹纯刀', heroes: [100498, 100013, 100027] },
-            { title: '鬼龙骑', heroes: [100479, 100498, 100023] },
-            { title: '吕布撸铁', heroes: [100479, 100452, 100023] },
-            { title: '大菜刀', heroes: [100013, 100027, 100023] },
-            { title: '攒刀', heroes: [100677, 100013, 100027] },
-            { title: '砍王', heroes: [100013, 100649, 100023] },
-            { title: '华雄撸铁', heroes: [100647, 100452, 100023] },
-            { title: '王异菜刀', heroes: [100028, 100027, 100023] }
+            { title: '三曹队', heroes: [100683, 100498, 100023], tier: 'T0' },
+            { title: '小鸟刀', heroes: [100498, 100704, 100027], tier: 'T0' },
+            { title: '曹纯刀', heroes: [100498, 100013, 100027], tier: 'T1' },
+            { title: '鬼龙骑', heroes: [100479, 100498, 100023], tier: 'T1' },
+            { title: '吕布撸铁', heroes: [100479, 100452, 100023], tier: 'T1-' },
+            { title: '大菜刀', heroes: [100013, 100027, 100023], tier: 'T1' },
+            { title: '攒刀', heroes: [100677, 100013, 100027], tier: 'T2+' },
+            { title: '砍王', heroes: [100013, 100649, 100023], tier: 'T2' },
+            { title: '华雄撸铁', heroes: [100647, 100452, 100023], tier: 'T2-' },
+            { title: '王异菜刀', heroes: [100028, 100027, 100023], tier: 'T1-' }
           ]
         },
         {
           category: '百战',
           teams: [
-            { title: '铁王八', heroes: [100790, 100016, 100769] },
-            { title: '鬼马韦', heroes: [100479, 100799, 100769] },
-            { title: '同心队', heroes: [100016, 100792, 100449] },
-            { title: '曹彰螃蟹', heroes: [100683, 100023, 100449] },
-            { title: '荀彧螃蟹', heroes: [100024, 100023, 100449] },
-            { title: '孙策螃蟹', heroes: [100450, 100023, 100449] },
-            { title: '华雄螃蟹', heroes: [100647, 100023, 100449] },
-            { title: '关羽螃蟹', heroes: [100451, 100023, 100449] },
-            { title: '百战钢板', heroes: [100016, 100480, 100020] }
+            { title: '铁王八', heroes: [100790, 100016, 100769], tier: 'T0' },
+            { title: '鬼马韦', heroes: [100479, 100799, 100769], tier: 'T1+' },
+            { title: '同心队', heroes: [100016, 100792, 100449], tier: 'T1' },
+            { title: '曹彰螃蟹', heroes: [100683, 100023, 100449], tier: 'T1' },
+            { title: '荀彧螃蟹', heroes: [100024, 100023, 100449], tier: 'T1-' },
+            { title: '孙策螃蟹', heroes: [100450, 100023, 100449], tier: 'T2-' },
+            { title: '华雄螃蟹', heroes: [100647, 100023, 100449], tier: 'T2' },
+            { title: '关羽螃蟹', heroes: [100451, 100023, 100449], tier: 'T2' },
+            { title: '百战钢板', heroes: [100016, 100480, 100020], tier: 'T2+' }
           ]
         },
         {
           category: '形兵',
           teams: [
-            { title: '孙权形兵', heroes: [100030, 100619, 100631] },
-            { title: '李儒形兵', heroes: [100604, 100452, 100337] },
-            { title: '吕布形兵', heroes: [100479, 100452, 100337] }
+            { title: '孙权形兵', heroes: [100030, 100619, 100631], tier: 'T2' },
+            { title: '李儒形兵', heroes: [100604, 100452, 100337], tier: 'T2-' },
+            { title: '吕布形兵', heroes: [100479, 100452, 100337], tier: 'T2+' }
           ]
         },
         {
           category: '其他',
           teams: [
-            { title: '横轭队', heroes: [100024, 100585, 100023] },
-            { title: '免疫法刀队', heroes: [100452, 100519, 100337] },
-            { title: '董卓刘备庞统钢板', heroes: [100477, 100016, 100480] }
+            { title: '郝昭白嫖1', heroes: [100475, 100799, 100645], tier: 'T0' },
+            { title: '郝昭白嫖2', heroes: [100475, 100337, 100480], tier: 'T1' },
+            { title: '横轭队', heroes: [100024, 100585, 100023], tier: 'T2' },
+            { title: '免疫法刀队', heroes: [100452, 100519, 100337], tier: 'T2' },
+            { title: '董卓庞统钢板', heroes: [100477, 100016, 100480], tier: 'T2' }
           ]
         }
       ];
@@ -214,7 +220,13 @@ export default {
           const teamsWithCards = validTeams.map(team => {
             // 保持武将的指定顺序，不根据进阶状态排序
             const cards = team.heroes.map(heroId => {
-              return this.uniqueCards.find(card => card.hero_id === heroId);
+              const card = this.uniqueCards.find(card => card.hero_id === heroId);
+              if (!card) return undefined;
+              return {
+                ...card,
+                // 兼容历史记录中缺失或使用数字表示的 season，确保 CardItem 能匹配样式类
+                season: this.normalizeSeason(card.season)
+              };
             }).filter(card => card !== undefined);
             
             // 计算队伍总进阶数量
@@ -226,8 +238,11 @@ export default {
               totalAdvanceNum
             };
           })
-          // 根据总进阶数进行降序排序
-          .sort((a, b) => b.totalAdvanceNum - a.totalAdvanceNum);
+          // 先按队伍等级降序，再按总进阶数（红度）降序排序
+          .sort((a, b) => {
+            const tierDifference = this.getTierRank(a.tier) - this.getTierRank(b.tier);
+            return tierDifference || (b.totalAdvanceNum - a.totalAdvanceNum);
+          });
 
           resultGroups.push({
             ...category,
@@ -240,6 +255,40 @@ export default {
     }
   },
   methods: {
+    normalizeSeason(season) {
+      if (season === null || season === undefined || season === '') return 'N';
+      if (typeof season === 'number' || /^\d+$/.test(String(season))) {
+        const numericSeason = Number(season);
+        return ({ 0: 'N', 2: 'S2', 3: 'S3', 4: 'XP', 5: 'SP' })[numericSeason] || 'N';
+      }
+      const normalized = String(season).toUpperCase();
+      return ['N', 'S2', 'S3', 'XP', 'SP'].includes(normalized) ? normalized : 'N';
+    },
+
+    getTierRank(tier) {
+      const tierRankMap = {
+        'T0': 0,
+        'T1+': 1,
+        'T1': 2,
+        'T1-': 3,
+        'T2+': 4,
+        'T2': 5,
+        'T2-': 6
+      };
+      return tierRankMap[tier] ?? Number.MAX_SAFE_INTEGER;
+    },
+    getTierClass(tier) {
+      const tierClassMap = {
+        'T0': 'tier-t0',
+        'T1-': 'tier-t1-minus',
+        'T1': 'tier-t1',
+        'T1+': 'tier-t1-plus',
+        'T2-': 'tier-t2-minus',
+        'T2': 'tier-t2',
+        'T2+': 'tier-t2-plus'
+      };
+      return tierClassMap[tier] || 'tier-unknown';
+    },
     getImageUrl(card) {
       if (card && card.icon_hero_id) {
         return `https://cbg-stzb.res.netease.com/game_res/cards/cut/card_medium_${card.icon_hero_id}.jpg`;
@@ -295,6 +344,56 @@ export default {
     font-size: 14px;
     font-weight: bold;
     margin-bottom: 2px; /* 可选：增加与卡片的间距 */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .team-tier {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 12px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .tier-t0 {
+    background-color: #c0392b;
+  }
+
+  .tier-t1-minus {
+    background-color: #e67e22;
+  }
+
+  .tier-t1 {
+    background-color: #d4a017;
+  }
+
+  .tier-t1-plus {
+    background-color: #2e8b57;
+  }
+
+  .tier-t2-minus {
+    background-color: #3973ac;
+  }
+
+  .tier-t2 {
+    background-color: #5b6fa6;
+  }
+
+  .tier-t2-plus {
+    background-color: #6c7a89;
+  }
+
+  .tier-unknown {
+    background-color: #7f8c8d;
   }
   
   .team-total-advance {

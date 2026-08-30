@@ -13,7 +13,8 @@ const allSkillIds: number[] = [
 
 interface CardData {
   hero_id: number
-  season?: number
+  // 接口通常返回 N/S2/S3/XP/SP，保留原值供 CardItem 生成 season-* 类名
+  season?: string | number
   advance_num?: number
   quality?: number
   name?: string
@@ -60,6 +61,7 @@ interface ProcessedData {
     icon_hero_id: number
     country: number
     advance_num: number
+    season?: string | number
   }>
   skill: Array<{
     skill_id: number
@@ -180,6 +182,8 @@ export const useFetchData = () => {
         // 保留武将所属国家，供 CardItem 渲染对应的 state 图标
         country: c.country ?? 5,
         advance_num: c.advance_num || 0,
+        // 季节标识不能在这里丢失，否则 CardItem 无法匹配 season-* 样式
+        season: c.season,
       })),
       // 保留账号接口返回的全部战法，前端可按名称搜索并自定义分组
       skill: (full.skill || [])
