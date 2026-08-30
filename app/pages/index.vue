@@ -37,8 +37,8 @@
         </div>
         <div class="button-section">
           <el-button type="primary" @click="addLink" :loading = "globalLoading">添加链接</el-button>
-          <el-button type="warning" @click="updateAll" :loading = "globalLoading" plain>更新全部</el-button>
-          <!-- <el-button type="info" @click="clearLinks" plain>清空链接</el-button>
+          <!-- <el-button type="warning" @click="updateAll" :loading = "globalLoading" plain>更新全部</el-button>
+          <el-button type="info" @click="clearLinks" plain>清空链接</el-button>
           <el-button type="primary" @click="exportDB" plain>导出数据</el-button>
           <el-upload
             :show-file-list="false"
@@ -847,7 +847,6 @@ onUnmounted(() => {
 .input-mode-switch {
   --el-switch-on-color: #409eff;
   --el-switch-off-color: #c0c4cc;
-  min-width: 72px;
 }
 
 .load-more-sentinel {
