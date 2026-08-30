@@ -8,7 +8,7 @@
           <div v-for="group in groupedCardSearchResults" :key="group.name" class="search-country-group">
             <div class="search-country-title">{{ group.name }} ({{ group.cards.length }})</div>
             <div class="search-country-cards">
-              <div v-for="card in group.cards" :key="card.id" class="result-item" @click="addSelectedCard(card)"><CardItem v-bind="card" /><div class="result-id">ID: {{ card.hero_id }}</div></div>
+              <div v-for="card in group.cards" :key="card.id" class="result-item" @click="addSelectedCard(card)"><CardItem v-bind="card" /><button type="button" class="result-id" :title="`复制武将ID ${card.hero_id}`" @click.stop="copyCardId(card.hero_id)">{{ card.hero_id }}</button></div>
             </div>
           </div>
           <span v-if="!cardSearchResults.length">未找到匹配武将</span>
@@ -201,6 +201,32 @@ export default {
       localStorage.setItem('stzb-custom-cards', JSON.stringify(result))
     },
     searchCards() { this.cardSearchSubmitted = true },
+    async copyCardId(heroId) {
+      if (heroId == null) return
+      const text = String(heroId)
+      let copied = false
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text)
+          copied = true
+        }
+      } catch {
+        copied = false
+      }
+      if (!copied) {
+        const textarea = document.createElement('textarea')
+        textarea.value = text
+        textarea.setAttribute('readonly', '')
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.select()
+        try { copied = document.execCommand('copy') } catch { copied = false }
+        document.body.removeChild(textarea)
+      }
+      if (copied) ElMessage.success('武将ID已复制')
+      else ElMessage.error('复制失败')
+    },
     addSelectedCard(card = this.selectedCard) {
       if (!card) return
       const target = this.categories.find(category => category.name === this.cardTargetCategory)
@@ -450,7 +476,8 @@ export default {
 .search-country-title { padding: 6px 8px; margin-bottom: 8px; border-bottom: 1px solid #ebeef5; color: #303133; font-size: 14px; font-weight: 600; }
 .search-country-cards { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; }
 .result-item { position: relative; flex: 0 0 auto; cursor: pointer; }
-.result-id { margin-top: 3px; color: #909399; font-size: 12px; text-align: center; }
+.result-id { display: block; width: 100%; margin-top: 3px; padding: 0; border: 0; color: #909399; background: transparent; font: inherit; font-size: 12px; text-align: center; cursor: copy; }
+.result-id:hover { color: #409eff; }
 .dialog-close { float: right; }
 .managed-item { position: relative; }
 .remove-item { position: absolute; top: -6px; right: -6px; z-index: 2; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; color: #fff; background: #c43d3d; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .15s; }
