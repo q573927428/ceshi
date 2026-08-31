@@ -88,6 +88,9 @@ MYSQL_PORT=3306
 MYSQL_USER=zangbao
 MYSQL_PASSWORD=请替换为数据库强密码
 MYSQL_DATABASE=zangbao
+# 可选：兼容藏宝阁接口的代理/出口地址
+# 该地址需要提供 /cgi/api/get_equip_detail 接口并转发到 stzb.cbg.163.com
+CBG_API_BASE_URL=https://stzb.cbg.163.com
 ```
 
 ```bash
@@ -258,6 +261,7 @@ mysql -u root -p zangbao < /var/backups/数据库备份文件.sql
 | 数据库连接失败 | 检查 `/etc/ceshi/ceshi.env`、`systemctl status mysql`，并测试 `mysql -u zangbao -p -h 127.0.0.1` |
 | 静态资源 404 | 确认已执行 `pnpm build`，并检查 `.output/public` 是否存在 |
 | 更新后环境变量未生效 | 执行 `pm2 reload ceshi --update-env`，必要时 `pm2 delete ceshi && pm2 start ecosystem.config.cjs` |
+| 刷新提示“为了您的账号安全，请登录之后继续访问” | 这是藏宝阁上游按服务器出口 IP 返回的风控提示，不是本项目登录态；更换服务器出口或配置兼容代理后，再执行 `pm2 reload ceshi --update-env` |
 
 ## 13. 生产安全建议
 
