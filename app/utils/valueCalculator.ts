@@ -1,62 +1,39 @@
 // utils/valueCalculator.ts
 
-// 1️⃣ 拆分稀有度数组 
-export const specialCardsData: number[] = [
-  100028, 100372, 100479
-] // 特殊卡
+import CategoryCardsList from '~/components/CategoryCardsList.vue'
 
-export const sssCardsData: number[] = [
-  100496, 100477, 100476, 100478, 100480, 100498, 100615,
-  100526, 100030, 100016, 100035, 100023, 100027, 100013, 100451, 100619,
-] // 超核心SSS 老卡
+type CatalogCard = { hero_id: number; value?: number }
+type CatalogMethods = {
+  generateSpecialCards: () => CatalogCard[]
+  generateSSSCards: () => CatalogCard[]
+  generateSSCards: () => CatalogCard[]
+  generateSCards: () => CatalogCard[]
+  generateACards: () => CatalogCard[]
+}
 
-export const ssCardsData: number[] = [
-  100337, 100685, 100670, 100692, 100649, 100787, 100807, 100808,
-  100771, 100794, 100704, 100703, 100708, 100709, 100792, 100799, 100785,
-  100741, 100784, 100701, 100705, 100796, 100791,
-  100802, 100805, 100783, 100769, 100683,
-  100702, 100790, 100795, 100801, 100800, 100691,
-] // SS卡 新卡
+// 卡片价格和分类以 CategoryCardsList.vue 为唯一数据源。
+const catalogMethods = (CategoryCardsList as unknown as { methods: CatalogMethods }).methods
+const cardCatalog = [
+  { rarity: 'special', cards: catalogMethods.generateSpecialCards() },
+  { rarity: 'sss', cards: catalogMethods.generateSSSCards() },
+  { rarity: 'ss', cards: catalogMethods.generateSSCards() },
+  { rarity: 's', cards: catalogMethods.generateSCards() },
+  { rarity: 'a', cards: catalogMethods.generateACards() }
+] as const
+const cardById = new Map(cardCatalog.flatMap(group =>
+  group.cards.map(card => [card.hero_id, { ...card, rarity: group.rarity }] as const)
+))
 
-export const sCardsData: number[] = [
-  100449, 100604, 100443, 100620, 100021, 102001, 100648, 100074, 102012,
-  100574, 100589, 100618, 100671, 100645, 100474, 100022, 100677,
-  100630, 100534, 100647, 100452,
-  100687
-] // S卡
-
-export const aCardsData: number[] = [
-  100072, 100450, 100358, 100020, 100616, 100034, 100090, 100024, 100003,
-  100631, 100519, 100582, 100553, 100788, 100689, 100653, 100707,
-  100494, 102016, 100019, 100524,
-  100793
-] // A卡
-
-// 2️⃣ 定义稀有度倍数
+// 定义稀有度倍数
 export const cardAdvanceRates: Record<string, number> = {
-  special: 1.5,
-  sss: 1.2,
+  special: 2.2,
+  sss: 1.6,
   ss: 1.5,
   s: 1,
   a: 0.6
 }
 
 // 3️⃣ 定义基础值
-export const cardBaseValues: Record<number, number> = {
-  100028: 100, 100372: 100, 100479: 150, 100477: 80, 100476: 80, 100478: 30, 100480: 30, 100498: 80, 100496: 100,
-  100526: 100, 100030: 120, 100016: 120, 100035: 100, 100023: 150, 100027: 30, 100013: 120, 100451: 100, 100619: 30,
-  100615: 10, 100337: 20, 100685: 30, 100670: 20, 100692: 10, 100649: 10, 100787: 200, 100807: 200, 100808: 50,
-  100771: 80, 100794: 80, 100704: 80, 100703: 80, 100708: 80, 100709: 80, 100792: 100, 100799: 80, 100785: 50,
-  100449: 30, 100604: 30, 100443: 30, 100620: 30, 100021: 30, 102001: 30, 100648: 30, 100074: 30, 102012: 30,
-  100574: 30, 100741: 80, 100589: 30, 100618: 30, 100671: 30, 100645: 30, 100474: 30, 100022: 30, 100677: 30,
-  100784: 80, 100630: 30, 100534: 30, 100647: 30, 100452: 30, 100701: 80, 100705: 80, 100796: 80, 100791: 80,
-  100802: 80, 100805: 80, 100783: 80, 100769: 60, 100687: 30,
-  100072: 10, 100450: 10, 100358: 10, 100020: 10, 100616: 10, 100034: 10, 100090: 10, 100024: 10, 100003: 10,
-  100631: 10, 100519: 10, 100582: 10, 100553: 10, 100788: 10, 100689: 10, 100653: 10, 100683: 80, 100707: 10,
-  100494: 10, 102016: 10, 100019: 10, 100702: 80, 100524: 10, 100790: 80, 100795: 80, 100801: 80, 100800: 80,
-  100691: 30, 100793: 30
-}
-
 interface Card {
   hero_id: number
   advance_num?: number
@@ -72,16 +49,16 @@ function getAdvanceMultiplier(card: Card): number {
   const advanceNum = card.advance_num || 0
   const heroId = card.hero_id
 
-  if (!heroId || !(specialCardsData.includes(heroId) || sssCardsData.includes(heroId) || ssCardsData.includes(heroId))) {
+  if (!heroId || !['special', 'sss', 'ss'].includes(cardById.get(heroId)?.rarity ?? '')) {
     return 1
   }
 
   let total = 0.8
-  let factor = 0.5
+  let factor = 0.2
 
   for (let i = 1; i <= advanceNum; i++) {
     total += factor
-    factor *= 2.0
+    factor *= 3.0
   }
 
   return total
@@ -91,15 +68,12 @@ function getAdvanceMultiplier(card: Card): number {
 export function getCardValue(card: Card): number {
   const heroId = card.hero_id
   if (!heroId) return 0
-  const baseValue: number = cardBaseValues[heroId] ?? 5
+  const catalogCard = cardById.get(heroId)
+  const baseValue: number = catalogCard?.value ?? 5
 
   // @ts-ignore - Record access returns number|undefined but we handle default above
   let rarityRate: number = 1
-  if (specialCardsData.includes(heroId)) rarityRate = cardAdvanceRates.special as number
-  else if (sssCardsData.includes(heroId)) rarityRate = cardAdvanceRates.sss as number
-  else if (ssCardsData.includes(heroId)) rarityRate = cardAdvanceRates.ss as number
-  else if (sCardsData.includes(heroId)) rarityRate = cardAdvanceRates.s as number
-  else if (aCardsData.includes(heroId)) rarityRate = cardAdvanceRates.a as number
+  if (catalogCard) rarityRate = cardAdvanceRates[catalogCard.rarity] as number
 
   const advanceMultiplier = getAdvanceMultiplier(card)
 
