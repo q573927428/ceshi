@@ -13,7 +13,7 @@
         <div class="hero-info"><div class="hero-title"><strong :class="`level-${hero.level}`">{{ hero.name }}</strong><el-tag size="small" :type="typeTagType(hero.type)" :class="`tactic-type-${hero.type}`">{{ hero.type }}</el-tag><span v-if="hero.mp !== undefined && hero.mp !== null && hero.mp !== ''" class="probability">概率 {{ hero.mp }}%</span><span class="cost">{{ hero.cost }}C</span></div><p class="tactic"><b>{{ hero.methodName || '暂无战法' }}</b>：{{ hero.methodDesc || '暂无描述' }}</p><div class="stats"><span :class="{ 'stat-highlight': maxGrowth(hero) === Number(hero.attGrow) }" title="初始攻击 / 攻击成长">攻 {{ hero.attack }} <i>+{{ hero.attGrow }}</i></span><span :class="{ 'stat-highlight': maxGrowth(hero) === Number(hero.ruseGrow) }" title="初始谋略 / 谋略成长">谋 {{ hero.ruse }} <i>+{{ hero.ruseGrow }}</i></span><span :class="{ 'stat-highlight': maxGrowth(hero) === Number(hero.defGrow) }" title="初始防御 / 防御成长">防 {{ hero.def }} <i>+{{ hero.defGrow }}</i></span><span :class="{ 'stat-highlight': maxGrowth(hero) === Number(hero.speedGrow) }" title="初始速度 / 速度成长">速 {{ hero.speed }} <i>+{{ hero.speedGrow }}</i></span><span :class="{ 'stat-highlight': maxGrowth(hero) === Number(hero.siegeGrow) }" title="初始攻城值 / 攻城值成长">城 {{ hero.siege }} <i>+{{ hero.siegeGrow }}</i></span></div><div class="meta">攻击距离 {{ hero.distance }}　可用兵种：{{ hero.typeAvailable || '暂无' }}</div></div>
       </article>
     </div><el-empty v-else description="没有符合条件的武将" />
-    <div v-if="filteredHeroes.length" class="pagination-wrap"><el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" background layout="prev, pager, next" :page-sizes="[20, 40, 80]" :total="filteredHeroes.length" @size-change="currentPage = 1" /></div>
+    <div v-if="filteredHeroes.length" class="pagination-wrap"><el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" background layout="prev, pager, next" :page-sizes="[30, 60, 90]" :total="filteredHeroes.length" @size-change="currentPage = 1" /></div>
     <el-dialog v-model="detailVisible" :title="selectedHero ? `${selectedHero.name} - 武将详情` : '武将详情'" width="min(720px, 94vw)">
       <div v-if="selectedHero" class="hero-detail">
         <div class="detail-header"><img :src="selectedHero.imageUrl" :alt="selectedHero.name" /><div><h2 :class="`level-${selectedHero.level}`">{{ selectedHero.name }}</h2><div class="detail-stars">★★★★★</div><p>{{ selectedHero.share_desc || '暂无武将描述' }}</p></div></div>
@@ -32,7 +32,7 @@ import CardItem from '~/components/CardItem.vue'
 import heroData from '~/data/heroextra.json'
 const countryIds = { 汉: 1, 魏: 2, 蜀: 3, 吴: 4, 群: 5 }
 const countries = ['汉', '魏', '蜀', '吴', '群']; const tacticTypes = ['主动', '指挥', '被动', '追击']
-const keyword = ref(''); const countryFilter = ref('全部'); const typeFilter = ref('全部'); const sortKey = ref('attGrow'); const currentPage = ref(1); const pageSize = ref(20); const detailVisible = ref(false); const selectedHero = ref(null)
+const keyword = ref(''); const countryFilter = ref('全部'); const typeFilter = ref('全部'); const sortKey = ref('attGrow'); const currentPage = ref(1); const pageSize = ref(30); const detailVisible = ref(false); const selectedHero = ref(null)
 const detailStats = [{ label: '攻击', base: 'attack', grow: 'attGrow' }, { label: '谋略', base: 'ruse', grow: 'ruseGrow' }, { label: '防御', base: 'def', grow: 'defGrow' }, { label: '速度', base: 'speed', grow: 'speedGrow' }, { label: '攻城', base: 'siege', grow: 'siegeGrow' }]
 const radarAxes = detailStats
 const radarCenter = { x: 180, y: 140 }; const radarRadius = 88

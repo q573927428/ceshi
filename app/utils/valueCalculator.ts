@@ -1,6 +1,7 @@
 // utils/valueCalculator.ts
 
 import CategoryCardsList from '~/components/CategoryCardsList.vue'
+import treasures from '~/data/treasures.json'
 
 type CatalogCard = { hero_id: number; value?: number }
 type CatalogMethods = {
@@ -42,7 +43,50 @@ interface Card {
 interface Weapon {
   name?: string
   color?: string
-  feature?: Array<[string]>
+  // 接口通常返回 [特性名, 特性描述, 特性 ID]
+  // 使用数组而非固定长度元组，兼容接口及 useFetchData 中的精简类型。
+  feature?: Array<Array<string | number | undefined>>
+}
+
+type TreasureFeature = {
+  name?: string
+  ids?: readonly number[]
+  // JSON 中各行字段并非固定长度，使用只读宽松数组兼容自动推断类型。
+  list?: readonly (readonly unknown[])[]
+}
+type Treasure = { label?: string; featureNames?: readonly TreasureFeature[] }
+
+const treasureByName = new Map(
+  (treasures as unknown as readonly Treasure[]).map(treasure => [treasure.label, treasure] as const)
+)
+
+/** 从 treasures.json 查找红/粉特性的价格。 */
+function getTreasurePrice(weapon: Weapon, color: WeaponColor): number | undefined {
+  if (color === '蓝' || !weapon.name) return 0
+
+  const feature = weapon.feature?.[0]
+  if (!feature) return undefined
+  const [featureName, description, featureId] = feature
+  if (typeof featureName !== 'string') return undefined
+  const treasure = treasureByName.get(weapon.name)
+  const treasureFeature = treasure?.featureNames?.find(item => item.name === featureName)
+  if (!treasureFeature?.list?.length) return undefined
+
+  const idIndex = typeof featureId === 'number'
+    ? treasureFeature.ids?.indexOf(featureId) ?? -1
+    : -1
+  const row = idIndex >= 0
+    ? treasureFeature.list[idIndex]
+    : treasureFeature.list.find(item => typeof description === 'string' && item[1] === description)
+  if (!row) return undefined
+
+  // 红色为最后一档（标记位为 1），粉色为其余档位；调用方传入的颜色决定是否接受该行。
+  const isRedRow = row[3] === 1
+  if ((color === '红') !== isRedRow) return undefined
+  const rawPrice = row[2]
+  if (rawPrice == null || rawPrice === '') return undefined
+  const price = Number(String(rawPrice).replace(/^s/i, ''))
+  return Number.isFinite(price) ? price : undefined
 }
 
 function getAdvanceMultiplier(card: Card): number {
@@ -81,191 +125,13 @@ export function getCardValue(card: Card): number {
 }
 
 type WeaponColor = '红' | '粉' | '蓝'
-type WeaponFeatureMap = Record<string, number> & { other: number }
-type WeaponColorMap = Partial<Record<WeaponColor, WeaponFeatureMap>>
-type WeaponValueMap = Record<string, WeaponColorMap>
-
-export const weaponValues: WeaponValueMap = {
-  '别鸣': {
-    红: { '机敏': 20000, '灵动': 20000, other: 5000 },
-    粉: { '机敏': 1000, '灵动': 800, other: 500 },
-    蓝: { '机敏': 100, '灵动': 0, other: 0 },
-  },
-  '博浪': {
-    红: { '机敏': 25000, '仁心': 20000, other: 5000 },
-    粉: { '机敏': 1500, '仁心': 1500, other: 500 },
-    蓝: { '机敏': 100, '仁心': 0, other: 0 },
-  },
-  '比翼': {
-    红: { '济世': 10000, '仁心': 5000, other: 5000 },
-    粉: { '济世': 1000, '仁心': 800, other: 500 },
-    蓝: { '济世': 100, '仁心': 0, other: 0 },
-  },
-  '承影': {
-    红: { '筹算': 10000, '天资': 5000, other: 5000 },
-    粉: { '筹算': 1000, '天资': 800, other: 500 },
-    蓝: { '筹算': 100, '天资': 0, other: 0 },
-  },
-  '沧海': {
-    红: { '戒备': 10000, '坚韧': 5000, other: 5000 },
-    粉: { '戒备': 1000, '坚韧': 800, other: 50 },
-    蓝: { '戒备': 100, '坚韧': 0, other: 0 },
-  },
-  '大将': {
-    红: { '灵动': 25000, '机敏': 20000, other: 5000 },
-    粉: { '灵动': 1000, '机敏': 800, other: 500 },
-    蓝: { '灵动': 100, '机敏': 0, other: 0 },
-  },
-  '大橹': {
-    红: { '机敏': 15000, '稳固': 8000, other: 5000 },
-    粉: { '机敏': 1000, '稳固': 800, other: 500 },
-    蓝: { '机敏': 100, '稳固': 0, other: 0 },
-  },
-  '惊鲵': {
-    红: { '英勇': 10000, '骁锐': 5000, other: 5000 },
-    粉: { '英勇': 1000, '骁锐': 800, other: 500 },
-    蓝: { '英勇': 100, '骁锐': 0, other: 0 },
-  },
-  '旌阳万仞': {
-    红: { '筹算': 10000, '天资': 5000, other: 5000 },
-    粉: { '筹算': 1000, '天资': 800, other: 500 },
-    蓝: { '筹算': 100, '天资': 0, other: 0 },
-  },
-  '钜黍': {
-    红: { '骁锐': 15000, '天资': 10000, other: 5000 },
-    粉: { '骁锐': 2000, '天资': 800, other: 500 },
-    蓝: { '骁锐': 100, '天资': 0, other: 0 },
-  },
-  '锟铻': {
-    红: { '筹算': 10000, '天资': 5000, other: 5000 },
-    粉: { '筹算': 1000, '天资': 800, other: 500 },
-    蓝: { '筹算': 100, '天资': 0, other: 0 },
-  },
-  '龙鳞': {
-    红: { '骁锐': 10000, '奔袭': 5000, other: 5000 },
-    粉: { '骁锐': 1000, '奔袭': 800, other: 500 },
-    蓝: { '骁锐': 100, '奔袭': 100, other: 0 },
-  },
-  '冥山勾月': {
-    红: { '英勇': 10000, '晓锐': 5000, other: 5000 },
-    粉: { '英勇': 1000, '晓锐': 800, other: 500 },
-    蓝: { '英勇': 100, '晓锐': 100, other: 0 },
-  },
-  '铭鸿': {
-    红: { '筹算': 20000, '英勇': 5000, other: 5000 },
-    粉: { '筹算': 1200, '英勇': 800, other: 500 },
-    蓝: { '筹算': 100, '英勇': 100, other: 0 },
-  },
-  '屈卢': {
-    红: { '骁锐': 10000, '奔袭': 5000, other: 5000 },
-    粉: { '骁锐': 1000, '奔袭': 800, other: 500 },
-    蓝: { '骁锐': 100, '奔袭': 0, other: 0 },
-  },
-  '戚': {
-    红: { '骁锐': 10000, '坚毅': 5000, other: 5000 },
-    粉: { '骁锐': 1000, '坚毅': 800, other: 500 },
-    蓝: { '骁锐': 100, '坚毅': 0, other: 0 },
-  },
-  '千钧': {
-    红: { '灵动': 10000, '济世': 5000, other: 5000 },
-    粉: { '灵动': 1000, '济世': 800, other: 500 },
-    蓝: { '灵动': 100, '济世': 0, other: 0 },
-  },
-  '仁风': {
-    红: { '灵动': 10000, '仁心': 5000, other: 5000 },
-    粉: { '灵动': 1000, '仁心': 800, other: 500 },
-    蓝: { '灵动': 100, '仁心': 0, other: 0 },
-  },
-  '少府': {
-    红: { '骁锐': 10000, '陷阵': 5000, other: 5000 },
-    粉: { '骁锐': 1000, '陷阵': 800, other: 500 },
-    蓝: { '骁锐': 100, '陷阵': 0, other: 0 },
-  },
-  '神锋': {
-    红: { '骁锐': 10000, '陷阵': 5000, other: 5000 },
-    粉: { '骁锐': 1000, '陷阵': 800, other: 500 },
-    蓝: { '骁锐': 100, '陷阵': 0, other: 0 },
-  },
-  '彤素': {
-    红: { '英勇': 25000, '骁锐': 15000, other: 5000 },
-    粉: { '英勇': 1000, '骁锐': 800, other: 500 },
-    蓝: { '英勇': 100, '骁锐': 0, other: 0 },
-  },
-  '泰阿': {
-    红: { '机敏': 10000, '灵动': 5000, other: 5000 },
-    粉: { '机敏': 1000, '灵动': 800, other: 500 },
-    蓝: { '机敏': 100, '灵动': 0, other: 0 },
-  },
-  '螣蛇': {
-    红: { '熟虑': 10000, '天资': 5000, other: 5000 },
-    粉: { '熟虑': 2000, '天资': 800, other: 500 },
-    蓝: { '熟虑': 100, '天资': 0, other: 0 },
-  },
-  '乌号': {
-    红: { '熟虑': 10000, '亢厉': 5000, other: 5000 },
-    粉: { '熟虑': 2000, '亢厉': 800, other: 500 },
-    蓝: { '熟虑': 100, '亢厉': 0, other: 0 },
-  },
-  '悬翦': {
-    红: { '骁锐': 10000, '筹算': 5000, other: 5000 },
-    粉: { '骁锐': 1000, '筹算': 800, other: 500 },
-    蓝: { '骁锐': 100, '筹算': 0, other: 0 },
-  },
-  '徐氏匕首': {
-    红: { '筹算': 10000, '天资': 5000, other: 5000 },
-    粉: { '筹算': 1000, '天资': 800, other: 500 },
-    蓝: { '筹算': 100, '天资': 0, other: 0 },
-  },
-  '貅猊': {
-    红: { '骁锐': 10000, '坚毅': 5000, other: 5000 },
-    粉: { '骁锐': 1000, '坚毅': 800, other: 500 },
-    蓝: { '骁锐': 100, '坚毅': 0, other: 0 },
-  },
-  '星汉': {
-    红: { '戒备': 10000, '不屈': 5000, other: 5000 },
-    粉: { '戒备': 1000, '不屈': 800, other: 500 },
-    蓝: { '戒备': 100, '不屈': 0, other: 0 },
-  },
-  '游飘': {
-    红: { '筹算': 20000, '天资': 1000, other: 5000 },
-    粉: { '筹算': 1000, '天资': 800, other: 500 },
-    蓝: { '筹算': 100, '天资': 0, other: 0 },
-  },
-  '掩日': {
-    红: { '熟虑': 10000, '天资': 5000, other: 5000 },
-    粉: { '熟虑': 1000, '天资': 800, other: 500 },
-    蓝: { '熟虑': 100, '天资': 0, other: 0 },
-  },
-  '元戎': {
-    红: { '骁锐': 10000, '奔袭': 10000, other: 5000 },
-    粉: { '骁锐': 2000, '奔袭': 2000, other: 500 },
-    蓝: { '骁锐': 100, '奔袭': 0, other: 0 },
-  },
-  '狰角枪': {
-    红: { '骁锐': 10000, '奔袭': 5000, other: 5000 },
-    粉: { '骁锐': 1000, '奔袭': 800, other: 500 },
-    蓝: { '骁锐': 100, '奔袭': 0, other: 0 },
-  },
-  '真刚': {
-    红: { '英勇': 20000, '骁锐': 15000, other: 5000 },
-    粉: { '英勇': 1500, '骁锐': 800, other: 500 },
-    蓝: { '英勇': 100, '骁锐': 0, other: 0 },
-  },
-  '障日': {
-    红: { '惑言': 10000, '机敏': 5000, other: 5000 },
-    粉: { '惑言': 1000, '机敏': 800, other: 500 },
-    蓝: { '惑言': 100, '机敏': 0, other: 0 },
-  }
-}
-
 export function getWeaponValue(weapon: Weapon): number {
   const name = weapon?.name
   const color = weapon?.color as WeaponColor | undefined
   const featureName = weapon?.feature?.[0]?.[0]
   if (!name || !color || !featureName) return 0
-  const weaponData = weaponValues[name]
-  if (!weaponData) return 0
-  const colorData = weaponData[color]
-  if (!colorData) return 0
-  return colorData[featureName] ?? colorData.other ?? 0
+  // 普通蓝色武器不计价；红、粉优先使用 treasures.json 中对应等级的价格。
+  if (color === '蓝') return 0
+  const treasurePrice = getTreasurePrice(weapon, color)
+  return treasurePrice ?? 0
 }
