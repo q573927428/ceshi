@@ -5,8 +5,12 @@ export default defineEventHandler(async (event) => {
   const rawLink = event.context.params?.link
   if (!rawLink) return null
   const link = decodeURIComponent(rawLink)
-  const user = await requireUser(event)
-  const row = await queryOne('SELECT * FROM records WHERE link = ? AND user_id = ?', [link, user.id]) as RecordRow | null
+  let user: any = null
+  try { user = await requireUser(event) } catch { /* public read */ }
+  const row = await queryOne(
+    user ? 'SELECT * FROM records WHERE link = ? AND user_id = ? ORDER BY timestamp DESC LIMIT 1' : 'SELECT * FROM records WHERE link = ? ORDER BY timestamp DESC LIMIT 1',
+    user ? [link, user.id] : [link]
+  ) as RecordRow | null
   if (!row) return null
   return toCamelCase(row)
 })

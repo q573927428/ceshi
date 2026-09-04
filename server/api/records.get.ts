@@ -9,7 +9,9 @@ const META_FIELDS = [
 ].join(', ')
 
 export default defineEventHandler(async (event) => {
-  const user = await requireUser(event)
+  // 浏览内容无需登录；写操作仍由各自接口强制校验登录。
+  let user: any = null
+  try { user = await requireUser(event) } catch { /* public read */ }
   const queryParams = getQuery(event)
   const page = parseInt(String(queryParams.page || '1'), 10)
   const pageSize = parseInt(String(queryParams.pageSize || '0'), 10)
@@ -20,11 +22,13 @@ export default defineEventHandler(async (event) => {
     const offset = (page - 1) * pageSize
     const pool = getPool()
     const [rows] = await pool.execute(
-      'SELECT * FROM records WHERE user_id = ? ORDER BY timestamp DESC LIMIT ? OFFSET ?',
-      [user.id, pageSize, offset]
+      user
+        ? 'SELECT * FROM records WHERE user_id = ? ORDER BY timestamp DESC LIMIT ? OFFSET ?'
+        : 'SELECT * FROM records ORDER BY timestamp DESC LIMIT ? OFFSET ?',
+      user ? [user.id, pageSize, offset] : [pageSize, offset]
     )
     const [countRows] = await pool.execute(
-      'SELECT COUNT(*) as total FROM records WHERE user_id = ?', [user.id]
+      user ? 'SELECT COUNT(*) as total FROM records WHERE user_id = ?' : 'SELECT COUNT(*) as total FROM records', user ? [user.id] : []
     )
     const total = (countRows as any[])[0]?.total || 0
 
@@ -37,14 +41,21 @@ export default defineEventHandler(async (event) => {
   }
 
   // 非分页请求 - 返回全部记录的元数据（不含 data）
-  const sql = `SELECT ${META_FIELDS} FROM records WHERE user_id = ? ORDER BY timestamp DESC`
-  const rows = await query(sql, [user.id])
-  return (rows as RecordRow[]).map((row) => ({
+  const sql = `SELECT ${META_FIELDS} FROM records ${user ? 'WHERE user_id = ?' : ''} ORDER BY timestamp DESC`
+  const rows = await query(sql, user ? [user.id] : [])
+  // 同一账号可能被多个用户保存，公开列表按链接去重，优先保留最新记录。
+  const seenLinks = new Set<string>()
+  return (rows as RecordRow[]).filter((row) => {
+    if (seenLinks.has(row.link)) return false
+    seenLinks.add(row.link)
+    return true
+  }).map((row) => ({
     id: row.id,
     user_id: row.user_id,
     link: row.link,
     timestamp: row.timestamp,
-    isFavorite: !!row.is_favorite,
+    // 未登录时不暴露任何用户的收藏状态；登录用户仍只看到自己的记录。
+    isFavorite: user ? !!row.is_favorite : false,
     equipPrice: row.equip_price,
     userPrice: row.user_price,
     estimatedPrice: row.estimated_price,

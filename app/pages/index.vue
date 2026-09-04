@@ -1,8 +1,8 @@
 <template> 
-  <div v-if="isLoggedIn" class="zangbao-page">
+  <div class="zangbao-page">
     <!-- 链接输入 + 操作 -->
     <div class="link-section">
-      <div class="link-input-container">
+      <div v-if="isLoggedIn" class="link-input-container">
         <div class="link-input-grid">
           <div class="link-input">
             <p>藏宝阁账号链接(一行一个URL):</p>
@@ -36,7 +36,7 @@
           </div>
         </div>
         <div class="button-section">
-          <el-button type="primary" @click="addLink" :loading = "globalLoading">添加链接</el-button>
+          <el-button v-if="isLoggedIn" type="primary" @click="addLink" :loading = "globalLoading">添加链接</el-button>
           <!-- <el-button type="warning" @click="updateAll" :loading = "globalLoading" plain>更新全部</el-button>
           <el-button type="info" @click="clearLinks" plain>清空链接</el-button>
           <el-button type="primary" @click="exportDB" plain>导出数据</el-button>
@@ -134,12 +134,12 @@
         </el-select>
         <span class="filter-interval"> | </span>
 
-        <el-button @click="toggleFilter" plain :type="filterFavorites ? 'primary' : 'warning'" style="margin-bottom: 10px;">
+        <el-button v-if="isLoggedIn" @click="toggleFilter" plain :type="filterFavorites ? 'primary' : 'warning'" style="margin-bottom: 10px;">
           {{ filterFavorites ? '显示全部' : '仅看收藏' }}
         </el-button>
         <span class="filter-interval"> | </span>
 
-        <el-button @click="deleteFilteredResults" type="danger" style="margin-bottom: 10px;" v-if="filteredLinks.length < zangbaoLinks.length">
+        <el-button @click="deleteFilteredResults" type="danger" style="margin-bottom: 10px;" v-if="isLoggedIn && filteredLinks.length < zangbaoLinks.length">
           删 {{ filteredLinks.length }} 条
         </el-button>
         <el-button plain text style="margin-bottom: 10px;">
@@ -207,7 +207,7 @@
                 <!-- 操作按钮组 -->
                   <div class="header-actions" v-if="item.data">
                     <div class="header-actions-top">
-                    <el-button
+                    <el-button v-if="isLoggedIn"
                       type="info"
                       size="small"
                       circle
@@ -223,7 +223,7 @@
                       <el-icon><DocumentCopy /></el-icon>
                     </el-button>
 
-                    <el-button
+                    <el-button v-if="isLoggedIn"
                       type="warning"
                       size="small"
                       circle
@@ -238,7 +238,7 @@
                       <el-icon><Connection /></el-icon>
                     </el-button>
 
-                    <el-button
+                    <el-button v-if="isLoggedIn"
                       type="warning"
                       size="small"
                       circle
@@ -249,7 +249,7 @@
                       <el-icon><Star /></el-icon>
                     </el-button>
 
-                    <el-button type="danger" size="small" circle plain @click="removeLink(item.link)" title="删除">
+                    <el-button v-if="isLoggedIn" type="danger" size="small" circle plain @click="removeLink(item.link)" title="删除">
                       <el-icon><Delete /></el-icon>
                     </el-button>
                   </div>
@@ -636,10 +636,8 @@ const importDB = async (file) => {
 // ============== 页面生命周期 ==============
 onMounted(async () => {
   await loadAuth();
-  if (isLoggedIn.value) {
-    await loadLinksFromDB();
-    observeLoadMore();
-  }
+  await loadLinksFromDB();
+  observeLoadMore();
 });
 
 watch(() => pagedLinks.value.length, () => observeLoadMore());

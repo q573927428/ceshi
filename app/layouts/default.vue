@@ -1,13 +1,13 @@
 <template>
-  <el-container v-if="isLoggedIn || isAuthPage" class="admin-container">
+  <el-container class="admin-container">
     <!-- 左侧边栏 -->
-    <el-aside v-if="isLoggedIn"
+    <el-aside v-if="!isAuthPage"
       v-show="!isCollapse || isDesktop"
       :width="isDesktop ? (isCollapse ? '64px' : '200px') : '200px'"
       class="admin-aside"
       :class="{ 'aside-overlay': !isDesktop }"
     >
-      <AppHeader :is-collapse="isDesktop && isCollapse" :is-admin="user?.isAdmin" @toggle="toggleSidebar" />
+      <AppHeader :is-collapse="isDesktop && isCollapse" :is-admin="user?.isAdmin" :is-logged-in="isLoggedIn" @toggle="toggleSidebar" />
     </el-aside>
 
     <!-- 移动端遮罩 -->
@@ -20,7 +20,7 @@
     <!-- 右侧内容区 -->
     <el-container class="admin-main-area">
       <!-- 顶部 header -->
-      <el-header v-if="isLoggedIn" class="admin-header" height="50px">
+      <el-header v-if="!isAuthPage" class="admin-header" height="50px">
         <div class="header-left">
           <el-button text @click="toggleSidebar" style="font-size: 18px;">
             <el-icon><Fold v-if="!isCollapse" /><Expand v-else /></el-icon>
@@ -37,6 +37,10 @@
             <el-button text size="small" title="退出登录" aria-label="退出登录" @click="logout">
               <el-icon><SwitchButton /></el-icon>
             </el-button>
+          </template>
+          <template v-else>
+            <el-button text size="small" @click="goToLogin">登录</el-button>
+            <el-button text size="small" @click="goToRegister">注册</el-button>
           </template>
         </div>
       </el-header>
@@ -77,6 +81,8 @@ const authVisible = ref(false)
 const authMode = ref<'login'|'register'>('login')
 const authForm = ref({ username: '', password: '' })
 const usedCount = ref(0)
+const goToLogin = () => navigateTo('/login')
+const goToRegister = () => navigateTo('/register')
 const toggleAuthMode = () => { authMode.value = authMode.value === 'login' ? 'register' : 'login' }
 const logout = async () => { await authLogout(); usedCount.value = 0; window.location.reload() }
 const submitAuth = async () => { try { if (authMode.value === 'login') await login(authForm.value.username, authForm.value.password); authVisible.value = false; usedCount.value = (await loadAllRecords()).length } catch {} }
@@ -108,7 +114,7 @@ const onResize = () => {
 
 onMounted(() => {
   window.addEventListener('records-count-changed', onRecordsCountChanged)
-  load().then(async () => { if (isLoggedIn.value) usedCount.value = (await loadAllRecords()).length; else if (location.pathname === '/') navigateTo('/login') })
+  load().then(async () => { if (isLoggedIn.value) usedCount.value = (await loadAllRecords()).length })
   windowWidth.value = window.innerWidth
   if (windowWidth.value <= 768) {
     isCollapse.value = true // 移动端默认隐藏侧边栏

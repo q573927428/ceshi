@@ -33,7 +33,7 @@
         <el-icon><Collection /></el-icon>
         <template #title>率土宝物</template>
       </el-menu-item>
-      <el-menu-item index="/recharge">
+      <el-menu-item v-if="isLoggedIn" index="/recharge">
         <el-icon><Wallet /></el-icon>
         <template #title>充值中心</template>
       </el-menu-item>
@@ -74,6 +74,10 @@ defineProps({
     default: false
   },
   isAdmin: {
+    type: Boolean,
+    default: false,
+  },
+  isLoggedIn: {
     type: Boolean,
     default: false,
   },
