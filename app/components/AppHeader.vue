@@ -29,6 +29,10 @@
         <el-icon><CollectionTag /></el-icon>
         <template #title>率土技能</template>
       </el-menu-item>
+      <el-menu-item index="/treasures">
+        <el-icon><Collection /></el-icon>
+        <template #title>率土宝物</template>
+      </el-menu-item>
       <el-menu-item index="/recharge">
         <el-icon><Wallet /></el-icon>
         <template #title>充值中心</template>
