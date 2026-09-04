@@ -5,6 +5,7 @@
   "scripts": {
     "find-id": "node scripts/find-stzb-id.mjs",
     "sync-heroes": "node scripts/sync-heroes.mjs",
+    "sync-skills": "node scripts/sync-skills.mjs",
     "migrate-user-quota": "node scripts/migrate-user-quota.mjs",
     "migrate-quota-to-remaining": "node scripts/migrate-quota-to-remaining.mjs",
     "migrate-link-unique": "node scripts/migrate-link-unique.mjs",
