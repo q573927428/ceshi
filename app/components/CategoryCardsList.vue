@@ -1,6 +1,5 @@
 <template>  
   <div class="category-cards">
-    <div class="list-toolbar"><span>武将列表</span><el-button type="primary" circle title="添加武将" @click="cardDialogOpen = true; cardSearchSubmitted = true">+</el-button></div>
     <el-dialog v-model="cardDialogOpen" title="添加武将" width="80%">
         <el-input v-model.trim="cardSearch" placeholder="输入武将名称" clearable @keyup.enter="searchCards"><template #append><el-button @click="searchCards">搜索</el-button></template></el-input>
         <el-select v-model="cardTargetCategory" style="width: 100%; margin-top: 12px;"><el-option v-for="category in categories" :key="category.name" :label="category.name" :value="category.name" /></el-select>
@@ -16,7 +15,10 @@
     </el-dialog>
     <!-- 特殊类卡片 -->
     <div v-for="category in nonCollapsibleCategories" :key="category.name" class="category-section">
-      <div class="category-title">{{ category.name }}</div>
+      <div class="category-title-row">
+        <div class="category-title">{{ category.name }}</div>
+        <el-button type="primary" size="small" plain circle title="添加武将" @click="openCardDialog(category.name)">+</el-button>
+      </div>
       <div class="cards-container">
         <div v-for="card in category.cards" :key="card.hero_id" class="managed-item">
         <CardItem
@@ -52,7 +54,10 @@
 
       <div v-show="!isCollapsed">
         <div v-for="category in collapsibleCategories" :key="category.name" class="category-section">
-          <div class="category-title">{{ category.name }}</div>
+          <div class="category-title-row">
+            <div class="category-title">{{ category.name }}</div>
+            <el-button type="primary" size="small" plain circle title="添加武将" @click="openCardDialog(category.name)">+</el-button>
+          </div>
           <div class="cards-container">
             <div v-for="card in category.cards" :key="card.hero_id" class="managed-item">
             <CardItem
@@ -201,6 +206,11 @@ export default {
     }
   },
   methods: {
+    openCardDialog(categoryName) {
+      this.cardTargetCategory = categoryName
+      this.cardSearchSubmitted = true
+      this.cardDialogOpen = true
+    },
     loadStoredCards() { try { return JSON.parse(localStorage.getItem('stzb-custom-cards') || '{}') } catch { return {} } },
     persistCustomCards() {
       const result = {}
@@ -521,6 +531,17 @@ export default {
   margin-top: 1px;
   margin-bottom: 5px;
   color: #333;
+}
+
+.category-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.category-title-row .category-title {
+  margin-bottom: 0;
 }
 
 .cards-container {

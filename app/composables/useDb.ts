@@ -71,7 +71,7 @@ export const useDb = () => {
     try {
       // @ts-ignore - Nuxt $fetch has complex route types
       return await $fetch('/api/records', {
-        params: { page, pageSize, withData: 'true' },
+        params: { page, pageSize },
       })
     } catch {
       return { records: [], total: 0, page, pageSize }
@@ -100,7 +100,7 @@ export const useDb = () => {
     try {
       // @ts-ignore - Nuxt $fetch has complex route types
       return await $fetch('/api/records', {
-        params: { page: 1, pageSize: 100000, withData: 'true' },
+        params: { page: 1, pageSize: 100000 },
       }).then(res => (res as any).records || [])
     } catch {
       return []

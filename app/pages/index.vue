@@ -937,6 +937,23 @@ onUnmounted(() => {
   white-space: nowrap; 
   padding-bottom: 3px; 
 }
+
+/* 五个分类标签等宽分布 */
+.tabs-assort :deep(.el-tabs__nav-wrap),
+.tabs-assort :deep(.el-tabs__nav-scroll),
+.tabs-assort :deep(.el-tabs__nav) {
+  width: 100%;
+}
+
+.tabs-assort :deep(.el-tabs__nav) {
+  display: flex;
+}
+
+.tabs-assort :deep(.el-tabs__item) {
+  flex: 1;
+  text-align: center;
+}
+
 .remark-textarea ::placeholder {
   white-space: pre-wrap;
   line-height: 1.5;

@@ -1,6 +1,5 @@
 <template> 
   <div class="skill-card-container">
-    <div class="list-toolbar"><span>战法列表</span><el-button type="primary" circle title="添加战法" @click="skillDialogOpen = true; skillSearchSubmitted = true">+</el-button></div>
     <el-dialog v-model="skillDialogOpen" title="添加战法" width="80%">
       <el-input v-model.trim="skillSearch" placeholder="输入战法名称" clearable @keyup.enter="searchSkills">
         <template #append><el-button @click="searchSkills">搜索</el-button></template>
@@ -20,7 +19,10 @@
         </div>
     </el-dialog>
     <div v-for="category in categories" :key="category.name" class="category-section">
-      <h2 class="category-title">{{ category.name }} ({{ category.skills.length }})</h2>
+      <div class="category-title-row">
+        <h2 class="category-title">{{ category.name }} ({{ category.skills.length }})</h2>
+        <el-button type="primary" size="small" plain circle title="添加战法" @click="openSkillDialog(category.name)">+</el-button>
+      </div>
       <div class="skills-container">
         <div v-for="skill in category.skills" :key="skill.skill_id" class="managed-item">
           <SkillItem v-bind="skill" />
@@ -163,6 +165,11 @@ export default {
     }
   },
   methods: {
+    openSkillDialog(categoryName) {
+      this.skillTargetCategory = categoryName
+      this.skillSearchSubmitted = true
+      this.skillDialogOpen = true
+    },
     sortSkillsByQuality(categories) {
       const qualityOrder = { S: 0, A: 1, B: 2, C: 3, D: 4 }
       categories.forEach(category => {
@@ -363,11 +370,22 @@ export default {
 }
 
 .category-title {
-  font-size: 20px;
+  font-size: 14px;
   font-weight: bold;
   margin-top: 1px;
   margin-bottom: 5px;
   color: #333;
+}
+
+.category-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.category-title-row .category-title {
+  margin-bottom: 0;
 }
 
 .skills-container {

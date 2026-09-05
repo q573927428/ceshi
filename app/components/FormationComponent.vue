@@ -8,7 +8,12 @@
         :name="index"
         :title="category.category"
       >
-        <div class="formation-cards" :class="{ 'single-column': singleColumn }">
+        <!-- 仅渲染当前展开的分组，避免折叠状态下同时挂载大量武将卡片 -->
+        <div
+          v-if="String(activeNames) === String(index)"
+          class="formation-cards"
+          :class="{ 'single-column': singleColumn }"
+        >
           <div 
             v-for="(team, teamIndex) in category.teams" 
             :key="teamIndex" 

@@ -69,6 +69,7 @@ export default {
 }
 
 .weapon-group h3 {
+  font-size: 14px;
   margin-bottom: 10px;
   color: #333;
   border-bottom: 1px solid #eee;
