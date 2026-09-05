@@ -47,7 +47,7 @@
 
       <!-- 主体内容 -->
       <el-main class="admin-main">
-        <NuxtPage />
+        <slot />
       </el-main>
     </el-container>
 
