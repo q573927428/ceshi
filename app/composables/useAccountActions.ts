@@ -72,6 +72,8 @@ export const useAccountActions = () => {
   const maxPriceFilter = ref('')
 
   const priceFilterType = ref<'equipPrice' | 'estimatedPrice'>('equipPrice')
+  // 账号列表关键字搜索：支持账号 ID、藏宝阁链接、武将名和备注。
+  const searchQuery = ref('')
 
   const updateProgress = ref('')
 
@@ -542,6 +544,23 @@ export const useAccountActions = () => {
   const filteredLinks = computed(() => {
     let list = zangbaoLinks.value
 
+    const query = searchQuery.value.trim().toLocaleLowerCase()
+    if (query) {
+      list = list.filter((item) => {
+        const heroNames = Array.isArray(item.data?.uniqueCards)
+          ? item.data.uniqueCards.map((card: any) => card?.name).filter(Boolean).join(' ')
+          : ''
+        const searchableText = [
+          item.link,
+          `${CBG_PREFIX}${item.link}`,
+          item.remark,
+          item.userRemark,
+          heroNames,
+        ].filter(Boolean).join(' ').toLocaleLowerCase()
+        return searchableText.includes(query)
+      })
+    }
+
     if (filterFavorites.value) {
       list = list.filter((i) => i.isFavorite)
     }
@@ -592,6 +611,11 @@ export const useAccountActions = () => {
     return filteredLinks.value.slice(0, currentPage.value * pageSize.value)
   })
 
+  // 搜索条件变化时从第一页开始展示，避免停留在不存在的页码。
+  watch(searchQuery, () => {
+    currentPage.value = 1
+  })
+
   // 监听当前页数据变化，自动加载缺失的完整 data
   // 覆盖筛选、排序、翻页等所有导致当前页变化的情况
   watch(
@@ -622,6 +646,7 @@ export const useAccountActions = () => {
     filteredLinks,
     statusFilter,
     priceFilterType,
+    searchQuery,
     newLinkPrice,
 
     loadLinksFromDB,

@@ -99,6 +99,19 @@
             <el-button :type="columnMode === 2 ? 'primary' : 'default'" @click="columnMode = 2">2 列</el-button>
             <el-button :type="columnMode === 3 ? 'primary' : 'default'" @click="columnMode = 3">3 列</el-button>
           </el-button-group>
+
+        </div>
+
+        <div class="filter-search">
+          <el-input
+            v-model="searchQuery"
+            class="account-search-input"
+            clearable
+            placeholder="搜索账号ID、藏宝阁链接、武将名或备注"
+            @keyup.enter="currentPage = 1"
+          >
+            <template #prefix><el-icon><Search /></el-icon></template>
+          </el-input>
         </div>
 
         <!-- 价格区间筛选 -->
@@ -137,7 +150,6 @@
         <el-button v-if="isLoggedIn" @click="toggleFilter" plain :type="filterFavorites ? 'primary' : 'warning'" style="margin-bottom: 10px;">
           {{ filterFavorites ? '显示全部' : '仅看收藏' }}
         </el-button>
-        <span class="filter-interval"> | </span>
 
         <el-button @click="deleteFilteredResults" type="danger" style="margin-bottom: 10px;" v-if="isLoggedIn && filteredLinks.length < zangbaoLinks.length">
           删 {{ filteredLinks.length }} 条
@@ -385,7 +397,7 @@ import skillQualityMap from '~/config/skillQualityMap';
 import WeaponList from '~/components/WeaponList.vue';
 import FormationComponent from '~/components/FormationComponent.vue';
 
-import { Delete, Star, DocumentCopy, Refresh, Edit, Connection, Share } from '@element-plus/icons-vue';
+import { Delete, Star, DocumentCopy, Refresh, Edit, Connection, Share, Search } from '@element-plus/icons-vue';
 
 import { exportIndexedDB, importIndexedDB } from '~/utils/dbTools';
 
@@ -426,6 +438,7 @@ const {
   filteredLinks,
   statusFilter,
   priceFilterType,
+  searchQuery,
   newLinkPrice,
 
   // 方法
@@ -692,14 +705,28 @@ onUnmounted(() => {
 }
 
 .filter-controls {
-  display: flex;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 1fr);
   gap: 12px;
   margin-top: 12px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.filter-search {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-width: 0;
+  background: #f5f5f5;
 }
 .filter-sort {
-  flex: 1 1 500px;
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
   min-width: 0;
   margin-top: 0;
   display: flex;
@@ -708,9 +735,16 @@ onUnmounted(() => {
   background: #f5f5f5;
   padding: 10px;
   border-radius: 10px;
+  box-sizing: border-box;
+}
+.account-search-input {
+  width: min(100%, 460px);
+  max-width: 100%;
 }
 .price-filter{
-  flex: 2 1 680px;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  width: 100%;
   min-width: 0;
   align-items: center;
   margin-top: 0;
@@ -720,9 +754,14 @@ onUnmounted(() => {
   background: #f5f5f5;
   padding: 10px;
   border-radius: 10px;
+  box-sizing: border-box;
 }
 .price-filter-input{
-  display:inline-block
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  min-width:0;
+  max-width:100%;
 }
 .filter-interval{
   margin: 0 10px;
@@ -741,11 +780,39 @@ onUnmounted(() => {
 }
 @media (max-width: 1100px) {
   .filter-controls {
-    flex-wrap: wrap;
+    grid-template-columns: 1fr;
   }
-  .filter-sort,
+  .filter-sort {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .filter-search {
+    grid-column: 1;
+    grid-row: 2;
+    justify-content: center;
+  }
   .price-filter {
-    flex-basis: 100%;
+    grid-column: 1;
+    grid-row: 3;
+  }
+  .account-search-input {
+    width: 100%;
+  }
+}
+
+@media (max-width: 767px) {
+  .zangbao-page {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .price-filter {
+    overflow: hidden;
+  }
+
+  .filter-interval {
+    margin-left: 4px;
+    margin-right: 4px;
   }
 }
 .compare-results {

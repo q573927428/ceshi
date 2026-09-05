@@ -405,6 +405,7 @@ export default {
         { id: 65, name: '小乔', country: 4, season: 'N', value: 30, hero_id: 100687, icon_hero_id: 100687 },
         { id: 66, name: '司马徽', country: 5, season: 'N', value: 50, hero_id: 100811, icon_hero_id: 100811 },
         { id: 67, name: '冯嫽', country: 1, season: 'N', value: 50, hero_id: 100812, icon_hero_id: 100812 },
+        { id: 67, name: '胡芳', country: 6, season: 'N', value: 50, hero_id: 100797, icon_hero_id: 100797 },
       ];
 
       return sCardsData.map(card => ({
@@ -418,6 +419,9 @@ export default {
       // 中间A类卡片 - 30个
       const aCardsData = [
         { id: 66, name: '关银屏', country: 3, season: 'N', value: 10, hero_id: 100072, icon_hero_id: 100072 },
+        { id: 201, name: '郝昭', country: 2, season: 'N', value: 10, hero_id: 100475, icon_hero_id: 100475 },
+        { id: 202, name: '张春华', country: 2, season: 'N', value: 10, hero_id: 100029, icon_hero_id: 100029 },
+        { id: 202, name: '甄洛', country: 5, season: 'N', value: 10, hero_id: 100015, icon_hero_id: 100015 },
         { id: 67, name: '孙策', country: 4, season: 'XP', value: 10, hero_id: 100450, icon_hero_id: 100450 },
         { id: 68, name: '张姬', country: 3, season: 'N', value: 10, hero_id: 100358, icon_hero_id: 100358 },
         { id: 69, name: '黄月英', country: 3, season: 'N', value: 10, hero_id: 100020, icon_hero_id: 100020 },
