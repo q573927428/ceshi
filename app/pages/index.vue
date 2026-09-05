@@ -370,17 +370,28 @@
     />
     <div class="remark-quick-tags" aria-label="快速添加备注标签">
       <el-tag
-        v-for="tag in ['老碧', '红旗']"
+        v-for="tag in remarkTags"
         :key="tag"
         class="remark-quick-tag"
         role="button"
         tabindex="0"
+        closable
+        @close="removeRemarkTag(tag)"
         @click="prependRemarkTag(tag)"
         @keydown.enter.prevent="prependRemarkTag(tag)"
         @keydown.space.prevent="prependRemarkTag(tag)"
       >
         {{ tag }}
       </el-tag>
+      <el-button
+        class="remark-add-tag-button"
+        circle
+        size="small"
+        :icon="Plus"
+        title="添加标签"
+        aria-label="添加标签"
+        @click="showAddRemarkTagDialog = true"
+      />
     </div>
     <p></p>
     <el-input
@@ -398,6 +409,23 @@
     </template>
   </el-dialog>
 
+  <el-dialog
+    v-model="showAddRemarkTagDialog"
+    title="添加备注标签"
+    width="320px"
+  >
+    <el-input
+      v-model="newRemarkTag"
+      maxlength="20"
+      placeholder="请输入标签名称"
+      @keyup.enter="addRemarkTag"
+    />
+    <template #footer>
+      <el-button @click="showAddRemarkTagDialog = false">取消</el-button>
+      <el-button type="primary" @click="addRemarkTag">添加</el-button>
+    </template>
+  </el-dialog>
+
 </template>
 
 
@@ -411,7 +439,7 @@ import skillQualityMap from '~/config/skillQualityMap';
 import WeaponList from '~/components/WeaponList.vue';
 import FormationComponent from '~/components/FormationComponent.vue';
 
-import { Delete, Star, DocumentCopy, Refresh, Edit, Connection, Share, Search } from '@element-plus/icons-vue';
+import { Delete, Star, DocumentCopy, Refresh, Edit, Connection, Share, Search, Plus } from '@element-plus/icons-vue';
 
 import { exportIndexedDB, importIndexedDB } from '~/utils/dbTools';
 
@@ -482,6 +510,33 @@ const editDialog = reactive({
   remark: '',
   price: null
 });
+
+const remarkTags = ref(['官方']);
+const newRemarkTag = ref('');
+const showAddRemarkTagDialog = ref(false);
+const REMARK_TAGS_STORAGE_KEY = 'stzb-remark-tags';
+
+const saveRemarkTags = () => {
+  localStorage.setItem(REMARK_TAGS_STORAGE_KEY, JSON.stringify(remarkTags.value));
+};
+
+const addRemarkTag = () => {
+  const tag = newRemarkTag.value.trim();
+  if (!tag) return;
+  if (remarkTags.value.includes(tag)) {
+    ElMessage.info('标签已存在');
+    return;
+  }
+  remarkTags.value.push(tag);
+  newRemarkTag.value = '';
+  showAddRemarkTagDialog.value = false;
+  saveRemarkTags();
+};
+
+const removeRemarkTag = (tag) => {
+  remarkTags.value = remarkTags.value.filter((item) => item !== tag);
+  saveRemarkTags();
+};
 
 const editRecord = (item) => {
   editDialog.link = item.link;
@@ -666,6 +721,19 @@ const importDB = async (file) => {
 
 // ============== 页面生命周期 ==============
 onMounted(async () => {
+  try {
+    const storedTags = JSON.parse(localStorage.getItem(REMARK_TAGS_STORAGE_KEY) || 'null');
+    if (Array.isArray(storedTags)) {
+      remarkTags.value = storedTags
+        .filter((tag) => typeof tag === 'string' && tag.trim())
+        .map((tag) => tag.trim())
+        .filter((tag) => !['老碧', '红旗'].includes(tag));
+      if (!remarkTags.value.length) remarkTags.value = ['官方'];
+      saveRemarkTags();
+    }
+  } catch {
+    // 本地标签读取失败时使用默认标签。
+  }
   await loadAuth();
   await loadLinksFromDB();
   observeLoadMore();
@@ -1053,5 +1121,9 @@ onUnmounted(() => {
 .remark-quick-tag {
   cursor: pointer;
   user-select: none;
+}
+
+.remark-add-tag-button {
+  flex-shrink: 0;
 }
 </style>
