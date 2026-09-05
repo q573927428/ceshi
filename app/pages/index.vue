@@ -156,8 +156,8 @@
       <div v-if="pagedLinks.length > 0">
         <div class="compare-container" :style="gridStyle">
           <div
-            v-for="(item) in pagedLinks"
-            :key="item.link"
+            v-for="(item, index) in pagedLinks"
+            :key="item.id || item.link + '-' + index"
             class="compare-panel"
           >
             <div v-loading = "item.loading">
@@ -773,6 +773,9 @@ onUnmounted(() => {
 }
 .header-actions-top{
   margin-bottom: 10px;
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .equip-header {
@@ -913,6 +916,14 @@ onUnmounted(() => {
 @media (max-width: 767px) {
   .panel-header {
     flex-wrap: wrap;
+  }
+
+  .header-actions {
+    width: 100%;
+  }
+
+  .header-actions-top {
+    justify-content: flex-start;
   }
 
   .header-info {

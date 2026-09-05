@@ -43,13 +43,8 @@ export default defineEventHandler(async (event) => {
   // 非分页请求 - 返回全部记录的元数据（不含 data）
   const sql = `SELECT ${META_FIELDS} FROM records ${user ? 'WHERE user_id = ?' : ''} ORDER BY timestamp DESC`
   const rows = await query(sql, user ? [user.id] : [])
-  // 同一账号可能被多个用户保存，公开列表按链接去重，优先保留最新记录。
-  const seenLinks = new Set<string>()
-  return (rows as RecordRow[]).filter((row) => {
-    if (seenLinks.has(row.link)) return false
-    seenLinks.add(row.link)
-    return true
-  }).map((row) => ({
+  // 公开列表不去重：同一藏宝阁链接被不同用户保存时分别展示。
+  return (rows as RecordRow[]).map((row) => ({
     id: row.id,
     user_id: row.user_id,
     link: row.link,

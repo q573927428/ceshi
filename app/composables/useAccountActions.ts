@@ -9,6 +9,7 @@ import { useFetchData } from './useFetchData'
 const CBG_PREFIX = 'https://stzb.cbg.163.com/cgi/mweb/equip/1/'
 
 interface LinkItem {
+  id?: number
   link: string
   timestamp: number
   isFavorite: boolean
@@ -172,6 +173,7 @@ export const useAccountActions = () => {
   const loadLinksFromDB = async () => {
     const all = await loadAllRecords()
     zangbaoLinks.value = all.map((r: any) => ({
+      id: r.id,
       link: r.link,
       timestamp: r.timestamp,
       isFavorite: r.isFavorite,
