@@ -149,7 +149,9 @@ export default {
   watch: {
     skillSearch() {
       this.selectedSkillId = this.skillSearchResults[0]?.skill_id || null
-      this.skillSearchSubmitted = false
+      // 输入内容变化时直接刷新结果，无需额外点击“搜索”。
+      // 保留该状态字段是为了兼容回车和按钮搜索的交互。
+      this.skillSearchSubmitted = true
     },
     skillData: {
       handler(newVal) {

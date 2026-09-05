@@ -368,6 +368,20 @@
       maxlength="100"
       show-word-limit
     />
+    <div class="remark-quick-tags" aria-label="快速添加备注标签">
+      <el-tag
+        v-for="tag in ['老碧', '红旗']"
+        :key="tag"
+        class="remark-quick-tag"
+        role="button"
+        tabindex="0"
+        @click="prependRemarkTag(tag)"
+        @keydown.enter.prevent="prependRemarkTag(tag)"
+        @keydown.space.prevent="prependRemarkTag(tag)"
+      >
+        {{ tag }}
+      </el-tag>
+    </div>
     <p></p>
     <el-input
       v-model="editDialog.price"
@@ -474,6 +488,10 @@ const editRecord = (item) => {
   editDialog.remark = item.remark || '';
   editDialog.visible = true;
   editDialog.price = item.userPrice ?? null;
+};
+
+const prependRemarkTag = (tag) => {
+  editDialog.remark = `${tag} ${editDialog.remark}`;
 };
 
 const saveRemark = async () => {
@@ -1024,5 +1042,16 @@ onUnmounted(() => {
 .remark-textarea ::placeholder {
   white-space: pre-wrap;
   line-height: 1.5;
+}
+
+.remark-quick-tags {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.remark-quick-tag {
+  cursor: pointer;
+  user-select: none;
 }
 </style>
