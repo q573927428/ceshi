@@ -40,8 +40,8 @@ const describeError = (err: any): string => {
   const message = err?.data?.message || err?.message || err?.statusMessage || err?.data?.statusMessage
   if (status === 402) return '金币不足，请前往充值中心充值后继续添加'
   if (status === 401) return '登录已失效，请重新登录'
-  if (status >= 500) return '服务器或数据库异常，请稍后重试'
   if (message) return String(message)
+  if (status >= 500) return '服务器或数据库异常，请稍后重试'
   return '藏宝阁接口返回异常或网络请求失败'
 }
 

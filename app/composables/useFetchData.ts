@@ -159,7 +159,7 @@ export const useFetchData = () => {
       : []
     const defaultRemark = highlights.join('、')
 
-    console.log('full', full);
+    // console.log(full);
     
     return {
       extractedId,

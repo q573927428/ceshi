@@ -38,12 +38,15 @@ export default defineEventHandler(async (event) => {
 
   if (data?.status !== 1) {
     const upstreamMessage = String(data?.msg || '')
-    const message = upstreamMessage.includes('登录之后继续访问')
-      ? '藏宝阁拒绝了当前服务器出口请求，请为服务器配置可正常访问藏宝阁的代理出口（CBG_API_BASE_URL）'
-      : upstreamMessage || `藏宝阁API返回异常: status=${data?.status}`
     throw createError({
       statusCode: 502,
-      message,
+      statusMessage: String(data?.status_code || 'UPSTREAM_ERROR'),
+      message: upstreamMessage || `藏宝阁API返回异常: status=${data?.status}`,
+      data: {
+        upstreamStatus: data?.status ?? null,
+        upstreamStatusCode: data?.status_code ?? null,
+        upstreamMessage: upstreamMessage || null,
+      },
     })
   }
 
