@@ -123,6 +123,7 @@ export default {
           teams: [
             { title: '司马懿狗刀', heroes: [100024, 100807, 100023], tier: 'T0' },
             { title: '刘徽黄盖刀', heroes: [100814, 100035, 100783], tier: 'T0' },
+            { title: '卫瓘黄盖刀', heroes: [100035, 100707, 100783], tier: 'T1+' },
             { title: '司马懿核弹', heroes: [100474, 100807, 100553], tier: 'T1+' },
             { title: '曹彰法刀', heroes: [100683, 100692, 100023], tier: 'T1+' },
             { title: '丑刀', heroes: [100794, 100771, 100474], tier: 'T1' },
