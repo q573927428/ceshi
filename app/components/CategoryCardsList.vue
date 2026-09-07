@@ -146,7 +146,9 @@ export default {
   watch: {
     cardSearch() {
       this.selectedCardId = this.cardSearchResults[0]?.hero_id || null
-      this.cardSearchSubmitted = false
+      // 输入内容变化时直接刷新结果，无需额外点击“搜索”。
+      // 保留该状态字段是为了兼容回车和按钮搜索的交互。
+      this.cardSearchSubmitted = true
     },
     uniqueCards: {
       handler(newVal) {
