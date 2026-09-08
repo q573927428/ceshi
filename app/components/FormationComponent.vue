@@ -99,7 +99,7 @@ export default {
             { title: '庞司刘', heroes: [100477, 100016, 100807], tier: 'T0' },
             { title: '大司机', heroes: [100619, 100807, 100526], tier: 'T0' },
             { title: '大桥流氓', heroes: [100619, 100526, 100030], tier: 'T1-' },
-            { title: '杜垒司', heroes: [100705, 100526, 100703], tier: 'T1' },
+            { title: '杜垒司', heroes: [100705, 100708, 100703], tier: 'T1' },
             { title: '鬼吕流氓', heroes: [100479, 100526, 100030], tier: 'T1-' },
             { title: '吕布网红', heroes: [100479, 100337, 100526], tier: 'T1' },
             { title: '大章鱼', heroes: [100619, 100526, 100787], tier: 'T1' },
