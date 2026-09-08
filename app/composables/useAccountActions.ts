@@ -591,12 +591,14 @@ export const useAccountActions = () => {
         A = a.estimatedPrice || 0
         B = b.estimatedPrice || 0
       } else if (key === 'ratio') {
-        const aPrice = a.equipPrice || 1
-        const bPrice = b.equipPrice || 1
+        // 溢价率以用户填写的价格为优先分母；未填写时才回退到藏宝阁价格。
+        // 价格无效或为 0 时无法计算，按 0 处理，避免用 1 作为分母造成误排序。
+        const aPrice = a.userPrice ?? a.equipPrice
+        const bPrice = b.userPrice ?? b.equipPrice
         const aEst = a.estimatedPrice || 0
         const bEst = b.estimatedPrice || 0
-        A = aEst / aPrice
-        B = bEst / bPrice
+        A = aPrice && aPrice > 0 ? aEst / aPrice : 0
+        B = bPrice && bPrice > 0 ? bEst / bPrice : 0
       } else {
         A = a.timestamp
         B = b.timestamp
