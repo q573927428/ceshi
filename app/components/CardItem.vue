@@ -354,7 +354,7 @@ export default {
   left: 2px;
   width: 10px;
   height: 14px;
-  line-height: 15px;
+  line-height: 12px;
   font-size: 11px;
   text-align: center;
   color: #fbe385;
