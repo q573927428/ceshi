@@ -99,7 +99,7 @@ export default {
             { title: '庞司刘', heroes: [100477, 100016, 100807], tier: 'T0' },
             { title: '大司机', heroes: [100619, 100807, 100526], tier: 'T0' },
             { title: '大桥流氓', heroes: [100619, 100526, 100030], tier: 'T1-' },
-            { title: '大张鲁', heroes: [100619, 100526, 100741], tier: 'T1' },
+            { title: '杜垒司', heroes: [100705, 100526, 100703], tier: 'T1' },
             { title: '鬼吕流氓', heroes: [100479, 100526, 100030], tier: 'T1-' },
             { title: '吕布网红', heroes: [100479, 100337, 100526], tier: 'T1' },
             { title: '大章鱼', heroes: [100619, 100526, 100787], tier: 'T1' },
@@ -120,6 +120,7 @@ export default {
         {
           category: '神兵大赏',
           teams: [
+            { title: '刘徽王异刀', heroes: [100028, 100807, 100814], tier: 'T0' },
             { title: '司马懿狗刀', heroes: [100024, 100807, 100023], tier: 'T0' },
             { title: '刘徽黄盖刀', heroes: [100814, 100035, 100783], tier: 'T0' },
             { title: '卫瓘黄盖刀', heroes: [100035, 100707, 100783], tier: 'T1+' },
@@ -127,7 +128,6 @@ export default {
             { title: '丑刀', heroes: [100794, 100771, 100474], tier: 'T1' },
             { title: '朱狗刀', heroes: [100024, 100807, 100553], tier: 'T1+' },
             { title: '狗刀', heroes: [100024, 100035, 100023], tier: 'T1-' },
-            { title: '刘徽王异刀', heroes: [100028, 100814, 100023], tier: 'T0' },
             { title: '司马懿王异刀', heroes: [100028, 100807, 100023], tier: 'T1+' },
             { title: '王异法刀', heroes: [100028, 100035, 100023], tier: 'T1' },
             { title: '杜预卫瓘法刀', heroes: [100705, 100707, 100035], tier: 'T1-' },
