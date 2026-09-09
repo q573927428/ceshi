@@ -107,7 +107,7 @@
             v-model="searchQuery"
             class="account-search-input"
             clearable
-            placeholder="搜索账号ID、藏宝阁链接或备注"
+            placeholder="搜索账号ID、链接、武将、技能、武器或备注"
             @keyup.enter="currentPage = 1"
           >
             <template #prefix><el-icon><Search /></el-icon></template>

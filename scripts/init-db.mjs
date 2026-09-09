@@ -58,6 +58,36 @@ await db.execute(`
   )
 `)
 
+await db.execute(`
+  CREATE TABLE IF NOT EXISTS record_heroes (
+    record_id INT NOT NULL,
+    hero_name VARCHAR(100) NOT NULL,
+    PRIMARY KEY (record_id, hero_name),
+    INDEX idx_record_heroes_name (hero_name, record_id),
+    CONSTRAINT fk_record_heroes_record FOREIGN KEY (record_id) REFERENCES records(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+`)
+
+await db.execute(`
+  CREATE TABLE IF NOT EXISTS record_skills (
+    record_id INT NOT NULL,
+    skill_name VARCHAR(100) NOT NULL,
+    PRIMARY KEY (record_id, skill_name),
+    INDEX idx_record_skills_name (skill_name, record_id),
+    CONSTRAINT fk_record_skills_record FOREIGN KEY (record_id) REFERENCES records(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+`)
+
+await db.execute(`
+  CREATE TABLE IF NOT EXISTS record_weapons (
+    record_id INT NOT NULL,
+    weapon_name VARCHAR(100) NOT NULL,
+    PRIMARY KEY (record_id, weapon_name),
+    INDEX idx_record_weapons_name (weapon_name, record_id),
+    CONSTRAINT fk_record_weapons_record FOREIGN KEY (record_id) REFERENCES records(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+`)
+
 // 创建 users 表
 await db.execute(`
   CREATE TABLE IF NOT EXISTS users (

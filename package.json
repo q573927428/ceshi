@@ -12,6 +12,7 @@
     "migrate-link-unique": "node scripts/migrate-link-unique.mjs",
     "migrate-user-price": "node scripts/migrate-user-price.mjs",
     "migrate-billing": "node scripts/migrate-billing.mjs",
+    "migrate-search-index": "node --env-file=.env scripts/migrate-search-index.mjs",
     "build": "nuxt build",
     "start": "node .output/server/index.mjs",
     "start:env": "node --env-file=.env .output/server/index.mjs",

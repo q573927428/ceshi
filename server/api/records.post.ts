@@ -1,5 +1,6 @@
 import { getPool } from '../db'
 import { requireUser } from '../utils/auth'
+import { syncRecordSearchIndex } from '../utils/recordSearchIndex'
 
 interface RecordBody {
   link: string
@@ -51,7 +52,7 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    await conn.execute(
+    const [writeResult] = await conn.execute(
     `INSERT INTO records (user_id, link, timestamp, is_favorite, equip_price, user_price, estimated_price, status_desc, remark, user_remark, data)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON DUPLICATE KEY UPDATE
@@ -78,6 +79,10 @@ export default defineEventHandler(async (event) => {
       body.data ? JSON.stringify(body.data) : null,
       ]
     )
+    const recordId = Number(sameUserLink?.id || (writeResult as any).insertId)
+    if (body.data && recordId) {
+      await syncRecordSearchIndex(conn, recordId, body.data)
+    }
     if (!sameUserLink) await conn.execute('UPDATE users SET quota_limit = quota_limit - 1 WHERE id = ?', [user.id])
     await conn.commit()
     return { success: true, link, remaining: sameUserLink ? remainingQuota : remainingQuota - 1 }

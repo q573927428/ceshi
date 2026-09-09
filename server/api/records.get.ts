@@ -25,12 +25,21 @@ export default defineEventHandler(async (event) => {
     whereParams.push(user.id)
   }
   if (search) {
+    const escapedSearch = search.replace(/[\\%_]/g, '\\$&')
+    const indexedNamePrefix = `${escapedSearch}%`
     whereParts.push(`(
       LOCATE(?, link) > 0
       OR LOCATE(?, COALESCE(remark, '')) > 0
       OR LOCATE(?, COALESCE(user_remark, '')) > 0
+      OR id IN (
+        SELECT record_id FROM record_heroes WHERE hero_name LIKE ?
+        UNION
+        SELECT record_id FROM record_skills WHERE skill_name LIKE ?
+        UNION
+        SELECT record_id FROM record_weapons WHERE weapon_name LIKE ?
+      )
     )`)
-    whereParams.push(search, search, search)
+    whereParams.push(search, search, search, indexedNamePrefix, indexedNamePrefix, indexedNamePrefix)
   }
   const whereSql = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : ''
 

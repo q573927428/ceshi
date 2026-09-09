@@ -69,7 +69,7 @@ export const useAccountActions = () => {
   const maxPriceFilter = ref('')
 
   const priceFilterType = ref<'equipPrice' | 'estimatedPrice'>('equipPrice')
-  // 账号列表关键字搜索：支持账号 ID、藏宝阁链接和备注。
+  // 账号列表关键字搜索：支持账号 ID、链接、武将、技能、武器和备注。
   const searchQuery = ref('')
   const databaseSearchResults = ref<LinkItem[]>([])
   let searchTimer: ReturnType<typeof setTimeout> | null = null
