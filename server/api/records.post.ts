@@ -1,5 +1,6 @@
 import { getPool } from '../db'
 import { requireUser } from '../utils/auth'
+import { getAccountCoinCost } from '../utils/billing'
 import { syncRecordSearchIndex } from '../utils/recordSearchIndex'
 
 interface RecordBody {
@@ -37,8 +38,10 @@ export default defineEventHandler(async (event) => {
   try {
     await conn.beginTransaction()
     // 锁住用户行，串行化同一用户的额度检查，避免并发请求同时通过 COUNT 检查。
-    const [lockedUserRows] = await conn.execute('SELECT quota_limit FROM users WHERE id = ? FOR UPDATE', [user.id])
-    const remainingQuota = Math.max(0, Number((lockedUserRows as any[])[0]?.quota_limit ?? 2))
+    const [lockedUserRows] = await conn.execute('SELECT quota_limit, plan, plan_expires_at FROM users WHERE id = ? FOR UPDATE', [user.id])
+    const lockedUser = (lockedUserRows as any[])[0]
+    const remainingQuota = Math.max(0, Number(lockedUser?.quota_limit ?? 2))
+    const coinCost = getAccountCoinCost(lockedUser)
     // 记录归属到当前用户；同一个藏宝阁 link 可以被多个用户分别保存。
     // 只在当前用户尚未保存该 link 时消耗额度，避免更新自己的记录重复扣额度。
     const [sameUserLinkRows] = await conn.execute(
@@ -47,8 +50,8 @@ export default defineEventHandler(async (event) => {
     )
     const sameUserLink = (sameUserLinkRows as any[])[0]
     if (!sameUserLink) {
-      if (remainingQuota <= 0) {
-        throw createError({ statusCode: 402, message: '金币不足，请充值后继续添加' })
+      if (remainingQuota < coinCost) {
+        throw createError({ statusCode: 402, message: `添加账号需要 ${coinCost} 金币，余额不足，请充值后继续添加` })
       }
     }
 
@@ -83,9 +86,9 @@ export default defineEventHandler(async (event) => {
     if (body.data && recordId) {
       await syncRecordSearchIndex(conn, recordId, body.data)
     }
-    if (!sameUserLink) await conn.execute('UPDATE users SET quota_limit = quota_limit - 1 WHERE id = ?', [user.id])
+    if (!sameUserLink) await conn.execute('UPDATE users SET quota_limit = quota_limit - ? WHERE id = ?', [coinCost, user.id])
     await conn.commit()
-    return { success: true, link, remaining: sameUserLink ? remainingQuota : remainingQuota - 1 }
+    return { success: true, link, remaining: sameUserLink ? remainingQuota : remainingQuota - coinCost }
   } catch (err) {
     await conn.rollback()
     throw err
