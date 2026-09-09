@@ -448,6 +448,12 @@ import { useAccountActions } from '~/composables/useAccountActions';
 import { useDb } from '~/composables/useDb';
 import { useAuth } from '~/composables/useAuth';
 
+useSeoMeta({
+  title: '率土之滨藏宝阁账号估价与对比 - 藏宝阁助手',
+  keywords: '率土之滨,率土藏宝阁,账号估价,账号对比,藏宝阁助手',
+  description: '率土之滨藏宝阁账号估价与对比工具，支持批量添加账号链接、价格筛选、武将与宝物价值分析，帮助玩家高效挑选账号。',
+});
+
 const { isLoggedIn, load: loadAuth } = useAuth();
 
 // 翻页后将视图定位到排序筛选区域，避免回到页面最顶部。
