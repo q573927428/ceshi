@@ -11,7 +11,7 @@
 import SkillList from '~/components/SkillList.vue'
 
 useSeoMeta({
-  title: '率土技能大全 - 战法效果与技能查询 | 藏宝阁助手',
+  title: '率土技能大全 - 战法效果与技能查询 | 率土助手',
   keywords: '率土之滨技能,率土战法,技能大全,战法效果,技能查询',
   description: '率土之滨技能与战法资料查询，提供技能品质、类型和战法效果等完整信息，帮助玩家查找和比较率土技能。',
 })

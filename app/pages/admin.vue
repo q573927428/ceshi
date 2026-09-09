@@ -45,8 +45,8 @@
 import { Refresh } from '@element-plus/icons-vue'
 
 useSeoMeta({
-  title: '用户管理 - 账号与会员管理 | 藏宝阁助手',
-  description: '藏宝阁助手用户管理后台，用于管理用户账号、金币额度、会员类型及专业会员有效期。',
+  title: '用户管理 - 账号与会员管理 | 率土助手',
+  description: '率土助手用户管理后台，用于管理用户账号、金币额度、会员类型及专业会员有效期。',
 })
 
 interface AdminUser {

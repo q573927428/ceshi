@@ -3,7 +3,7 @@
 import TreasureList from '~/components/TreasureList.vue'
 
 useSeoMeta({
-  title: '率土宝物大全 - 宝物特性与效果查询 | 藏宝阁助手',
+  title: '率土宝物大全 - 宝物特性与效果查询 | 率土助手',
   keywords: '率土之滨宝物,率土宝物大全,宝物特性,宝物效果,宝物查询',
   description: '率土之滨宝物资料查询，收录宝物类型、品质、特性与效果信息，方便玩家筛选和比较率土宝物。',
 })

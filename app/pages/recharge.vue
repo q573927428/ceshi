@@ -18,8 +18,8 @@
 </template>
 <script setup lang="ts">
 useSeoMeta({
-  title: '充值中心 - 金币充值 | 藏宝阁助手',
-  description: '藏宝阁助手充值中心，选择充值套餐并通过微信支付购买金币，用于添加和管理率土之滨藏宝阁账号。',
+  title: '充值中心 - 金币充值 | 率土助手',
+  description: '率土助手充值中心，选择充值套餐并通过微信支付购买金币，用于添加和管理率土之滨藏宝阁账号。',
 })
 
 const plans = ref<any[]>([]); const selectedPlanId = ref(''); const message = ref(''); const paying = ref(''); const showPay = ref(false); const orderNo = ref(''); const payment = ref<any>(null); const paid = ref(false); let pollTimer: ReturnType<typeof setInterval> | undefined

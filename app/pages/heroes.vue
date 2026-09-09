@@ -3,7 +3,7 @@
 import HeroList from '~/components/HeroList.vue'
 
 useSeoMeta({
-  title: '率土武将大全 - 武将属性与战法查询 | 藏宝阁助手',
+  title: '率土武将大全 - 武将属性与战法查询 | 率土助手',
   keywords: '率土之滨武将,率土武将大全,武将属性,武将战法,武将查询',
   description: '率土之滨武将资料查询，汇总武将属性、阵营、兵种与自带战法信息，方便玩家快速筛选和了解率土武将。',
 })

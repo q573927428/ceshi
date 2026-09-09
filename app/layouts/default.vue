@@ -25,7 +25,7 @@
           <el-button text @click="toggleSidebar" style="font-size: 18px;">
             <el-icon><Fold v-if="!isCollapse" /><Expand v-else /></el-icon>
           </el-button>
-          <!-- <span class="header-title">藏宝阁助手</span> -->
+          <!-- <span class="header-title">率土助手</span> -->
         </div>
         <div class="header-right">
           <template v-if="isLoggedIn">
@@ -54,7 +54,7 @@
     <!-- 返回顶部按钮 -->
     <BackToTop />
 
-    <el-dialog v-if="false" v-model="authVisible" title="登录藏宝阁助手" width="360px" :close-on-click-modal="false">
+    <el-dialog v-if="false" v-model="authVisible" title="登录率土助手" width="360px" :close-on-click-modal="false">
       <el-input v-model="authForm.username" placeholder="用户名" class="auth-input" />
       <el-input v-model="authForm.password" type="password" show-password placeholder="密码（至少6位）" class="auth-input" />
       <div v-if="authError" class="auth-error">{{ authError }}</div>
