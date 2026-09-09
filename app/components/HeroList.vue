@@ -2,7 +2,7 @@
   <section class="hero-list">
     <div class="toolbar">
       <div class="toolbar-heading">
-        <el-input v-model="keyword" clearable placeholder="搜索武将名 / 战法" class="search-input"><template #prefix>⌕</template></el-input>
+        <el-input v-model="keyword" clearable placeholder="搜索武将名 / 战法" class="search-input" :prefix-icon="Search" />
         <SkillSpecialStatusGuide />
       </div>
       <div class="filter-row"><span class="filter-label">阵营</span><el-radio-group v-model="countryFilter" size="small"><el-radio-button value="全部">全部</el-radio-button><el-radio-button v-for="country in countries" :key="country" :value="country">{{ country }}</el-radio-button></el-radio-group></div>
@@ -31,6 +31,7 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue'
+import { Search } from '@element-plus/icons-vue'
 import CardItem from '~/components/CardItem.vue'
 import SkillSpecialStatusGuide from '~/components/SkillSpecialStatusGuide.vue'
 import heroData from '~/data/heroextra.json'
