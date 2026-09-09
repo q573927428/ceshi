@@ -15,6 +15,13 @@ interface RecordData {
   [key: string]: any
 }
 
+interface RecordsPage {
+  records: RecordData[]
+  total: number
+  page: number
+  pageSize: number
+}
+
 export const useDb = () => {
   const saveRecord = async (record: RecordData): Promise<{ remaining?: number }> => {
     const normalizePrice = (value: unknown): number | null => {
@@ -67,12 +74,13 @@ export const useDb = () => {
     }
   }
 
-  const loadPageRecords = async (page: number, pageSize: number): Promise<{ records: any[]; total: number; page: number; pageSize: number }> => {
+  const loadPageRecords = async (page: number, pageSize: number): Promise<RecordsPage> => {
     try {
-      // @ts-ignore - Nuxt $fetch has complex route types
-      return await $fetch('/api/records', {
+      const response: unknown = await $fetch('/api/records', {
         params: { page, pageSize },
       })
+      // 此接口会根据 pageSize 返回列表或分页对象，调用方在此固定使用分页模式。
+      return response as RecordsPage
     } catch {
       return { records: [], total: 0, page, pageSize }
     }
@@ -91,11 +99,15 @@ export const useDb = () => {
     }
   }
 
-  const searchRecords = async (search: string): Promise<any[]> => {
+  const searchRecords = async (
+    search: string,
+    heroes: Array<{ heroId: number; name: string; minAdvance: number }> = [],
+    skills: string[] = [],
+  ): Promise<any[]> => {
     try {
       // @ts-ignore - Nuxt $fetch has complex route types
       return await $fetch('/api/records', {
-        params: { search },
+        params: { search, heroes: JSON.stringify(heroes), skills: JSON.stringify(skills) },
       })
     } catch {
       return []

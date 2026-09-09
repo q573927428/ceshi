@@ -61,9 +61,13 @@ await db.execute(`
 await db.execute(`
   CREATE TABLE IF NOT EXISTS record_heroes (
     record_id INT NOT NULL,
+    hero_id INT NOT NULL,
     hero_name VARCHAR(100) NOT NULL,
-    PRIMARY KEY (record_id, hero_name),
-    INDEX idx_record_heroes_name (hero_name, record_id),
+    season VARCHAR(20) NOT NULL DEFAULT '',
+    advance_num TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (record_id, hero_id, season),
+    INDEX idx_record_heroes_name_advance (hero_name, advance_num, record_id),
+    INDEX idx_record_heroes_id_advance (hero_id, advance_num, record_id),
     CONSTRAINT fk_record_heroes_record FOREIGN KEY (record_id) REFERENCES records(id) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 `)

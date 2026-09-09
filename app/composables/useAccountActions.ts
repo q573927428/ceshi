@@ -42,6 +42,12 @@ const describeError = (err: any): string => {
   return '藏宝阁接口返回异常或网络请求失败'
 }
 
+interface HeroFilter {
+  heroId: number
+  name: string
+  minAdvance: number
+}
+
 export const useAccountActions = () => {
   const { saveRecord, getRecord, deleteRecord, loadAllRecords, searchRecords, clearAllRecords, batchFetchRecords, preflightRecords } = useDb()
   const { fetchAccountData } = useFetchData()
@@ -71,6 +77,8 @@ export const useAccountActions = () => {
   const priceFilterType = ref<'equipPrice' | 'estimatedPrice'>('equipPrice')
   // 账号列表关键字搜索：支持账号 ID、链接、武将、技能、武器和备注。
   const searchQuery = ref('')
+  const heroFilters = ref<HeroFilter[]>([])
+  const skillFilters = ref<string[]>([])
   const databaseSearchResults = ref<LinkItem[]>([])
   let searchTimer: ReturnType<typeof setTimeout> | null = null
   let searchRequestId = 0
@@ -546,7 +554,9 @@ export const useAccountActions = () => {
   }
 
   const filteredLinks = computed(() => {
-    let list = searchQuery.value.trim() ? databaseSearchResults.value : zangbaoLinks.value
+    let list = searchQuery.value.trim() || heroFilters.value.length || skillFilters.value.length
+      ? databaseSearchResults.value
+      : zangbaoLinks.value
 
     if (filterFavorites.value) {
       list = list.filter((i) => i.isFavorite)
@@ -601,18 +611,24 @@ export const useAccountActions = () => {
   })
 
   // 关键字交给数据库查询；请求序号用于丢弃输入过快时晚到的旧响应。
-  watch(searchQuery, (value) => {
+  watch([
+    searchQuery,
+    () => heroFilters.value.map((hero) => `${hero.heroId}:${hero.minAdvance}`).join('|'),
+    () => skillFilters.value.join('|'),
+  ], ([value]) => {
     currentPage.value = 1
     databaseSearchResults.value = []
     if (searchTimer) clearTimeout(searchTimer)
 
     const keyword = value.trim()
     const requestId = ++searchRequestId
-    if (!keyword) return
+    const selectedHeroes = heroFilters.value.map((hero) => ({ ...hero }))
+    const selectedSkills = [...skillFilters.value]
+    if (!keyword && !selectedHeroes.length && !selectedSkills.length) return
 
     searchTimer = setTimeout(async () => {
-      const records = await searchRecords(keyword)
-      if (requestId !== searchRequestId || keyword !== searchQuery.value.trim()) return
+      const records = await searchRecords(keyword, selectedHeroes, selectedSkills)
+      if (requestId !== searchRequestId) return
 
       databaseSearchResults.value = records.map((record: any) => {
         const item = mapRecordToLinkItem(record)
@@ -654,6 +670,8 @@ export const useAccountActions = () => {
     statusFilter,
     priceFilterType,
     searchQuery,
+    heroFilters,
+    skillFilters,
     newLinkPrice,
 
     loadLinksFromDB,

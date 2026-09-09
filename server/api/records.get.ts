@@ -16,6 +16,26 @@ export default defineEventHandler(async (event) => {
   const page = parseInt(String(queryParams.page || '1'), 10)
   const pageSize = parseInt(String(queryParams.pageSize || '0'), 10)
   const search = String(queryParams.search || '').trim().slice(0, 100)
+  let heroFilters: Array<{ heroId: number; name: string; minAdvance: number }> = []
+  let skillFilters: string[] = []
+  try {
+    const parsed = JSON.parse(String(queryParams.heroes || '[]'))
+    if (Array.isArray(parsed)) {
+      heroFilters = parsed.slice(0, 20).map((item: any) => ({
+        heroId: Math.trunc(Number(item?.heroId) || 0),
+        name: String(item?.name || '').trim().slice(0, 100),
+        minAdvance: Math.min(5, Math.max(0, Math.trunc(Number(item?.minAdvance) || 0))),
+      })).filter((item) => item.heroId > 0 && item.name)
+    }
+  } catch { /* 无效筛选参数按空条件处理 */ }
+  try {
+    const parsed = JSON.parse(String(queryParams.skills || '[]'))
+    if (Array.isArray(parsed)) {
+      skillFilters = [...new Set(parsed.slice(0, 20)
+        .map((item: any) => String(item || '').trim().slice(0, 100))
+        .filter(Boolean))]
+    }
+  } catch { /* 无效筛选参数按空条件处理 */ }
   const isPageRequest = pageSize > 0
 
   const whereParts: string[] = []
@@ -40,6 +60,19 @@ export default defineEventHandler(async (event) => {
       )
     )`)
     whereParams.push(search, search, search, indexedNamePrefix, indexedNamePrefix, indexedNamePrefix)
+  }
+  for (const hero of heroFilters) {
+    whereParts.push(`id IN (
+      SELECT record_id FROM record_heroes
+      WHERE hero_id = ? AND advance_num >= ?
+    )`)
+    whereParams.push(hero.heroId, hero.minAdvance)
+  }
+  for (const skill of skillFilters) {
+    whereParts.push(`id IN (
+      SELECT record_id FROM record_skills WHERE skill_name = ?
+    )`)
+    whereParams.push(skill)
   }
   const whereSql = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : ''
 

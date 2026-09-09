@@ -64,6 +64,7 @@
             aria-label="写价格"
           />
         </div>
+
       </div>
 
       <el-alert
@@ -145,6 +146,9 @@
           <el-option label="买家取走" value="买家取走"></el-option>
           <el-option label="卖家取回" value="卖家取回"></el-option>
         </el-select>
+        <span class="filter-interval"> | </span>
+
+        <HeroAdvanceFilter v-model:heroes="heroFilters" v-model:skills="skillFilters" />
         <span class="filter-interval"> | </span>
 
         <el-button v-if="isLoggedIn" @click="toggleFilter" plain :type="filterFavorites ? 'primary' : 'warning'" style="margin-bottom: 10px;">
@@ -438,6 +442,7 @@ import SkillCard from '~/components/SkillCard.vue';
 import skillQualityMap from '~/config/skillQualityMap';
 import WeaponList from '~/components/WeaponList.vue';
 import FormationComponent from '~/components/FormationComponent.vue';
+import HeroAdvanceFilter from '~/components/HeroAdvanceFilter.vue';
 
 import { Delete, Star, DocumentCopy, Refresh, Edit, Connection, Share, Search, Plus } from '@element-plus/icons-vue';
 
@@ -487,6 +492,8 @@ const {
   statusFilter,
   priceFilterType,
   searchQuery,
+  heroFilters,
+  skillFilters,
   newLinkPrice,
 
   // 方法
