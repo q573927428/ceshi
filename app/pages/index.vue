@@ -168,7 +168,12 @@
     <!-- 全局加载指示 -->
 
     <!-- 对比区域 -->
-    <div class="compare-results">
+    <div
+      v-loading="databaseSearchLoading"
+      class="compare-results"
+      :class="{ 'is-filtering': databaseSearchLoading }"
+      element-loading-text="正在筛选..."
+    >
       <div v-if="pagedLinks.length > 0">
         <div class="compare-container" :style="gridStyle">
           <div
@@ -494,6 +499,7 @@ const {
   searchQuery,
   heroFilters,
   skillFilters,
+  databaseSearchLoading,
   newLinkPrice,
 
   // 方法
@@ -916,6 +922,9 @@ onUnmounted(() => {
 }
 .compare-results {
   margin-top: 16px;
+}
+.compare-results.is-filtering {
+  min-height: 160px;
 }
 
 .panel-header {

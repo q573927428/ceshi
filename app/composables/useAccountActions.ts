@@ -80,6 +80,7 @@ export const useAccountActions = () => {
   const heroFilters = ref<HeroFilter[]>([])
   const skillFilters = ref<string[]>([])
   const databaseSearchResults = ref<LinkItem[]>([])
+  const databaseSearchLoading = ref(false)
   let searchTimer: ReturnType<typeof setTimeout> | null = null
   let searchRequestId = 0
 
@@ -624,18 +625,27 @@ export const useAccountActions = () => {
     const requestId = ++searchRequestId
     const selectedHeroes = heroFilters.value.map((hero) => ({ ...hero }))
     const selectedSkills = [...skillFilters.value]
-    if (!keyword && !selectedHeroes.length && !selectedSkills.length) return
+    if (!keyword && !selectedHeroes.length && !selectedSkills.length) {
+      databaseSearchLoading.value = false
+      return
+    }
+
+    databaseSearchLoading.value = true
 
     searchTimer = setTimeout(async () => {
-      const records = await searchRecords(keyword, selectedHeroes, selectedSkills)
-      if (requestId !== searchRequestId) return
+      try {
+        const records = await searchRecords(keyword, selectedHeroes, selectedSkills)
+        if (requestId !== searchRequestId) return
 
-      databaseSearchResults.value = records.map((record: any) => {
-        const item = mapRecordToLinkItem(record)
-        const existing = zangbaoLinks.value.find((candidate) => candidate.id === item.id)
-        if (existing?.data) item.data = existing.data
-        return item
-      })
+        databaseSearchResults.value = records.map((record: any) => {
+          const item = mapRecordToLinkItem(record)
+          const existing = zangbaoLinks.value.find((candidate) => candidate.id === item.id)
+          if (existing?.data) item.data = existing.data
+          return item
+        })
+      } finally {
+        if (requestId === searchRequestId) databaseSearchLoading.value = false
+      }
     }, 300)
   })
 
@@ -672,6 +682,7 @@ export const useAccountActions = () => {
     searchQuery,
     heroFilters,
     skillFilters,
+    databaseSearchLoading,
     newLinkPrice,
 
     loadLinksFromDB,
