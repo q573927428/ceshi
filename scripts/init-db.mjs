@@ -101,7 +101,7 @@ await db.execute(`
     password_hash VARCHAR(255) NOT NULL,
     nickname      VARCHAR(100) DEFAULT '',
     plan          VARCHAR(20) NOT NULL DEFAULT 'free',
-    quota_limit   INT NOT NULL DEFAULT 2,
+    quota_limit   INT NOT NULL DEFAULT 5,
     plan_expires_at TIMESTAMP NULL DEFAULT NULL,
     created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

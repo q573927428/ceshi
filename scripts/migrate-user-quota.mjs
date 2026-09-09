@@ -4,7 +4,7 @@ const db = await mysql.createConnection({ host: process.env.MYSQL_HOST || '127.0
 const [columns] = await db.query("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users'")
 const existingColumns = new Set(columns.map((c) => c.COLUMN_NAME))
 if (!existingColumns.has('plan')) await db.query("ALTER TABLE users ADD COLUMN plan VARCHAR(20) NOT NULL DEFAULT 'free'")
-if (!existingColumns.has('quota_limit')) await db.query("ALTER TABLE users ADD COLUMN quota_limit INT NOT NULL DEFAULT 2")
+if (!existingColumns.has('quota_limit')) await db.query("ALTER TABLE users ADD COLUMN quota_limit INT NOT NULL DEFAULT 5")
 // 旧版本使用 link 全局唯一，会阻止不同用户保存同一个藏宝阁账号。
 // 迁移为按用户隔离的联合唯一索引后，同一 link 可被多个用户分别保存。
 try { await db.query('ALTER TABLE records DROP INDEX uk_link') } catch {}

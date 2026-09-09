@@ -1,5 +1,6 @@
 export const STANDARD_ACCOUNT_COIN_COST = 5
 export const PRO_ACCOUNT_COIN_COST = 3
+export const NEW_USER_COIN_BONUS = 5
 
 export function hasActiveProMembership(user: any, now = Date.now()) {
   if (user?.plan !== 'pro') return false
