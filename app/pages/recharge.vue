@@ -3,7 +3,7 @@
     <h2>充值中心</h2><p>充值规则：1 元 = 10 金币，1 金币可添加 1 个藏宝阁账号。</p>
     <div class="plans-grid">
       <el-card v-for="p in plans" :key="p.id" class="plan" :class="{ selected: selectedPlanId === p.id }" @click="selectedPlanId = p.id">
-        <div class="plan-check"><el-radio v-model="selectedPlanId" :label="p.id">{{ p.name }}</el-radio></div>
+        <div class="plan-check"><el-radio v-model="selectedPlanId" :value="p.id">{{ p.name }}</el-radio></div>
         <p>{{ p.description }}</p><strong>¥{{ (p.amountFen / 100).toFixed(2) }}</strong>
       </el-card>
     </div>
