@@ -120,6 +120,7 @@
         <span style="margin-bottom: 12px;">筛选：</span>
         <el-select v-model="priceFilterType" placeholder="选择筛选字段" class="select-filter">
           <el-option label="藏宝阁价" value="equipPrice" ></el-option>
+          <el-option label="自定价格" value="userPrice"></el-option>
           <el-option label="预估价值" value="estimatedPrice"></el-option>
         </el-select>
         <span class="price-filter-input">
@@ -151,13 +152,13 @@
         <HeroAdvanceFilter v-model:heroes="heroFilters" v-model:skills="skillFilters" />
         <span class="filter-interval"> | </span>
 
-        <el-button v-if="isLoggedIn" @click="toggleFilter" plain :type="filterFavorites ? 'primary' : 'warning'" style="margin-bottom: 10px;">
+        <el-button v-if="isLoggedIn" @click="toggleFilter" plain type="warning" style="margin-bottom: 10px;">
           {{ filterFavorites ? '显示全部' : '仅看收藏' }}
         </el-button>
 
-        <el-button @click="deleteFilteredResults" type="danger" style="margin-bottom: 10px;" v-if="isLoggedIn && filteredLinks.length < zangbaoLinks.length">
+        <!-- <el-button @click="deleteFilteredResults" type="danger" style="margin-bottom: 10px;" v-if="isLoggedIn && filteredLinks.length < zangbaoLinks.length">
           删 {{ filteredLinks.length }} 条
-        </el-button>
+        </el-button> -->
         <el-button plain text style="margin-bottom: 10px;">
           共 {{ filteredLinks.length }} 条
         </el-button>

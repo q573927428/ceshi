@@ -74,7 +74,7 @@ export const useAccountActions = () => {
   const minPriceFilter = ref('')
   const maxPriceFilter = ref('')
 
-  const priceFilterType = ref<'equipPrice' | 'estimatedPrice'>('equipPrice')
+  const priceFilterType = ref<'equipPrice' | 'userPrice' | 'estimatedPrice'>('equipPrice')
   // 账号列表关键字搜索：支持账号 ID、链接、武将、技能、武器和备注。
   const searchQuery = ref('')
   const heroFilters = ref<HeroFilter[]>([])
@@ -567,8 +567,13 @@ export const useAccountActions = () => {
     const max = maxPriceFilter.value === '' ? Infinity : parseFloat(maxPriceFilter.value)
 
     list = list.filter((i) => {
-      const field = priceFilterType.value === 'equipPrice' ? i.equipPrice : i.estimatedPrice
-      const price = field || 0
+      const field = priceFilterType.value === 'equipPrice'
+        ? i.equipPrice
+        : priceFilterType.value === 'userPrice'
+          ? i.userPrice
+          : i.estimatedPrice
+      if (priceFilterType.value === 'userPrice' && (field === null || field === undefined)) return false
+      const price = field ?? 0
       return price >= min && price <= max
     })
 
