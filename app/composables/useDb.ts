@@ -91,6 +91,17 @@ export const useDb = () => {
     }
   }
 
+  const searchRecords = async (search: string): Promise<any[]> => {
+    try {
+      // @ts-ignore - Nuxt $fetch has complex route types
+      return await $fetch('/api/records', {
+        params: { search },
+      })
+    } catch {
+      return []
+    }
+  }
+
   const preflightRecords = async (links: string[]) => {
     return await $fetch('/api/records/preflight', { method: 'POST', body: { links } }) as any
   }
@@ -119,6 +130,7 @@ export const useDb = () => {
     getRecord,
     deleteRecord,
     loadAllRecords,
+    searchRecords,
     loadPageRecords,
     batchFetchRecords,
     preflightRecords,

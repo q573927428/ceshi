@@ -15,20 +15,36 @@ export default defineEventHandler(async (event) => {
   const queryParams = getQuery(event)
   const page = parseInt(String(queryParams.page || '1'), 10)
   const pageSize = parseInt(String(queryParams.pageSize || '0'), 10)
+  const search = String(queryParams.search || '').trim().slice(0, 100)
   const isPageRequest = pageSize > 0
+
+  const whereParts: string[] = []
+  const whereParams: any[] = []
+  if (user) {
+    whereParts.push('user_id = ?')
+    whereParams.push(user.id)
+  }
+  if (search) {
+    whereParts.push(`(
+      LOCATE(?, link) > 0
+      OR LOCATE(?, COALESCE(remark, '')) > 0
+      OR LOCATE(?, COALESCE(user_remark, '')) > 0
+    )`)
+    whereParams.push(search, search, search)
+  }
+  const whereSql = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : ''
 
   if (isPageRequest) {
     // 分页请求 - 返回指定页的完整记录（含 data）
     const offset = (page - 1) * pageSize
     const pool = getPool()
     const [rows] = await pool.execute(
-      user
-        ? 'SELECT * FROM records WHERE user_id = ? ORDER BY timestamp DESC LIMIT ? OFFSET ?'
-        : 'SELECT * FROM records ORDER BY timestamp DESC LIMIT ? OFFSET ?',
-      user ? [user.id, pageSize, offset] : [pageSize, offset]
+      `SELECT * FROM records ${whereSql} ORDER BY timestamp DESC LIMIT ? OFFSET ?`,
+      [...whereParams, pageSize, offset]
     )
     const [countRows] = await pool.execute(
-      user ? 'SELECT COUNT(*) as total FROM records WHERE user_id = ?' : 'SELECT COUNT(*) as total FROM records', user ? [user.id] : []
+      `SELECT COUNT(*) as total FROM records ${whereSql}`,
+      whereParams
     )
     const total = (countRows as any[])[0]?.total || 0
 
@@ -41,8 +57,8 @@ export default defineEventHandler(async (event) => {
   }
 
   // 非分页请求 - 返回全部记录的元数据（不含 data）
-  const sql = `SELECT ${META_FIELDS} FROM records ${user ? 'WHERE user_id = ?' : ''} ORDER BY timestamp DESC`
-  const rows = await query(sql, user ? [user.id] : [])
+  const sql = `SELECT ${META_FIELDS} FROM records ${whereSql} ORDER BY timestamp DESC`
+  const rows = await query(sql, whereParams)
   // 公开列表不去重：同一藏宝阁链接被不同用户保存时分别展示。
   return (rows as RecordRow[]).map((row) => ({
     id: row.id,

@@ -5,9 +5,6 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useDb } from './useDb'
 import { useFetchData } from './useFetchData'
 
-// 完整藏宝阁URL前缀
-const CBG_PREFIX = 'https://stzb.cbg.163.com/cgi/mweb/equip/1/'
-
 interface LinkItem {
   id?: number
   link: string
@@ -46,7 +43,7 @@ const describeError = (err: any): string => {
 }
 
 export const useAccountActions = () => {
-  const { saveRecord, getRecord, deleteRecord, loadAllRecords, clearAllRecords, batchFetchRecords, preflightRecords } = useDb()
+  const { saveRecord, getRecord, deleteRecord, loadAllRecords, searchRecords, clearAllRecords, batchFetchRecords, preflightRecords } = useDb()
   const { fetchAccountData } = useFetchData()
 
   // 所有状态
@@ -72,8 +69,11 @@ export const useAccountActions = () => {
   const maxPriceFilter = ref('')
 
   const priceFilterType = ref<'equipPrice' | 'estimatedPrice'>('equipPrice')
-  // 账号列表关键字搜索：支持账号 ID、藏宝阁链接、武将名和备注。
+  // 账号列表关键字搜索：支持账号 ID、藏宝阁链接和备注。
   const searchQuery = ref('')
+  const databaseSearchResults = ref<LinkItem[]>([])
+  let searchTimer: ReturnType<typeof setTimeout> | null = null
+  let searchRequestId = 0
 
   const updateProgress = ref('')
 
@@ -157,10 +157,11 @@ export const useAccountActions = () => {
         }
       }
 
-      // 用批量获取的 data 更新 zangbaoLinks 中对应项
+      // 搜索结果和完整列表是不同数组，两边都要同步完整 data。
       for (const record of batchRecords) {
-        const target = zangbaoLinks.value.find((i) => i.link === record.link)
-        if (target) {
+        const targets = [...zangbaoLinks.value, ...databaseSearchResults.value]
+          .filter((i) => record.id ? i.id === record.id : i.link === record.link)
+        for (const target of targets) {
           target.data = record.data || null
           target.loading = false
         }
@@ -172,22 +173,24 @@ export const useAccountActions = () => {
   }
 
   // 加载所有纪录（元数据模式 - 不含 data 大字段）
+  const mapRecordToLinkItem = (r: any): LinkItem => ({
+    id: r.id,
+    link: r.link,
+    timestamp: r.timestamp,
+    isFavorite: r.isFavorite,
+    equipPrice: normalizePrice(r.equipPrice),
+    userPrice: normalizePrice(r.userPrice),
+    data: r.data || null,
+    loading: false,
+    remark: r.remark || '',
+    userRemark: r.userRemark || null,
+    statusDesc: r.statusDesc,
+    estimatedPrice: normalizePrice(r.estimatedPrice),
+  })
+
   const loadLinksFromDB = async () => {
     const all = await loadAllRecords()
-    zangbaoLinks.value = all.map((r: any) => ({
-      id: r.id,
-      link: r.link,
-      timestamp: r.timestamp,
-      isFavorite: r.isFavorite,
-      equipPrice: normalizePrice(r.equipPrice),
-      userPrice: normalizePrice(r.userPrice),
-      data: r.data || null,  // 元数据没有 data，设为 null
-      loading: false,
-      remark: r.remark || '',
-      userRemark: r.userRemark || null,
-      statusDesc: r.statusDesc,
-      estimatedPrice: normalizePrice(r.estimatedPrice),
-    }))
+    zangbaoLinks.value = all.map(mapRecordToLinkItem)
 
     zangbaoLinks.value.forEach((i) => {
       activeTabs[i.link] = activeTabs[i.link] || 'first'
@@ -201,6 +204,7 @@ export const useAccountActions = () => {
   const removeLinksLocally = (links: string[]) => {
     const deletedLinks = new Set(links)
     zangbaoLinks.value = zangbaoLinks.value.filter((item) => !deletedLinks.has(item.link))
+    databaseSearchResults.value = databaseSearchResults.value.filter((item) => !deletedLinks.has(item.link))
 
     for (const link of deletedLinks) {
       delete activeTabs[link]
@@ -542,24 +546,7 @@ export const useAccountActions = () => {
   }
 
   const filteredLinks = computed(() => {
-    let list = zangbaoLinks.value
-
-    const query = searchQuery.value.trim().toLocaleLowerCase()
-    if (query) {
-      list = list.filter((item) => {
-        const heroNames = Array.isArray(item.data?.uniqueCards)
-          ? item.data.uniqueCards.map((card: any) => card?.name).filter(Boolean).join(' ')
-          : ''
-        const searchableText = [
-          item.link,
-          `${CBG_PREFIX}${item.link}`,
-          item.remark,
-          item.userRemark,
-          heroNames,
-        ].filter(Boolean).join(' ').toLocaleLowerCase()
-        return searchableText.includes(query)
-      })
-    }
+    let list = searchQuery.value.trim() ? databaseSearchResults.value : zangbaoLinks.value
 
     if (filterFavorites.value) {
       list = list.filter((i) => i.isFavorite)
@@ -613,9 +600,27 @@ export const useAccountActions = () => {
     return filteredLinks.value.slice(0, currentPage.value * pageSize.value)
   })
 
-  // 搜索条件变化时从第一页开始展示，避免停留在不存在的页码。
-  watch(searchQuery, () => {
+  // 关键字交给数据库查询；请求序号用于丢弃输入过快时晚到的旧响应。
+  watch(searchQuery, (value) => {
     currentPage.value = 1
+    databaseSearchResults.value = []
+    if (searchTimer) clearTimeout(searchTimer)
+
+    const keyword = value.trim()
+    const requestId = ++searchRequestId
+    if (!keyword) return
+
+    searchTimer = setTimeout(async () => {
+      const records = await searchRecords(keyword)
+      if (requestId !== searchRequestId || keyword !== searchQuery.value.trim()) return
+
+      databaseSearchResults.value = records.map((record: any) => {
+        const item = mapRecordToLinkItem(record)
+        const existing = zangbaoLinks.value.find((candidate) => candidate.id === item.id)
+        if (existing?.data) item.data = existing.data
+        return item
+      })
+    }, 300)
   })
 
   // 监听当前页数据变化，自动加载缺失的完整 data
