@@ -39,14 +39,6 @@
           <el-button v-if="isLoggedIn" type="primary" @click="addLink" :loading = "globalLoading">添加链接</el-button>
           <el-button type="warning" @click="updateAll" :loading = "globalLoading" plain>更新全部</el-button>
           <el-button type="info" @click="clearLinks" plain>清空链接</el-button>
-          <el-button type="primary" @click="exportDB" plain>导出数据</el-button>
-          <el-upload
-            :show-file-list="false"
-            accept=".json"
-            :before-upload="importDB"
-          >
-            <el-button type="warning" plain>导入数据</el-button>
-          </el-upload>
           <el-switch
             v-model="showRemarkInput"
             class="input-mode-switch"
@@ -452,8 +444,6 @@ import HeroAdvanceFilter from '~/components/HeroAdvanceFilter.vue';
 
 import { Delete, Star, DocumentCopy, Refresh, Edit, Connection, Share, Search, Plus } from '@element-plus/icons-vue';
 
-import { exportIndexedDB, importIndexedDB } from '~/utils/dbTools';
-
 // 使用拆分后的 composables（如果你尚未创建，请按前一条回复建立）
 import { useAccountActions } from '~/composables/useAccountActions';
 import { useDb } from '~/composables/useDb';
@@ -699,45 +689,6 @@ const observeLoadMore = async () => {
 const gridStyle = computed(() => ({
   gridTemplateColumns: `repeat(${columnMode.value}, 1fr)`
 }));
-
-// ============== 导出 / 导入 IndexedDB ==============
-const exportDB = async () => {
-  try {
-    const ok = await exportIndexedDB('zangbaoDB');
-    if (ok) ElMessage.success('数据已导出');
-    else ElMessage.error('导出失败');
-  } catch (err) {
-    console.error(err);
-    ElMessage.error('导出失败');
-  }
-};
-
-const importDB = async (file) => {
-  try {
-    await ElMessageBox.confirm(
-      '导入数据会覆盖当前 IndexedDB 中的所有记录，确定继续吗？',
-      '确认导入',
-      {
-        confirmButtonText: '确定导入',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    );
-    await importIndexedDB(file, 'zangbaoDB');
-    ElMessage.success('数据已成功导入');
-    // 导入后立即刷新
-    await loadLinksFromDB();
-  } catch (err) {
-    // 用户取消或其他错误
-    if (err === 'cancel' || err === 'close') {
-      ElMessage.info('已取消导入');
-      return false;
-    }
-    console.error(err);
-    ElMessage.error('导入失败');
-  }
-  return false; // 阻止 el-upload 自动上传
-};
 
 // ============== 页面生命周期 ==============
 onMounted(async () => {
