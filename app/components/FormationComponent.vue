@@ -85,10 +85,11 @@ export default {
           category: '开荒',
           teams: [
             { title: '大乐于', heroes: [100619, 100685, 100796], tier: 'T0' },
-            { title: '大黄乐', heroes: [100619, 100020, 100685], tier: 'T1+' },
+            { title: '大黄乐', heroes: [100619, 100020, 100685], tier: 'T0' },
             { title: '张曹黄', heroes: [100029, 100683, 100020], tier: 'T1+' },
             { title: '大黄机', heroes: [100619, 100020, 100526], tier: 'T1' },
             { title: '张姜乐', heroes: [100029, 100074, 100685], tier: 'T1+' },
+            { title: '刘关张', heroes: [100072, 100029, 100689], tier: 'T1+' },
             { title: '法拉利', heroes: [100615, 100004, 100620], tier: 'T1-' },
             { title: '马魏甄', heroes: [100013, 100649, 100015], tier: 'T2' }
           ]
