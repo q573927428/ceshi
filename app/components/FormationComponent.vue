@@ -84,7 +84,6 @@ export default {
         {
           category: '开荒',
           teams: [
-            { title: '大乐于', heroes: [100619, 100685, 100796], tier: 'T0' },
             { title: '大黄乐', heroes: [100619, 100020, 100685], tier: 'T0' },
             { title: '张曹黄', heroes: [100029, 100683, 100020], tier: 'T1+' },
             { title: '大黄机', heroes: [100619, 100020, 100526], tier: 'T1' },
