@@ -88,6 +88,7 @@ export default {
             { title: '大黄乐', heroes: [100619, 100020, 100685], tier: 'T1+' },
             { title: '张曹黄', heroes: [100029, 100683, 100020], tier: 'T1+' },
             { title: '大黄机', heroes: [100619, 100020, 100526], tier: 'T1' },
+            { title: '张姜乐', heroes: [100029, 100074, 100685], tier: 'T1+' },
             { title: '法拉利', heroes: [100615, 100004, 100620], tier: 'T1-' },
             { title: '马魏甄', heroes: [100013, 100649, 100015], tier: 'T2' }
           ]
