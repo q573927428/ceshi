@@ -103,14 +103,14 @@ export default {
             { title: '大桥流氓', heroes: [100619, 100526, 100030], tier: 'T1-' },
             { title: '杜垒司', heroes: [100705, 100708, 100703], tier: 'T1' },
             { title: '鬼吕流氓', heroes: [100479, 100526, 100030], tier: 'T1-' },
-            { title: '吕布网红', heroes: [100479, 100337, 100526], tier: 'T1' },
+            { title: '吕布网红', heroes: [100479, 100337, 100526], tier: 'T1+' },
             { title: '大章鱼', heroes: [100619, 100526, 100787], tier: 'T1' },
             { title: 'XP周瑜打火机', heroes: [100478, 100526, 100784], tier: 'T1-' },
             { title: '赵无敌', heroes: [100021, 100526, 100649], tier: 'T1-' },
             { title: '周泰张机肉步', heroes: [100574, 100526, 100589], tier: 'T2-' },
             { title: '大张张', heroes: [100619, 100526, 100648], tier: 'T2' },
             { title: '爷爷队', heroes: [100574, 100526, 100630], tier: 'T2+' },
-            { title: '庞张昱', heroes: [100477, 100526, 100787], tier: 'T1+' },
+            { title: '庞张昱', heroes: [100477, 100526, 100787], tier: 'T0' },
             { title: 'SP赵维机', heroes: [102001, 100526, 102012], tier: 'T2+' },
             { title: 'SP赵严机', heroes: [102001, 100526, 100631], tier: 'T1-' },
             { title: '黄无敌', heroes: [100526, 100649, 100630], tier: 'T2-' },
@@ -125,8 +125,8 @@ export default {
             { title: '刘徽王异刀', heroes: [100028, 100807, 100814], tier: 'T0' },
             { title: '司马懿狗刀', heroes: [100024, 100807, 100023], tier: 'T0' },
             { title: '刘徽黄盖刀', heroes: [100814, 100035, 100783], tier: 'T0' },
-            { title: '卫瓘黄盖刀', heroes: [100035, 100707, 100783], tier: 'T1+' },
-            { title: '曹彰法刀', heroes: [100683, 100692, 100023], tier: 'T1+' },
+            { title: '卫瓘黄盖刀', heroes: [100035, 100707, 100783], tier: 'T0' },
+            { title: '曹彰法刀', heroes: [100683, 100692, 100023], tier: 'T0' },
             { title: '丑刀', heroes: [100794, 100771, 100474], tier: 'T1' },
             { title: '朱狗刀', heroes: [100024, 100807, 100553], tier: 'T1+' },
             { title: '狗刀', heroes: [100024, 100035, 100023], tier: 'T1-' },
@@ -150,7 +150,9 @@ export default {
           teams: [
             { title: '三马队', heroes: [100615, 100799, 100785], tier: 'T0' },
             { title: '马谡蜀骑', heroes: [100615, 100799, 100620], tier: 'T1+' },
-            { title: '属性队', heroes: [100794, 100771, 100474], tier: 'T1' },
+            { title: '属性队', heroes: [100794, 100771, 100474], tier: 'T1+' },
+            { title: '刘关张', heroes: [100072, 100029, 100689], tier: 'T1-' },
+            { title: '曹田彰', heroes: [100683, 100692, 100023], tier: 'T1' },
             { title: '程昱魏智', heroes: [100024, 100787, 100476], tier: 'T1' },
             { title: '曹彰流氓', heroes: [100683, 100029, 100030], tier: 'T1' },
             { title: '多马队', heroes: [100701, 100687, 100476], tier: 'T1' },
@@ -183,9 +185,10 @@ export default {
           category: '百战',
           teams: [
             { title: '铁王八', heroes: [100790, 100016, 100769], tier: 'T0' },
-            { title: '鬼马韦', heroes: [100479, 100799, 100769], tier: 'T1+' },
+            { title: '鬼马韦', heroes: [100479, 100799, 100769], tier: 'T0' },
             { title: '同心队', heroes: [100016, 100792, 100449], tier: 'T1' },
-            { title: '曹彰螃蟹', heroes: [100683, 100023, 100449], tier: 'T1' },
+            { title: '乐进蜀刀', heroes: [100016, 100649, 100685], tier: 'T1' },
+            { title: '曹彰螃蟹', heroes: [100683, 100023, 100449], tier: 'T1+' },
             { title: '曹彰形兵', heroes: [100683, 100029, 100769], tier: 'T1' },
             { title: '荀彧螃蟹', heroes: [100024, 100023, 100449], tier: 'T1-' },
             { title: '华雄螃蟹', heroes: [100647, 100023, 100449], tier: 'T2' },
@@ -193,16 +196,11 @@ export default {
           ]
         },
         {
-          category: '形兵',
+          category: '其他',
           teams: [
             { title: '孙权形兵', heroes: [100030, 100619, 100631], tier: 'T2' },
             { title: '李儒形兵', heroes: [100604, 100452, 100337], tier: 'T2-' },
-            { title: '吕布形兵', heroes: [100479, 100452, 100337], tier: 'T2+' }
-          ]
-        },
-        {
-          category: '其他',
-          teams: [
+            { title: '吕布形兵', heroes: [100479, 100452, 100337], tier: 'T2+' },
             { title: '郝昭白嫖1', heroes: [100475, 100799, 100645], tier: 'T0' },
             { title: '郝昭白嫖2', heroes: [100475, 100337, 100480], tier: 'T1' },
             { title: '免疫法刀队', heroes: [100452, 100519, 100337], tier: 'T2' },
