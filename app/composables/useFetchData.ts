@@ -35,7 +35,7 @@ interface WeaponData {
 }
 
 interface EquipData {
-  price: number
+  price: number | null
   status_desc: string
   area_name: string
   server_name: string
@@ -45,10 +45,10 @@ interface EquipData {
 interface ProcessedData {
   extractedId: string
   link: string
-  equipPrice: number
+  equipPrice: number | null
   statusDesc: string
   equip: {
-    price: number
+    price: number | null
     status_desc: string
     area_name: string
     server_name: string
@@ -148,7 +148,7 @@ export const useFetchData = () => {
     const allW = [...weapons.redWeapons, ...weapons.pinkWeapons, ...weapons.blueWeapons]
     allW.forEach((w) => (w.calculatedValue = getWeaponValue(w)))
     const weaponTotalValue = allW.reduce((s, w) => s + (w.calculatedValue || 0), 0)
-    // 亮点可能由 get_equip_detail 返回，也可能只存在 full.json 的 equip 节点
+    // 静态资料没有亮点时保留已有记录的亮点。
     const rawHighlights = equip.complex_highlights_v2?.length
       ? equip.complex_highlights_v2
       : full?.equip?.complex_highlights_v2
@@ -165,7 +165,7 @@ export const useFetchData = () => {
       extractedId,
       link,
       // 接口价格单位为分，换算为元后统一保存为整数。
-      equipPrice: Math.round((Number(equip.price) || 0) / 100),
+      equipPrice: equip.price === null ? null : Math.round(Number(equip.price) / 100),
       statusDesc: equip.status_desc,
       equip: {
         price: equip.price,
@@ -219,26 +219,10 @@ export const useFetchData = () => {
 
   // 主流程 - extractedId 即数据库中的 link（账号ID）
   const fetchAccountData = async (extractedId: string, record: RecordData | null = null): Promise<ProcessedData> => {
-    let equip: EquipData
-
-    if (record === null) {
-      // @ts-ignore - Nuxt $fetch has complex route types
-      equip = await $fetch('/api/equip/detail', {
-        params: { ordersn: extractedId },
-      }) as any
-    } else {
-      equip = {
-        price: record?.data?.equip?.price || 0,
-        status_desc: record?.data?.equip?.status_desc || '',
-        area_name: record?.data?.equip?.area_name || '',
-        server_name: record?.data?.equip?.server_name || '',
-        complex_highlights_v2: record?.data?.equip?.complex_highlights_v2 || [],
-      }
-    }
-
     // 解析 full.json
     const jsonUrl = `https://cbg-other-desc.res.netease.com/stzb/static/equipdesc/${extractedId}.json`
     const raw = await fetch(jsonUrl)
+    if (!raw.ok) throw new Error(`账号静态资料获取失败：HTTP ${raw.status}`)
     const text = await raw.text()
     const parsed = JSON.parse(text)
 
@@ -246,6 +230,21 @@ export const useFetchData = () => {
       String.fromCharCode(parseInt(g, 16))
     )
     const full = JSON.parse(decoded)
+
+    let equip: EquipData
+    if (!record) {
+      // @ts-ignore - Nuxt $fetch has complex route types
+      equip = await $fetch('/api/equip/detail', { params: { ordersn: extractedId } }) as EquipData
+    } else {
+      const previousEquip = record?.data?.equip
+      equip = {
+        price: previousEquip?.price ?? null,
+        status_desc: previousEquip?.status_desc || '未知',
+        area_name: previousEquip?.area_name || '',
+        server_name: previousEquip?.server_name || '',
+        complex_highlights_v2: previousEquip?.complex_highlights_v2 || [],
+      }
+    }
 
     const uniqueCards = extractUniqueCards(full)
     const weapons = extractWeapons(full)

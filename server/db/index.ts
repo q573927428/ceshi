@@ -84,3 +84,17 @@ export async function queryOne(sql: string, params: any[] = []): Promise<any> {
   const rows = await query(sql, params)
   return rows[0] || null
 }
+
+export async function ensureAppSettings(): Promise<void> {
+  await query(`CREATE TABLE IF NOT EXISTS app_settings (
+    setting_key VARCHAR(100) PRIMARY KEY,
+    cookie_value TEXT NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  )`)
+}
+
+export async function getCbgCookie(): Promise<string> {
+  await ensureAppSettings()
+  const row = await queryOne('SELECT cookie_value FROM app_settings WHERE setting_key = ?', ['cbg_cookie'])
+  return row?.cookie_value || ''
+}

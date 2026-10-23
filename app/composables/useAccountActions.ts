@@ -294,7 +294,7 @@ export const useAccountActions = () => {
           let savedRecord: any
           let record = await getRecord(link)
           if (record) {
-            // 传null强制请求API获取最新价格（不走缓存）
+            // 更新已有记录时从藏宝阁重新获取商品详情。
             const processed = await fetchAccountData(link, null)
             record.data = processed
             const enteredPrice = prices.length >= index ? normalizePrice(prices[index - 1]) : null
@@ -440,7 +440,7 @@ export const useAccountActions = () => {
     try {
       const record = await getRecord(link)
       if (!record) return
-      // 传null强制重新请求API获取最新价格
+      // 刷新时从藏宝阁重新获取商品详情。
       const processed = await fetchAccountData(link, null)
       record.data = processed
       record.equipPrice = normalizePrice(processed.equipPrice)
@@ -484,7 +484,7 @@ export const useAccountActions = () => {
       if (!record) continue
 
       try {
-        // 传null强制重新请求API获取最新价格
+        // 更新时从藏宝阁重新获取商品详情。
         const processed = await fetchAccountData(item.link, null)
         record.data = processed
         record.equipPrice = normalizePrice(processed.equipPrice)

@@ -37,7 +37,7 @@
         </div>
         <div class="button-section">
           <el-button v-if="isLoggedIn" type="primary" @click="addLink" :loading = "globalLoading">添加链接</el-button>
-          <el-button type="warning" @click="updateAll" :loading = "globalLoading" plain>更新全部</el-button>
+          <!-- <el-button type="warning" @click="updateAll" :loading = "globalLoading" plain>更新全部</el-button> -->
           <el-button type="info" @click="clearLinks" plain>清空链接</el-button>
           <el-switch
             v-model="showRemarkInput"

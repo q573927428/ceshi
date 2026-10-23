@@ -41,6 +41,10 @@
         <el-icon><Setting /></el-icon>
         <template #title>用户管理</template>
       </el-menu-item>
+      <el-menu-item v-if="isAdmin" index="/cbg-settings">
+        <el-icon><Setting /></el-icon>
+        <template #title>藏宝阁 Cookie</template>
+      </el-menu-item>
     </el-menu>
   </div>
 
